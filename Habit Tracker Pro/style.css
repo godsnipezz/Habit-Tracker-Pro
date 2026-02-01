@@ -1,0 +1,164 @@
+/* =========================================================
+   1. CORE THEME & LAYOUT
+========================================================= */
+:root {
+    --bg: #0b0b0b;
+    --surface: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
+    --text: #ffffff;
+    --muted: rgba(255, 255, 255, 0.5);
+    --green: #63e6a4;
+    --cyan: #4fd1ff;
+    --yellow: #facc15;
+    --radius: 24px;
+}
+
+* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+/* SLEEK CUSTOM SCROLLBARS */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+    background: rgba(255, 255, 255, 0.1); 
+    border-radius: 10px; 
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+
+body {
+    margin: 0; font-family: 'Inter', sans-serif;
+    background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, var(--bg) 80%);
+    color: var(--text); min-height: 100vh; overflow-x: hidden;
+}
+
+/* APP CONTAINER - FLUID STRETCH */
+.app { 
+    width: 98%; 
+    max-width: 1600px; 
+    margin: 0 auto; 
+    padding: 20px; 
+}
+
+/* =========================================================
+   2. HEADER & YEAR SELECTOR (FIXED ARROWS)
+========================================================= */
+.top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
+
+input[type="number"] {
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    color: #ffffff !important;
+    padding: 10px 40px 10px 15px; /* Added padding to clear space for arrows */
+    border-radius: 12px; 
+    width: 115px;
+    font-size: 15px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer !important;
+    position: relative; /* Context for the absolute spinner */
+    
+    /* Custom SVG arrows */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+/* Position the invisible clickable arrows EXACTLY over the SVG */
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button !important;
+    opacity: 0; /* Keeps them invisible */
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 35px; /* Matches the right padding of the input */
+    cursor: pointer !important;
+}
+
+.headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
+.headline .label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+/* =========================================================
+   3. DROPDOWNS & CARDS
+========================================================= */
+.dropdown { position: relative; display: inline-block; }
+.dropdown-button { 
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: #fff; padding: 10px 16px; border-radius: 12px; cursor: pointer;
+    font-size: 14px; min-width: 120px; text-align: left;
+}
+.dropdown-menu {
+    position: absolute; top: calc(100% + 8px); left: 0; 
+    background: #181818; border: 1px solid var(--border);
+    border-radius: 14px; z-index: 1000; min-width: 150px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden;
+}
+.dropdown-item { padding: 12px 16px; cursor: pointer; font-size: 13px; color: var(--muted); transition: 0.2s; }
+.dropdown-item:hover { background: rgba(255,255,255,0.08); color: white; }
+
+.today-focus, .habits {
+    background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 32px; margin-bottom: 20px;
+}
+
+/* =========================================================
+   4. ANALYTICS & TABLE
+========================================================= */
+.analytics { display: flex; gap: 40px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 10px; }
+.ring-block { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.ring { width: 72px; height: 72px; position: relative; display: flex; align-items: center; justify-content: center; }
+.ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+.ring-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8; }
+.ring-progress { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; }
+.ring span { position: absolute; font-weight: 700; font-size: 13px; }
+
+.table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
+table { border-collapse: collapse; width: 100%; }
+th, td { padding: 12px 10px; text-align: center; font-size: 13px; }
+
+th:first-child, td:first-child {
+    position: sticky; left: 0; z-index: 10; background: #121212; 
+    min-width: 180px; text-align: left; border-right: 1px solid var(--border);
+}
+th { position: sticky; top: 0; background: #121212; z-index: 11; }
+
+.today-col { background: rgba(99, 230, 164, 0.05) !important; }
+
+/* GOAL INPUT STYLE */  
+.goal-input {
+    width: 30px;
+    padding-right: 30px;
+    background: transparent;
+    border: none;
+    color: #ffffff !important;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer !important;
+    outline: none;
+}
+
+/* =========================================================
+   5. FOOTER & COUNTER
+========================================================= */
+.footer { 
+    display: flex; justify-content: space-between; align-items: center; 
+    margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border);
+}
+
+button#addHabit {
+    background: var(--green); color: #000; border: none; padding: 12px 24px;
+    border-radius: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s;
+}
+button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
+
+.counter { font-size: 14px; font-weight: 600; color: var(--muted); }
+#completed { color: var(--green); } 
+#total { color: var(--text); }
+
+input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--green); cursor: pointer; }
+.progress-bar { width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 0 auto; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.4s ease; }
