@@ -1,12 +1,12 @@
 /* =========================================================
-   CORE THEME & RESET (UNCHANGED)
+   CORE THEME & LAYOUT
 ========================================================= */
 :root {
   --bg: #0b0b0b;
-  --surface: rgba(255,255,255,0.05);
-  --border: rgba(255,255,255,0.1);
+  --surface: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.1);
   --text: #ffffff;
-  --muted: rgba(255,255,255,0.65);
+  --muted: rgba(255, 255, 255, 0.65);
   --green: #63e6a4;
   --cyan: #4fd1ff;
   --yellow: #facc15;
@@ -14,8 +14,9 @@
   --radius: 24px;
 }
 
-* { box-sizing: border-box; }
 html { font-size: 13px; }
+* { box-sizing: border-box; }
+
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
@@ -25,7 +26,7 @@ body {
 }
 
 /* =========================================================
-   TABLE WRAPPER (UNCHANGED BASE)
+   TABLE WRAPPER
 ========================================================= */
 .table-wrapper {
   width: 100%;
@@ -35,13 +36,13 @@ body {
 }
 
 /* =========================================================
-   TABLE CORE
+   TABLE
 ========================================================= */
 table {
   border-collapse: separate;
   border-spacing: 0;
   width: 100%;
-  min-width: 800px;
+  min-width: 900px;
 }
 
 th, td {
@@ -52,12 +53,12 @@ th, td {
 }
 
 /* =========================================================
-   STICKY HABIT COLUMN (UNCHANGED DESKTOP)
+   HABIT COLUMN (STICKY, ALWAYS FIRST)
 ========================================================= */
 .sticky-col {
   position: sticky;
   left: 0;
-  z-index: 100;
+  z-index: 200;
   background: #121212;
   min-width: 140px;
   max-width: 140px;
@@ -67,7 +68,7 @@ th, td {
 }
 
 /* =========================================================
-   METADATA COLUMNS (UNCHANGED DESKTOP)
+   METADATA COLUMNS
 ========================================================= */
 .metadata-col {
   background: #0f0f0f;
@@ -75,37 +76,39 @@ th, td {
 }
 
 /* =========================================================
-   🔧 MOBILE FIXES (ADDITIVE ONLY)
+   MOBILE EDIT MODE BEHAVIOR (CRITICAL FIX)
 ========================================================= */
 @media (max-width: 768px) {
 
-  /* Habit column always visible */
   .sticky-col {
     min-width: 120px;
     max-width: 120px;
-    z-index: 200;
   }
 
   /* Metadata hidden under habit initially */
   .metadata-col {
+    transform: translateX(-120%);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease;
+    transition:
+      transform 0.35s cubic-bezier(.4,0,.2,1),
+      opacity 0.25s ease;
   }
 
-  /* Revealed only after horizontal scroll */
-  .table-wrapper.scrolled .metadata-col {
+  /* Reveal metadata only after scroll */
+  .table-wrapper.show-metadata .metadata-col {
+    transform: translateX(0);
     opacity: 1;
     pointer-events: auto;
   }
 
   table {
-    min-width: 980px;
+    min-width: 1100px;
   }
 }
 
 /* =========================================================
-   GRAPH SCROLL CONTAINER (NEW, SAFE)
+   GRAPH SCROLL CONTAINER
 ========================================================= */
 .graph-scroll {
   width: 100%;
@@ -119,7 +122,7 @@ svg#activityGraph {
 }
 
 /* =========================================================
-   GRAPH VISUALS (UNCHANGED)
+   GRAPH STYLES
 ========================================================= */
 .graph-path {
   fill: none;
