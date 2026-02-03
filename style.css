@@ -55,14 +55,11 @@ body {
     outline: none; 
     cursor: text;
     text-align: center; 
-    -moz-appearance: textfield;
-    appearance: textfield;
+    -moz-appearance: textfield; appearance: textfield;
 }
 
 .date-picker input[type="number"]::-webkit-inner-spin-button, 
-.date-picker input[type="number"]::-webkit-outer-spin-button { 
-    -webkit-appearance: none; margin: 0; 
-}
+.date-picker input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 .headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
 .headline .label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
@@ -94,7 +91,7 @@ body {
 .dropdown-item:hover { background: rgba(255,255,255,0.08); color: white; }
 
 /* =========================================================
-   4. ANALYTICS
+   4. ANALYTICS & GRAPH
 ========================================================= */
 .analytics { display: flex; gap: 40px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 10px; }
 .ring-block { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
@@ -106,10 +103,57 @@ body {
     filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); 
 }
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
-.today-focus, .habits {
+
+/* UPDATED TODAY CARD (GRAPH) */
+.today-focus {
+    background: var(--surface); 
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: var(--radius); 
+    padding: 24px 32px; margin-bottom: 20px;
+    display: flex; flex-direction: column;
+    height: 240px; 
+    position: relative;
+    overflow: hidden;
+}
+.habits {
     background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 32px; margin-bottom: 20px;
 }
+
+.today-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; z-index: 2;
+}
+
+.today-header-title { display: flex; gap: 10px; align-items: center; }
+.today-header-title h2 { margin: 0; font-size: 18px; }
+
+.graph-summary {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px;
+}
+
+/* GRAPH CONTAINER */
+.graph-container {
+    flex: 1;
+    width: 110%; 
+    margin-left: -5%;
+    position: relative;
+    display: flex; align-items: flex-end;
+}
+svg#activityGraph { overflow: visible; }
+
+.graph-path {
+    fill: none; stroke: var(--green); stroke-width: 3px;
+    stroke-linecap: round; stroke-linejoin: round;
+    filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
+}
+.graph-area { fill: url(#gradient-area); opacity: 0.2; stroke: none; }
+.graph-label {
+    fill: #fff; font-size: 11px; font-weight: 700;
+    text-anchor: middle; opacity: 0; transition: opacity 0.2s;
+}
+.graph-label.visible { opacity: 1; }
 
 /* =========================================================
    5. TABLE & LAYOUT

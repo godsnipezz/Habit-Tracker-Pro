@@ -31,10 +31,17 @@
 
       <section class="today-focus">
         <div class="today-header">
-          <i data-lucide="sparkles" style="color: var(--green)"></i>
-          <h2>Today</h2>
+          <div class="today-header-title">
+            <i data-lucide="activity" style="color: var(--green)"></i>
+            <h2>Activity Graph</h2>
+          </div>
+          <div id="todaySummary" class="graph-summary">0 net score today</div>
         </div>
-        <p id="todaySummary">0 of 0 habits done today</p>
+        
+        <div class="graph-container">
+          <svg id="activityGraph" width="100%" height="100%" viewBox="0 0 800 150" preserveAspectRatio="none">
+             </svg>
+        </div>
       </section>
 
       <section class="analytics">

@@ -37,11 +37,12 @@ const loadHabits = () => {
     if (stored) {
         habits = JSON.parse(stored);
     } else {
-        // Persistence Logic: Copy from previous months if current is empty
+        // Persistence: Copy from previous month if current is empty
         habits = []; 
         let checkY = y;
         let checkM = currentMonth;
 
+        // Check last 12 months for data
         for (let i = 0; i < 12; i++) {
             checkM--;
             if (checkM < 0) { checkM = 11; checkY--; }
@@ -55,7 +56,7 @@ const loadHabits = () => {
                     type: h.type || 'positive',
                     weight: h.weight || 2,
                     goal: h.goal || 28,
-                    days: [] 
+                    days: [] // Reset days
                 }));
                 break;
             }
@@ -289,6 +290,7 @@ function renderHabits() {
                 save(); 
                 updateStats();
                 if (!isEditMode) updateProgress(tr, h); 
+                renderGraph();
             };
             td.appendChild(cb);
             tr.appendChild(td);
@@ -357,14 +359,12 @@ function renderHabits() {
 function updateProgress(tr, h) {
     const done = h.days.filter(Boolean).length;
     let pct = 0;
-
     if (h.type === "positive") {
         const target = h.goal || h.days.length;
         pct = (done / target) * 100;
     } else {
         pct = ((h.days.length - done) / h.days.length) * 100;
     }
-
     if (pct > 100) pct = 100;
     const fill = tr.querySelector(".progress-fill");
     if (fill) fill.style.width = pct + "%";
@@ -375,7 +375,6 @@ function setRing(id, pct) {
     const text = document.getElementById(id.replace("ring-", "") + "Pct");
     const r = path.getAttribute('r'); 
     const circ = 2 * Math.PI * r; 
-
     path.style.strokeDasharray = `${circ} ${circ}`;
     path.style.strokeDashoffset = circ - (pct / 100) * circ;
     text.textContent = Math.round(pct) + "%";
@@ -442,12 +441,106 @@ function updateStats() {
     document.getElementById("completed").textContent = todayDone;
     document.getElementById("total").textContent = todayTotal;
 
+    // We updated this to be simpler since the graph summary is now in the graph card
     document.getElementById("todaySummary").innerHTML = 
-        `${todayDone} of ${todayTotal} habits done <span style="opacity:0.5; margin:0 8px">|</span> ${negSlips} of ${negTotal} slips`;
+        `${todayScoreText()}`;
 
     setRing("ring-monthly", mScore); 
     setRing("ring-normalized", tScore); 
     setRing("ring-momentum", momScore);
+}
+
+function todayScoreText() {
+    // Helper to calculate daily score for the graph text
+    const y = parseInt(yearInput.value) || NOW.getFullYear();
+    const today = NOW.getDate() - 1;
+    let score = 0;
+    habits.forEach(h => {
+        if(h.days[today]) score += (h.type === 'positive' ? 1 : -1);
+    });
+    return `${score > 0 ? '+' : ''}${score} Net Score`;
+}
+
+// --- GRAPH RENDERING LOGIC ---
+function renderGraph() {
+    const svg = document.getElementById("activityGraph");
+    if (!svg) return;
+
+    // 1. Calculate Daily Scores
+    const y = parseInt(yearInput.value) || NOW.getFullYear();
+    const days = getDays(y, currentMonth);
+    const scores = new Array(days).fill(0);
+    
+    const todayDate = NOW.getDate(); 
+    const isCurrentMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
+
+    for (let d = 0; d < days; d++) {
+        let dailyScore = 0;
+        habits.forEach(h => {
+            if (h.days[d]) {
+                dailyScore += (h.type === 'positive' ? 1 : -1);
+            }
+        });
+        scores[d] = dailyScore;
+    }
+
+    // 2. Setup Dimensions
+    const width = 800;  
+    const height = 150; 
+    const padding = 20;
+    
+    // Auto-Scale Y-Axis
+    let maxVal = Math.max(...scores, 5); 
+    let minVal = Math.min(...scores, 0); 
+    const range = maxVal - minVal;
+    
+    const mapY = (val) => height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
+    const mapX = (dayIdx) => (dayIdx / (days - 1)) * width;
+
+    // 3. Generate Path Points
+    const points = scores.map((val, i) => ({ x: mapX(i), y: mapY(val), val }));
+
+    // 4. Build Smooth Path (Cubic Bezier)
+    let dPath = `M ${points[0].x} ${points[0].y}`;
+    
+    for (let i = 0; i < points.length - 1; i++) {
+        const p0 = points[Math.max(i - 1, 0)];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[Math.min(i + 2, points.length - 1)];
+
+        const cp1x = p1.x + (p2.x - p0.x) / 6;
+        const cp1y = p1.y + (p2.y - p0.y) / 6;
+
+        const cp2x = p2.x - (p3.x - p1.x) / 6;
+        const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+        dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+
+    // 5. Build Gradient Area
+    const dArea = `${dPath} L ${width} ${height} L 0 ${height} Z`;
+
+    // 6. Render SVG Content
+    let svgContent = `
+        <defs>
+            <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.4"/>
+                <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
+            </linearGradient>
+        </defs>
+        <path class="graph-area" d="${dArea}" />
+        <path class="graph-path" d="${dPath}" />
+    `;
+
+    // 7. Add Labels (Non-zero only)
+    points.forEach((p, i) => {
+        if (p.val !== 0 || (isCurrentMonth && i === todayDate - 1)) {
+            svgContent += `<text x="${p.x}" y="${p.y - 10}" class="graph-label visible">${p.val}</text>`;
+        }
+    });
+
+    svg.innerHTML = svgContent;
 }
 
 yearInput.addEventListener("input", () => {
@@ -486,6 +579,7 @@ function update() {
     renderHeader();
     renderHabits();
     updateStats();
+    renderGraph();
     lucide.createIcons();
 }
 
