@@ -10,7 +10,6 @@ let currentMonth = NOW.getMonth();
 const yearInput = document.getElementById("year");
 yearInput.value = NOW.getFullYear();
 
-// Debounce helper to prevent lag on rapid resizing/typing
 const debounce = (func, wait) => {
   let timeout;
   return (...args) => {
@@ -38,11 +37,9 @@ const loadHabits = () => {
     if (stored) {
         habits = JSON.parse(stored);
     } else {
-        // Migration/Init logic
         habits = []; 
         let checkY = y;
         let checkM = currentMonth;
-        // Check previous months for habits to carry over
         for (let i = 0; i < 12; i++) {
             checkM--;
             if (checkM < 0) { checkM = 11; checkY--; }
@@ -50,7 +47,6 @@ const loadHabits = () => {
             const prevData = localStorage.getItem(prevKey);
             if (prevData) {
                 const parsedPrev = JSON.parse(prevData);
-                // Carry over structure but reset days
                 habits = parsedPrev.map(h => ({
                     name: h.name, type: h.type || 'positive',
                     weight: h.weight || 2, goal: h.goal || 28, days: [] 
@@ -92,20 +88,18 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
     const toggleMenu = (e) => {
         e.stopPropagation();
         document.querySelectorAll(".dropdown-menu").forEach((m) => { if (m !== menu) m.style.display = "none"; });
-        
         const isClosed = menu.style.display === "none";
+        
         if (isClosed) {
             menu.style.display = "block";
             let openUp = false;
-            
-            // Smart positioning
             if (fixedSide === 'up') openUp = true;
             else if (fixedSide === 'down') openUp = false;
             else {
                 const rect = btn.getBoundingClientRect();
-                if (window.innerHeight - rect.bottom < 200) openUp = true;
+                const spaceBelow = window.innerHeight - rect.bottom;
+                if (spaceBelow < 200) openUp = true;
             }
-            
             if (openUp) {
                 menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)";
                 menu.style.transformOrigin = "bottom left";
@@ -123,7 +117,7 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
 }
 
 /* =========================================================
-   4. RENDERING (ORDER: SETTINGS -> HABIT NAME -> DAYS)
+   4. RENDERING
 ========================================================= */
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
@@ -133,21 +127,7 @@ function renderHeader() {
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     dayHeader.innerHTML = "";
-
-    // 1. SETTINGS HEADERS (Hidden left initially)
-    if (isEditMode) {
-        ["Type", "Imp", "Goal"].forEach(t => {
-            const th = document.createElement("th");
-            th.textContent = t;
-            th.className = "metadata-col";
-            dayHeader.appendChild(th);
-        });
-    }
-
-    // 2. HABIT NAME (Sticky Column)
     const nameTh = document.createElement("th");
-    nameTh.className = "sticky-col"; 
-    
     const wrapper = document.createElement("div");
     wrapper.className = "sticky-header-content";
 
@@ -155,37 +135,23 @@ function renderHeader() {
     settingsBtn.className = "toggle-edit-btn";
     settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
-    
-    // ACTION: Toggle Mode & TRIGGER AUTO-SCROLL
-    settingsBtn.onclick = (e) => { 
-        e.stopPropagation(); 
-        isEditMode = !isEditMode; 
-        update(); 
-        
-        // Auto-scroll to hide settings initially (Mobile UX)
-        if (isEditMode) {
-            setTimeout(() => {
-                const wrapper = document.querySelector(".table-wrapper");
-                if(wrapper) {
-                    wrapper.scrollLeft = 285; // Scroll past 3 metadata cols (3 * 95px)
-                }
-            }, 50);
-        }
-    };
+    settingsBtn.onclick = (e) => { e.stopPropagation(); isEditMode = !isEditMode; update(); };
 
     const labelSpan = document.createElement("span"); labelSpan.textContent = "Habit";
     wrapper.appendChild(settingsBtn); wrapper.appendChild(labelSpan);
-    nameTh.appendChild(wrapper); 
-    dayHeader.appendChild(nameTh);
+    nameTh.appendChild(wrapper); dayHeader.appendChild(nameTh);
 
-    // 3. DAYS HEADERS
+    if (isEditMode) {
+        ["Type", "Imp", "Goal"].forEach(t => {
+            const th = document.createElement("th"); th.textContent = t; dayHeader.appendChild(th);
+        });
+    }
+
     for (let d = 1; d <= days; d++) {
         const th = document.createElement("th"); th.textContent = d;
         if (isThisMonth && d === today) th.classList.add("today-col");
         dayHeader.appendChild(th);
     }
-    
-    // 4. ACTIONS (Delete/Move buttons header)
     const endTh = document.createElement("th");
     endTh.textContent = isEditMode ? "Actions" : "";
     endTh.style.minWidth = isEditMode ? "90px" : "auto";
@@ -200,7 +166,6 @@ function renderHabits() {
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     habits.forEach((h, i) => {
-        // Ensure data integrity
         if (!h.days || h.days.length !== days) {
             const newDays = Array(days).fill(false);
             if(h.days) h.days.forEach((val, idx) => { if(idx < days) newDays[idx] = val; });
@@ -208,51 +173,37 @@ function renderHabits() {
         }
 
         const tr = document.createElement("tr");
+        const nameTd = document.createElement("td");
+        nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
+        nameTd.style.cursor = isEditMode ? "text" : "default";
+        nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
+        tr.appendChild(nameTd);
 
-        // 1. SETTINGS COLUMNS
+        // LAST 2 ROWS OPEN UP
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
         if (isEditMode) {
-            // Type
-            const typeTd = document.createElement("td"); typeTd.className = "metadata-col";
-            const tDD = document.createElement("div"); tDD.className = "dropdown";
+            const typeTd = document.createElement("td"); const tDD = document.createElement("div"); tDD.className = "dropdown";
             makeDropdown(tDD, [{label:"Positive",value:"positive"},{label:"Negative",value:"negative"}], h.type==="negative"?1:0, (v)=>{h.type=v;save();update();}, dropDir);
-            
-            // APPLY COLOR BADGES
             const typeBtn = tDD.querySelector('.dropdown-button');
             if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
             typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-            // Importance
-            const impTd = document.createElement("td"); impTd.className = "metadata-col";
-            const iDD = document.createElement("div"); iDD.className = "dropdown";
+            const impTd = document.createElement("td"); const iDD = document.createElement("div"); iDD.className = "dropdown";
             makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
-            
-            // APPLY COLOR BADGES
             const impBtn = iDD.querySelector('.dropdown-button');
             const w = h.weight||2;
             if(w===1) impBtn.classList.add('badge-imp-low'); if(w===2) impBtn.classList.add('badge-imp-med'); if(w===3) impBtn.classList.add('badge-imp-high');
             impTd.appendChild(iDD); tr.appendChild(impTd);
 
-            // Goal
-            const goalTd = document.createElement("td"); goalTd.className = "metadata-col";
-            const gIn = document.createElement("input");
+            const goalTd = document.createElement("td"); const gIn = document.createElement("input");
             gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
             gIn.addEventListener("wheel", (e)=>e.preventDefault());
             gIn.oninput = (e)=>{ h.goal = +e.target.value; debouncedSave(); updateStats(); if(!isEditMode) updateProgress(tr,h); };
             goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
-        // 2. HABIT NAME (Sticky)
-        const nameTd = document.createElement("td");
-        nameTd.className = "sticky-col"; 
-        nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
-        nameTd.style.cursor = isEditMode ? "text" : "default";
-        nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
-        tr.appendChild(nameTd);
-
-        // 3. DAYS CHECKBOXES
         for (let d = 0; d < days; d++) {
             const td = document.createElement("td");
             const isToday = isThisMonth && d + 1 === today;
@@ -269,7 +220,6 @@ function renderHabits() {
             td.appendChild(cb); tr.appendChild(td);
         }
 
-        // 4. ACTIONS (Delete/Move)
         const endTd = document.createElement("td");
         if (isEditMode) {
             const actionWrap = document.createElement("div");
@@ -291,16 +241,6 @@ function renderHabits() {
         }
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
-
-    // Auto-scroll to today in View Mode
-    if (!isEditMode) {
-        setTimeout(() => {
-            const todayCol = document.querySelector(".today-col");
-            if (todayCol) {
-                todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-            }
-        }, 100);
-    }
 }
 
 function updateProgress(tr, h) {
@@ -352,7 +292,6 @@ function updateStats() {
         if (h.type === "positive") { todayTotal++; if (h.days[todayIdx]) todayDone++; }
         else { negTotal++; if (h.days[todayIdx]) todaySlips++; }
 
-        // Momentum Calc
         let hMom = 0, wSum = 0;
         const weights = [0.1, 0.2, 0.3, 0.4]; 
         weights.forEach((weight, i) => {
@@ -432,12 +371,7 @@ function renderGraph() {
         scores.push(dailyScore);
     }
     const container = svg.parentElement;
-    
-    // SAFE WIDTH CALCULATION (Fallbacks preventing 0 width)
-    const rect = container.getBoundingClientRect();
-    const width = rect.width || container.scrollWidth || 600; 
-    const height = 150; 
-    
+    const width = container.offsetWidth; const height = 150; 
     const dayHeaders = document.querySelectorAll('table thead th');
     let xPositions = [];
     let startIndex = -1;
@@ -459,9 +393,7 @@ function renderGraph() {
     const pxPerUnit = (floorY - padding) / Math.max(maxScore, 1);
     const mapY = (val) => floorY - (val * pxPerUnit);
 
-    // Map points, handle case where width might still be calibrating
-    const points = scores.map((val, i) => ({ x: xPositions[i] || (i * (width/totalDaysInMonth)), y: mapY(val), val }));
-    
+    const points = scores.map((val, i) => ({ x: xPositions[i] || 0, y: mapY(val), val }));
     if (points.length < 2) { svg.innerHTML = ``; return; }
 
     let dPath = `M ${points[0].x} ${points[0].y}`;
@@ -509,27 +441,8 @@ document.addEventListener("click", () => document.querySelectorAll(".dropdown-me
 
 function update() {
     renderHeader(); renderHabits(); updateStats(); renderGraph();
+    // RE-INIT ICONS AT END OF UPDATE
     lucide.createIcons();
 }
 
 loadHabits(); update();
-
-/* =========================================================
-   6. DYNAMIC QUOTES
-========================================================= */
-const motivationalQuotes = [
-    "Consistency is key.", "Focus on the process.", "Small wins matter.",
-    "Day one or one day.", "Keep showing up.", "Progress, not perfection.",
-    "Build momentum.", "Stay hard.", "Discipline equals freedom.",
-    "Just do it.", "One percent better.", "Don't break the chain.",
-    "Focus.", "Execute.", "Less talk, more action."
-];
-
-function setDailyQuote() {
-    const el = document.getElementById("dailyQuote");
-    if (el) {
-        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
-        el.innerText = motivationalQuotes[randomIndex];
-    }
-}
-setDailyQuote();
