@@ -10,7 +10,6 @@ let currentMonth = NOW.getMonth();
 const yearInput = document.getElementById("year");
 yearInput.value = NOW.getFullYear();
 
-// DEBOUNCE: Prevents localStorage spamming
 const debounce = (func, wait) => {
   let timeout;
   return (...args) => {
@@ -19,19 +18,16 @@ const debounce = (func, wait) => {
   };
 };
 
-// DATA HANDLING
 const getDays = (y, m) => new Date(y, m + 1, 0).getDate();
 const storageKey = (y, m) => `habits-${y}-${m}`;
 
-// Prevent scrolling on number input
 yearInput.addEventListener("wheel", (e) => e.preventDefault());
 
 let habits = [];
 let isEditMode = false;
 
 /* =========================================================
-   2. DATA PERSISTENCE & LOADING
-   Fix: Automatically carries over habit definitions to new months
+   2. DATA PERSISTENCE
 ========================================================= */
 const loadHabits = () => {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
@@ -41,13 +37,10 @@ const loadHabits = () => {
     if (stored) {
         habits = JSON.parse(stored);
     } else {
-        // No data for this month? Try to find the most recent previous data to copy definitions
-        habits = []; // Default empty
-        
-        // Look back up to 12 months for existing habits
+        // Persistence Logic: Copy from previous months if current is empty
+        habits = []; 
         let checkY = y;
         let checkM = currentMonth;
-        let found = false;
 
         for (let i = 0; i < 12; i++) {
             checkM--;
@@ -57,15 +50,13 @@ const loadHabits = () => {
             
             if (prevData) {
                 const parsedPrev = JSON.parse(prevData);
-                // Copy definitions, reset progress
                 habits = parsedPrev.map(h => ({
                     name: h.name,
                     type: h.type || 'positive',
                     weight: h.weight || 2,
                     goal: h.goal || 28,
-                    days: [] // Will be filled with false in update()
+                    days: [] 
                 }));
-                found = true;
                 break;
             }
         }
@@ -77,7 +68,6 @@ const save = () => {
     localStorage.setItem(storageKey(y, currentMonth), JSON.stringify(habits));
 };
 
-// Debounced save for text inputs to improve performance
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
@@ -116,7 +106,6 @@ function makeDropdown(el, options, selectedIndex, onChange) {
         });
         menu.style.display = menu.style.display === "none" ? "block" : "none";
         
-        // Simple position check
         if(menu.style.display === 'block') {
              menu.style.top = "calc(100% + 8px)";
              menu.style.bottom = "auto";
@@ -151,6 +140,8 @@ function renderHeader() {
 
     const settingsBtn = document.createElement("button");
     settingsBtn.className = "toggle-edit-btn";
+    settingsBtn.style.width = "auto"; 
+    settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode 
         ? `<i data-lucide="check" style="width: 16px; height: 16px;"></i>` 
         : `<i data-lucide="settings-2" style="width: 16px; height: 16px;"></i>`;
@@ -186,9 +177,10 @@ function renderHeader() {
         dayHeader.appendChild(th);
     }
 
-    // 4. End Column
+    // 4. End Column (Actions)
     const endTh = document.createElement("th");
-    endTh.textContent = isEditMode ? "Del" : "";
+    endTh.textContent = isEditMode ? "Actions" : "";
+    endTh.style.minWidth = isEditMode ? "90px" : "auto";
     dayHeader.appendChild(endTh);
 }
 
@@ -201,9 +193,7 @@ function renderHabits() {
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     habits.forEach((h, i) => {
-        // Ensure days array size matches the month
         if (!h.days || h.days.length !== days) {
-            // Resize array carefully preserving data if expanding
             const newDays = Array(days).fill(false);
             if(h.days) {
                 h.days.forEach((val, idx) => { if(idx < days) newDays[idx] = val; });
@@ -266,7 +256,6 @@ function renderHabits() {
                 h.goal = +e.target.value; 
                 debouncedSave(); 
                 updateStats(); 
-                // Also update the progress bar inline while typing goal
                 if (!isEditMode) updateProgress(tr, h); 
             };
             goalTd.appendChild(gIn);
@@ -286,7 +275,6 @@ function renderHabits() {
 
             if (h.type === "negative") cb.classList.add("neg-habit");
             
-            // Logic for future disabling
             const isFutureYear = y > NOW.getFullYear();
             const isFutureMonth = y === NOW.getFullYear() && currentMonth > NOW.getMonth();
             const isFutureDay = isThisMonth && d > NOW.getDate() - 1;
@@ -298,7 +286,7 @@ function renderHabits() {
 
             cb.onchange = () => {
                 h.days[d] = cb.checked;
-                save(); // Immediate save for checkboxes is better UX
+                save(); 
                 updateStats();
                 if (!isEditMode) updateProgress(tr, h); 
             };
@@ -306,19 +294,57 @@ function renderHabits() {
             tr.appendChild(td);
         }
 
-        // --- 4. End Column ---
+        // --- 4. End Column (ACTIONS) ---
         const endTd = document.createElement("td");
         if (isEditMode) {
-            endTd.innerHTML = `<i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>`;
-            endTd.style.cursor = "pointer";
-            endTd.style.color = "#ef4444";
-            endTd.onclick = () => {
+            const actionWrap = document.createElement("div");
+            actionWrap.style.display = "flex";
+            actionWrap.style.gap = "4px";
+            actionWrap.style.justifyContent = "center";
+            actionWrap.style.alignItems = "center";
+
+            // UP
+            const btnUp = document.createElement("button");
+            btnUp.className = "toggle-edit-btn";
+            btnUp.innerHTML = `<i data-lucide="arrow-up" style="width: 14px; height: 14px;"></i>`;
+            btnUp.disabled = i === 0; 
+            btnUp.onclick = (e) => {
+                e.stopPropagation();
+                [habits[i], habits[i - 1]] = [habits[i - 1], habits[i]];
+                save();
+                update();
+            };
+
+            // DOWN
+            const btnDown = document.createElement("button");
+            btnDown.className = "toggle-edit-btn";
+            btnDown.innerHTML = `<i data-lucide="arrow-down" style="width: 14px; height: 14px;"></i>`;
+            btnDown.disabled = i === habits.length - 1;
+            btnDown.onclick = (e) => {
+                e.stopPropagation();
+                [habits[i], habits[i + 1]] = [habits[i + 1], habits[i]];
+                save();
+                update();
+            };
+
+            // DELETE
+            const btnDel = document.createElement("button");
+            btnDel.className = "toggle-edit-btn";
+            btnDel.innerHTML = `<i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>`;
+            btnDel.style.color = "#ef4444";
+            btnDel.style.marginLeft = "8px"; 
+            btnDel.onclick = () => {
                 if (confirm("Delete habit?")) {
                     habits.splice(i, 1);
                     save();
                     update();
                 }
             };
+
+            actionWrap.appendChild(btnUp);
+            actionWrap.appendChild(btnDown);
+            actionWrap.appendChild(btnDel);
+            endTd.appendChild(actionWrap);
         } else {
             endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
             setTimeout(() => updateProgress(tr, h), 0);
@@ -333,28 +359,20 @@ function updateProgress(tr, h) {
     let pct = 0;
 
     if (h.type === "positive") {
-        // FIX: Use the User's GOAL as the target, not the total days in the month
-        // If goal is missing or 0, fallback to month length to avoid division by zero
         const target = h.goal || h.days.length;
         pct = (done / target) * 100;
     } else {
-        // For negative habits, we keep it based on total days (staying clean all month)
         pct = ((h.days.length - done) / h.days.length) * 100;
     }
 
-    // CAP AT 100%
     if (pct > 100) pct = 100;
-
     const fill = tr.querySelector(".progress-fill");
     if (fill) fill.style.width = pct + "%";
 }
 
-// Fix: Calculates ring circumference dynamically based on SVG Radius
 function setRing(id, pct) {
     const path = document.getElementById(id.replace("ring-", "path-"));
     const text = document.getElementById(id.replace("ring-", "") + "Pct");
-    
-    // Get exact radius from SVG attribute to calculate C = 2*pi*r
     const r = path.getAttribute('r'); 
     const circ = 2 * Math.PI * r; 
 
@@ -363,7 +381,6 @@ function setRing(id, pct) {
     text.textContent = Math.round(pct) + "%";
 }
 
-// Fix: Improved Momentum Algorithm (Normalized) & Goal-based Math
 function updateStats() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
@@ -378,21 +395,18 @@ function updateStats() {
         const w = Number(h.weight) || 2; 
         const checkedDays = h.days.filter(Boolean).length;
         
-        // --- GOAL BASED MATH ---
         let ratio = 0;
         if (h.type === "positive") {
             const target = h.goal || h.days.length;
             ratio = checkedDays / target;
-            if (ratio > 1) ratio = 1; // Cap at 100%
+            if (ratio > 1) ratio = 1; 
         } else {
-            // Negative: Success is avoiding it. 
             ratio = (h.days.length - checkedDays) / h.days.length;
         }
         
         earned += ratio * w;
         totalPossible += w;
 
-        // Today's Stats
         if (h.type === "positive") {
             todayTotal++;
             if (h.days[todayIdx]) todayDone++; 
@@ -401,14 +415,12 @@ function updateStats() {
             if (h.days[todayIdx]) negSlips++;
         }
 
-        // Momentum Calculation
         let hMom = 0, wSum = 0;
         const weights = [0.1, 0.2, 0.3, 0.4]; 
         
         weights.forEach((weight, i) => {
             const lookback = 3 - i; 
             const idx = todayIdx - lookback;
-            
             if (idx >= 0 && idx < h.days.length) { 
                 const isSuccess = h.type === "positive" ? h.days[idx] : !h.days[idx];
                 hMom += (isSuccess ? 1 : 0) * weight; 
@@ -424,7 +436,6 @@ function updateStats() {
     const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
     const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
 
-    // UPDATE UI
     const successEl = document.getElementById("successRate");
     if (successEl) successEl.textContent = Math.round(mScore) + "%";
 
@@ -439,7 +450,6 @@ function updateStats() {
     setRing("ring-momentum", momScore);
 }
 
-// EVENTS
 yearInput.addEventListener("input", () => {
     loadHabits();
     update();
@@ -479,6 +489,5 @@ function update() {
     lucide.createIcons();
 }
 
-// INITIALIZE
 loadHabits();
 update();
