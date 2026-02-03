@@ -101,36 +101,38 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     const toggleMenu = (e) => {
         e.stopPropagation();
         
-        // 1. Close all other menus first
+        // 1. Close all other menus
         document.querySelectorAll(".dropdown-menu").forEach((m) => {
             if (m !== menu) m.style.display = "none";
         });
 
-        // 2. Determine if we are opening
         const isClosed = menu.style.display === "none";
         
         if (isClosed) {
+            // 2. Temporarily show (hidden) to measure exact height
+            menu.style.visibility = "hidden";
             menu.style.display = "block";
             
-            // --- SMART POSITIONING LOGIC ---
-            // Get the button's position relative to the viewport
+            const menuHeight = menu.offsetHeight;
             const rect = btn.getBoundingClientRect();
             const spaceBelow = window.innerHeight - rect.bottom;
             
-            // If we have less than 180px below (space for ~4 items), flip UP
-            const requiredSpace = 180; 
-
-            if (spaceBelow < requiredSpace) {
+            // 3. Exact Fit Check: Only flip if we strictly don't fit below
+            // Added 10px buffer for aesthetics
+            if (spaceBelow < menuHeight + 10) {
                 // FLIP UP
                 menu.style.top = "auto";
                 menu.style.bottom = "calc(100% + 8px)";
                 menu.style.transformOrigin = "bottom left";
             } else {
-                // FLIP DOWN (Default)
+                // FLIP DOWN
                 menu.style.top = "calc(100% + 8px)";
                 menu.style.bottom = "auto";
                 menu.style.transformOrigin = "top left";
             }
+
+            // 4. Make visible
+            menu.style.visibility = "visible";
         } else {
             menu.style.display = "none";
         }
