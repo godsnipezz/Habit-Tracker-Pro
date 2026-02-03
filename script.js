@@ -196,20 +196,13 @@ function renderHabits() {
         impTd.appendChild(iDD);
         tr.appendChild(impTd);
 
-        // --- CUSTOM GOAL SPINNER COMPONENT ---
+        // GOAL (Standard Input)
         const goalTd = document.createElement("td");
-        
-        // 1. Wrapper
-        const wrapper = document.createElement("div");
-        wrapper.className = "goal-wrapper";
-
-        // 2. Input
         const gIn = document.createElement("input");
         gIn.type = "number";
         gIn.className = "goal-input";
         gIn.value = h.goal || 28;
         
-        // Input Logic
         gIn.oninput = (e) => { 
             h.goal = +e.target.value; save(); updateStats(); 
         };
@@ -217,37 +210,7 @@ function renderHabits() {
             if (e.key === "Enter") gIn.blur(); 
         };
 
-        // 3. Spinner Container
-        const spinContainer = document.createElement("div");
-        spinContainer.className = "goal-spinners";
-
-        // 4. Up Button
-        const upBtn = document.createElement("div");
-        upBtn.className = "spin-btn";
-        upBtn.innerHTML = `<i data-lucide="chevron-up"></i>`;
-        upBtn.onclick = (e) => {
-            e.stopPropagation();
-            gIn.stepUp(); // Built-in method
-            // Trigger change manually
-            gIn.dispatchEvent(new Event('input'));
-        };
-
-        // 5. Down Button
-        const downBtn = document.createElement("div");
-        downBtn.className = "spin-btn";
-        downBtn.innerHTML = `<i data-lucide="chevron-down"></i>`;
-        downBtn.onclick = (e) => {
-            e.stopPropagation();
-            gIn.stepDown();
-            gIn.dispatchEvent(new Event('input'));
-        };
-
-        spinContainer.appendChild(upBtn);
-        spinContainer.appendChild(downBtn);
-
-        wrapper.appendChild(gIn);
-        wrapper.appendChild(spinContainer);
-        goalTd.appendChild(wrapper);
+        goalTd.appendChild(gIn);
         tr.appendChild(goalTd);
     }
 
