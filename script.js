@@ -117,7 +117,7 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
 }
 
 /* =========================================================
-   4. RENDERING
+   4. RENDERING (SCROLL-TO-REVEAL LOGIC)
 ========================================================= */
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
@@ -127,36 +127,62 @@ function renderHeader() {
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     dayHeader.innerHTML = "";
+
+    // 1. EDIT MODE: Append Metadata Headers FIRST (Left of Name)
+    // These will be hidden off-screen initially
+    if (isEditMode) {
+        ["Type", "Imp", "Goal"].forEach(t => {
+            const th = document.createElement("th");
+            th.textContent = t;
+            th.className = "metadata-col";
+            dayHeader.appendChild(th);
+        });
+    }
+
+    // 2. HABIT NAME (Sticky Anchor)
     const nameTh = document.createElement("th");
+    nameTh.className = "sticky-col"; 
+    
     const wrapper = document.createElement("div");
     wrapper.className = "sticky-header-content";
 
     const settingsBtn = document.createElement("button");
     settingsBtn.className = "toggle-edit-btn";
-    settingsBtn.style.width = "auto"; 
-    settingsBtn.style.padding = "0 8px";
+    settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
-    settingsBtn.onclick = (e) => { e.stopPropagation(); isEditMode = !isEditMode; update(); };
+    
+    // ACTION: Toggle Mode & Handle Auto-Scroll
+    settingsBtn.onclick = (e) => { 
+        e.stopPropagation(); 
+        isEditMode = !isEditMode; 
+        update(); 
+        
+        // AUTO-SCROLL LOGIC FOR EDIT MODE
+        if (isEditMode) {
+            // Wait for render, then scroll right to hide the metadata columns
+            setTimeout(() => {
+                const wrapper = document.querySelector(".table-wrapper");
+                if(wrapper) {
+                    // Scroll past the ~270px of metadata so "Habit Name" is first visible
+                    wrapper.scrollLeft = 270; 
+                }
+            }, 50);
+        }
+    };
 
     const labelSpan = document.createElement("span"); labelSpan.textContent = "Habit";
     wrapper.appendChild(settingsBtn); wrapper.appendChild(labelSpan);
-    nameTh.appendChild(wrapper); dayHeader.appendChild(nameTh);
+    nameTh.appendChild(wrapper); 
+    dayHeader.appendChild(nameTh);
 
-    if (isEditMode) {
-        // UPDATED: Added 'metadata-col' class so CSS can hide these on mobile
-        ["Type", "Imp", "Goal"].forEach(t => {
-            const th = document.createElement("th");
-            th.textContent = t;
-            th.className = "metadata-col"; 
-            dayHeader.appendChild(th);
-        });
-    }
-
+    // 3. DAYS
     for (let d = 1; d <= days; d++) {
         const th = document.createElement("th"); th.textContent = d;
         if (isThisMonth && d === today) th.classList.add("today-col");
         dayHeader.appendChild(th);
     }
+    
+    // 4. ACTIONS (Right Edge)
     const endTh = document.createElement("th");
     endTh.textContent = isEditMode ? "Actions" : "";
     endTh.style.minWidth = isEditMode ? "90px" : "auto";
@@ -178,31 +204,22 @@ function renderHabits() {
         }
 
         const tr = document.createElement("tr");
-        const nameTd = document.createElement("td");
-        nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
-        nameTd.style.cursor = isEditMode ? "text" : "default";
-        nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
-        tr.appendChild(nameTd);
 
-        // LAST 2 ROWS OPEN UP
+        // 1. EDIT MODE: Append Metadata Cells FIRST
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
         if (isEditMode) {
-            // UPDATED: Added 'metadata-col' class to all 3 edit columns
-            
-            // 1. Type
-            const typeTd = document.createElement("td");
-            typeTd.className = "metadata-col"; 
+            // Type
+            const typeTd = document.createElement("td"); typeTd.className = "metadata-col";
             const tDD = document.createElement("div"); tDD.className = "dropdown";
             makeDropdown(tDD, [{label:"Positive",value:"positive"},{label:"Negative",value:"negative"}], h.type==="negative"?1:0, (v)=>{h.type=v;save();update();}, dropDir);
             const typeBtn = tDD.querySelector('.dropdown-button');
             if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
             typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-            // 2. Importance
-            const impTd = document.createElement("td"); 
-            impTd.className = "metadata-col";
+            // Importance
+            const impTd = document.createElement("td"); impTd.className = "metadata-col";
             const iDD = document.createElement("div"); iDD.className = "dropdown";
             makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
             const impBtn = iDD.querySelector('.dropdown-button');
@@ -210,9 +227,8 @@ function renderHabits() {
             if(w===1) impBtn.classList.add('badge-imp-low'); if(w===2) impBtn.classList.add('badge-imp-med'); if(w===3) impBtn.classList.add('badge-imp-high');
             impTd.appendChild(iDD); tr.appendChild(impTd);
 
-            // 3. Goal
-            const goalTd = document.createElement("td"); 
-            goalTd.className = "metadata-col";
+            // Goal
+            const goalTd = document.createElement("td"); goalTd.className = "metadata-col";
             const gIn = document.createElement("input");
             gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
             gIn.addEventListener("wheel", (e)=>e.preventDefault());
@@ -220,6 +236,15 @@ function renderHabits() {
             goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
+        // 2. HABIT NAME (Sticky)
+        const nameTd = document.createElement("td");
+        nameTd.className = "sticky-col"; // Apply sticky class
+        nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
+        nameTd.style.cursor = isEditMode ? "text" : "default";
+        nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
+        tr.appendChild(nameTd);
+
+        // 3. DAYS
         for (let d = 0; d < days; d++) {
             const td = document.createElement("td");
             const isToday = isThisMonth && d + 1 === today;
@@ -236,6 +261,7 @@ function renderHabits() {
             td.appendChild(cb); tr.appendChild(td);
         }
 
+        // 4. ACTIONS
         const endTd = document.createElement("td");
         if (isEditMode) {
             const actionWrap = document.createElement("div");
@@ -259,17 +285,21 @@ function renderHabits() {
     });
 
     // AUTO-SCROLL TO TODAY (Mobile UX Fix)
-    setTimeout(() => {
-        const todayCol = document.querySelector(".today-col");
-        if (todayCol) {
-            todayCol.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest",
-                inline: "center"
-            });
-        }
-    }, 100);
+    // Only if NOT in Edit Mode, otherwise we let the Edit Scroll logic handle it
+    if (!isEditMode) {
+        setTimeout(() => {
+            const todayCol = document.querySelector(".today-col");
+            if (todayCol) {
+                todayCol.scrollIntoView({
+                    behavior: "smooth",
+                    block: "nearest",
+                    inline: "center"
+                });
+            }
+        }, 100);
+    }
 }
+
 function updateProgress(tr, h) {
     const done = h.days.filter(Boolean).length;
     let pct = 0;
@@ -399,7 +429,7 @@ function renderGraph() {
     }
     const container = svg.parentElement;
     
-    // UPDATED: Use scrollWidth to support horizontal scrolling on mobile
+    // SUPPORT MOBILE SCROLL: Use scrollWidth
     const width = container.scrollWidth || container.offsetWidth; 
     const height = 150; 
     
@@ -479,7 +509,7 @@ function update() {
 loadHabits(); update();
 
 /* =========================================================
-   8. DYNAMIC QUOTES
+   6. DYNAMIC QUOTES
 ========================================================= */
 const motivationalQuotes = [
     "Consistency is key.",
@@ -502,7 +532,6 @@ const motivationalQuotes = [
 function setDailyQuote() {
     const el = document.getElementById("dailyQuote");
     if (el) {
-        // Pick random index
         const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
         el.innerText = motivationalQuotes[randomIndex];
     }
