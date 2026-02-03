@@ -13,18 +13,28 @@
     --radius: 24px;
 }
 
-/* GLOBAL SCALING FIX */
 html { font-size: 13px; }
-
 * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-/* SCROLLBARS */
+/* REMOVE UGLY WHITE FOCUS BORDERS */
+*:focus { outline: none !important; }
+
+/* Custom Focus for Keyboard Users (Accessibility) */
+*:focus-visible { 
+    outline: 1px solid var(--muted); 
+    outline-offset: 2px;
+}
+
+/* Edit Mode Cell Focus - Subtle Background instead of Border */
+td[contenteditable]:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    outline: none;
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { 
-    background: rgba(255, 255, 255, 0.1); 
-    border-radius: 10px; 
-}
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
 body {
@@ -36,72 +46,51 @@ body {
 .app { width: 98%; max-width: 1600px; margin: 0 auto; padding: 20px; }
 
 /* =========================================================
-   2. HEADER & INPUTS (PERFECT ALIGNMENT FIX)
+   2. HEADER & INPUTS
 ========================================================= */
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* YEAR INPUT STYLE */
 input[type="number"] {
-    -webkit-appearance: none;
-    -moz-appearance: textfield;
-    appearance: none;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border);
-    color: #ffffff !important;
-    
-    /* ALIGNMENT FIX: Explicit Height & Box Model */
-    height: 42px;
-    padding: 0 15px; 
-    line-height: 40px; /* Vertically center text */
-    
-    border-radius: 12px; 
-    width: 90px; 
-    font-size: 14px; 
-    font-weight: 600;
-    outline: none;
-    cursor: pointer !important;
-    position: relative;
-    
+    -webkit-appearance: none; appearance: none;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
+    color: #ffffff !important; height: 42px; padding: 0 15px; line-height: 40px;
+    border-radius: 12px; width: 90px; font-size: 14px; font-weight: 600;
+    outline: none; cursor: pointer !important; position: relative;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
+    background-repeat: no-repeat; background-position: right 8px center;
 }
-
-input::-webkit-inner-spin-button,
-input::-webkit-outer-spin-button {
-    -webkit-appearance: inner-spin-button !important;
-    opacity: 0; position: absolute; right: 0; top: 0; height: 100%; width: 30px; cursor: pointer !important;
-}
+input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 .headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
 .headline .label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
 
 /* =========================================================
-   3. DROPDOWNS (MATCHING YEAR INPUT)
+   3. DROPDOWNS
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
 
+/* Main Dropdowns (Month) */
 .dropdown-button { 
     background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: #fff; 
-    
-    /* ALIGNMENT FIX: Explicit Height matching Input */
-    height: 42px;
-    padding: 0 15px; 
-    
-    border-radius: 12px; cursor: pointer;
-    font-size: 14px; font-weight: 600;
-    min-width: 130px; 
-    text-align: left;
+    color: #fff; height: 42px; padding: 0 15px; border-radius: 12px; cursor: pointer;
+    font-size: 14px; font-weight: 600; min-width: 130px; 
     display: flex; align-items: center; justify-content: space-between;
 }
-.dropdown-button:focus { outline: 1px solid var(--green); } /* Accessibility focus */
-
 .dropdown-button::after {
     content: ''; width: 16px; height: 16px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: center;
+}
+
+/* TABLE SPECIFIC DROPDOWNS (Compact) */
+td .dropdown-button {
+    height: 30px; /* Smaller to fit in row */
+    min-width: 90px;
+    font-size: 12px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.03);
 }
 
 .dropdown-menu {
@@ -119,24 +108,16 @@ input::-webkit-outer-spin-button {
 }
 
 /* =========================================================
-   4. ANALYTICS RINGS (ENHANCED DESIGN)
+   4. ANALYTICS
 ========================================================= */
 .analytics { display: flex; gap: 40px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 10px; }
 .ring-block { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
 .ring { width: 72px; height: 72px; position: relative; display: flex; align-items: center; justify-content: center; }
 .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-
-.ring-bg { 
-    fill: none; 
-    stroke: rgba(0, 0, 0, 0.5); /* Much darker track */
-    stroke-width: 5; /* Thinner */
-}
+.ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; }
 .ring-progress { 
-    fill: none; 
-    stroke-width: 5; /* Thinner */
-    stroke-linecap: round; 
-    transition: stroke-dashoffset 0.8s ease; 
-    filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); /* Classy Glow */
+    fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; 
+    filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); 
 }
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
 
@@ -146,9 +127,16 @@ input::-webkit-outer-spin-button {
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
 table { border-collapse: collapse; width: 100%; }
 
-th, td { padding: 6px 2px; text-align: center; font-size: 13px; height: 40px; }
+/* Table Cells Alignment */
+th, td { 
+    padding: 6px 4px; 
+    text-align: center; 
+    font-size: 13px; 
+    height: 44px; /* Slightly taller for breathing room */
+    vertical-align: middle; /* Fixes vertical misalignment */
+}
 
-/* STICKY COLUMN: Perfected Width */
+/* STICKY COLUMN */
 th:first-child, td:first-child {
     position: sticky; left: 0; z-index: 10; background: #121212; 
     min-width: 180px; max-width: 180px;
@@ -157,17 +145,26 @@ th:first-child, td:first-child {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     padding-left: 12px;
 }
-
-/* Header Specifics */
 th { position: sticky; top: 0; background: #121212; z-index: 11; }
-.sticky-col-header { display: flex; align-items: center; gap: 8px; height: 100%; }
+
+/* Sticky Header Flex Container (Used in JS) */
+.sticky-header-content {
+    display: flex; align-items: center; gap: 10px; height: 100%;
+}
 
 .today-col { background: rgba(99, 230, 164, 0.05) !important; }
-
 tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
 tbody tr:hover td:first-child { background-color: #121212; }
 
-.goal-input { width: 36px; background: transparent; border: none; color: #fff !important; text-align: center; font-weight: 500; outline: none; padding: 0; }
+/* Inputs inside Table */
+.goal-input { 
+    width: 40px; height: 30px; 
+    background: transparent; border: 1px solid transparent; 
+    color: #fff !important; text-align: center; font-weight: 500; padding: 0; 
+    border-radius: 6px;
+}
+.goal-input:hover { border-color: var(--border); }
+.goal-input:focus { border-color: var(--green); background: rgba(255,255,255,0.05); }
 
 /* =========================================================
    6. FOOTER & UI ELEMENTS
@@ -188,7 +185,6 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); 
 .progress-bar { width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 0 auto; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.4s ease; }
 
-/* UX STATES */
 .toggle-edit-btn {
     background: none; border: none; cursor: pointer; color: var(--muted);
     padding: 4px; display: flex; align-items: center; justify-content: center;
@@ -197,7 +193,5 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); 
 .toggle-edit-btn:hover { color: #fff; }
 
 input[type="checkbox"].neg-habit { accent-color: #ef4444; }
-
 .future-day { opacity: 0.15; pointer-events: none; }
 .today-col input { transform: scale(1.15); box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); }
-.hidden-col { display: none; }

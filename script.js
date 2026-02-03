@@ -110,10 +110,13 @@ function renderHeader() {
 
   dayHeader.innerHTML = "";
 
-  // 1. Habit Column with Settings Toggle
+  // 1. Habit Column with Wrapper for Perfect Alignment
   const nameTh = document.createElement("th");
-  nameTh.className = "sticky-col-header"; // New class for flex alignment
   
+  // Create a wrapper div to handle Flexbox layout safely inside a TH
+  const wrapper = document.createElement("div");
+  wrapper.className = "sticky-header-content";
+
   // Create the Gear Icon Button
   const settingsBtn = document.createElement("button");
   settingsBtn.className = "toggle-edit-btn";
@@ -121,7 +124,8 @@ function renderHeader() {
     ? `<i data-lucide="check" style="width: 16px; height: 16px;"></i>` 
     : `<i data-lucide="settings-2" style="width: 16px; height: 16px;"></i>`;
     
-  settingsBtn.onclick = () => {
+  settingsBtn.onclick = (e) => {
+      e.stopPropagation(); // Prevent bubbling
       isEditMode = !isEditMode;
       update(); 
   };
@@ -129,8 +133,11 @@ function renderHeader() {
   const labelSpan = document.createElement("span");
   labelSpan.textContent = "Habit";
   
-  nameTh.appendChild(settingsBtn);
-  nameTh.appendChild(labelSpan);
+  // Append to wrapper, then append wrapper to TH
+  wrapper.appendChild(settingsBtn);
+  wrapper.appendChild(labelSpan);
+  nameTh.appendChild(wrapper);
+  
   dayHeader.appendChild(nameTh);
 
   // 2. Conditional Columns
