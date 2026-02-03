@@ -37,26 +37,19 @@ const loadHabits = () => {
     if (stored) {
         habits = JSON.parse(stored);
     } else {
-        // Auto-Persistence: Look back 12 months for data
         habits = []; 
         let checkY = y;
         let checkM = currentMonth;
-
         for (let i = 0; i < 12; i++) {
             checkM--;
             if (checkM < 0) { checkM = 11; checkY--; }
             const prevKey = storageKey(checkY, checkM);
             const prevData = localStorage.getItem(prevKey);
-            
             if (prevData) {
                 const parsedPrev = JSON.parse(prevData);
-                // Copy definitions, reset progress
                 habits = parsedPrev.map(h => ({
-                    name: h.name,
-                    type: h.type || 'positive',
-                    weight: h.weight || 2,
-                    goal: h.goal || 28,
-                    days: [] 
+                    name: h.name, type: h.type || 'positive',
+                    weight: h.weight || 2, goal: h.goal || 28, days: [] 
                 }));
                 break;
             }
@@ -68,94 +61,63 @@ const save = () => {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     localStorage.setItem(storageKey(y, currentMonth), JSON.stringify(habits));
 };
-
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. UI COMPONENTS (Dropdowns)
+   3. DROPDOWNS
 ========================================================= */
 function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
-    el.innerHTML = "";
-    el.style.position = "relative";
-
+    el.innerHTML = ""; el.style.position = "relative";
     const btn = document.createElement("div");
-    btn.className = "dropdown-button";
-    btn.tabIndex = 0;
+    btn.className = "dropdown-button"; btn.tabIndex = 0;
     btn.innerHTML = options[selectedIndex]?.label || "Select";
 
     const menu = document.createElement("div");
-    menu.className = "dropdown-menu";
-    menu.style.display = "none";
+    menu.className = "dropdown-menu"; menu.style.display = "none";
 
     options.forEach((opt) => {
         const item = document.createElement("div");
-        item.className = "dropdown-item";
-        item.innerHTML = opt.label;
+        item.className = "dropdown-item"; item.innerHTML = opt.label;
         item.onclick = (e) => {
-            e.stopPropagation();
-            btn.innerHTML = opt.label;
-            menu.style.display = "none";
-            onChange(opt.value);
+            e.stopPropagation(); btn.innerHTML = opt.label;
+            menu.style.display = "none"; onChange(opt.value);
         };
         menu.appendChild(item);
     });
 
     const toggleMenu = (e) => {
         e.stopPropagation();
-        
-        // Close others
-        document.querySelectorAll(".dropdown-menu").forEach((m) => {
-            if (m !== menu) m.style.display = "none";
-        });
-
+        document.querySelectorAll(".dropdown-menu").forEach((m) => { if (m !== menu) m.style.display = "none"; });
         const isClosed = menu.style.display === "none";
         
         if (isClosed) {
             menu.style.display = "block";
-            
-            // Positioning Logic
             let openUp = false;
-
-            if (fixedSide === 'up') {
-                openUp = true;
-            } else if (fixedSide === 'down') {
-                openUp = false;
-            } else {
-                // Auto-measure (for Header Dropdown)
+            if (fixedSide === 'up') openUp = true;
+            else if (fixedSide === 'down') openUp = false;
+            else {
                 const rect = btn.getBoundingClientRect();
                 const spaceBelow = window.innerHeight - rect.bottom;
                 if (spaceBelow < 200) openUp = true;
             }
-
             if (openUp) {
-                menu.style.top = "auto";
-                menu.style.bottom = "calc(100% + 8px)";
+                menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)";
                 menu.style.transformOrigin = "bottom left";
             } else {
-                menu.style.top = "calc(100% + 8px)";
-                menu.style.bottom = "auto";
+                menu.style.top = "calc(100% + 8px)"; menu.style.bottom = "auto";
                 menu.style.transformOrigin = "top left";
             }
-
         } else {
             menu.style.display = "none";
         }
     };
-
     btn.onclick = toggleMenu;
-    btn.onkeydown = (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            toggleMenu(e);
-        }
-    };
-
-    el.appendChild(btn);
-    el.appendChild(menu);
+    btn.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleMenu(e); } };
+    el.appendChild(btn); el.appendChild(menu);
 }
 
 /* =========================================================
-   4. RENDERING (Table)
+   4. RENDERING
 ========================================================= */
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
@@ -165,52 +127,31 @@ function renderHeader() {
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     dayHeader.innerHTML = "";
-
-    // Habit Column
     const nameTh = document.createElement("th");
     const wrapper = document.createElement("div");
     wrapper.className = "sticky-header-content";
 
     const settingsBtn = document.createElement("button");
     settingsBtn.className = "toggle-edit-btn";
-    settingsBtn.style.width = "auto"; 
-    settingsBtn.style.padding = "0 8px";
-    settingsBtn.innerHTML = isEditMode 
-        ? `<i data-lucide="check" style="width: 16px; height: 16px;"></i>` 
-        : `<i data-lucide="settings-2" style="width: 16px; height: 16px;"></i>`;
-      
-    settingsBtn.onclick = (e) => {
-        e.stopPropagation();
-        isEditMode = !isEditMode;
-        update(); 
-    };
+    settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
+    settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
+    settingsBtn.onclick = (e) => { e.stopPropagation(); isEditMode = !isEditMode; update(); };
 
-    const labelSpan = document.createElement("span");
-    labelSpan.textContent = "Habit";
+    const labelSpan = document.createElement("span"); labelSpan.textContent = "Habit";
+    wrapper.appendChild(settingsBtn); wrapper.appendChild(labelSpan);
+    nameTh.appendChild(wrapper); dayHeader.appendChild(nameTh);
 
-    wrapper.appendChild(settingsBtn);
-    wrapper.appendChild(labelSpan);
-    nameTh.appendChild(wrapper);
-    dayHeader.appendChild(nameTh);
-
-    // Edit Columns
     if (isEditMode) {
         ["Type", "Imp", "Goal"].forEach(t => {
-            const th = document.createElement("th");
-            th.textContent = t;
-            dayHeader.appendChild(th);
+            const th = document.createElement("th"); th.textContent = t; dayHeader.appendChild(th);
         });
     }
 
-    // Days
     for (let d = 1; d <= days; d++) {
-        const th = document.createElement("th");
-        th.textContent = d;
+        const th = document.createElement("th"); th.textContent = d;
         if (isThisMonth && d === today) th.classList.add("today-col");
         dayHeader.appendChild(th);
     }
-
-    // Actions Column
     const endTh = document.createElement("th");
     endTh.textContent = isEditMode ? "Actions" : "";
     endTh.style.minWidth = isEditMode ? "90px" : "auto";
@@ -218,196 +159,101 @@ function renderHeader() {
 }
 
 function renderHabits() {
-    const habitBody = document.getElementById("habitBody");
-    habitBody.innerHTML = "";
+    const habitBody = document.getElementById("habitBody"); habitBody.innerHTML = "";
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const days = getDays(y, currentMonth);
     const today = NOW.getDate();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     habits.forEach((h, i) => {
-        // Resize days array if needed
         if (!h.days || h.days.length !== days) {
             const newDays = Array(days).fill(false);
-            if(h.days) {
-                h.days.forEach((val, idx) => { if(idx < days) newDays[idx] = val; });
-            }
+            if(h.days) h.days.forEach((val, idx) => { if(idx < days) newDays[idx] = val; });
             h.days = newDays;
         }
 
         const tr = document.createElement("tr");
-
-        // 1. Name
         const nameTd = document.createElement("td");
-        nameTd.contentEditable = isEditMode; 
-        nameTd.textContent = h.name;
+        nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
         nameTd.style.cursor = isEditMode ? "text" : "default";
         nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
         tr.appendChild(nameTd);
 
-        // Calculate Dropdown Direction: Last 2 rows = UP, others = DOWN
+        // LAST 2 ROWS OPEN UP
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
-        // 2. Edit Controls
         if (isEditMode) {
-            // Type
-            const typeTd = document.createElement("td");
-            const tDD = document.createElement("div");
-            tDD.className = "dropdown";
-            makeDropdown(tDD, 
-                [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }],
-                h.type === "negative" ? 1 : 0,
-                (v) => { h.type = v; save(); update(); },
-                dropDir
-            );
+            const typeTd = document.createElement("td"); const tDD = document.createElement("div"); tDD.className = "dropdown";
+            makeDropdown(tDD, [{label:"Positive",value:"positive"},{label:"Negative",value:"negative"}], h.type==="negative"?1:0, (v)=>{h.type=v;save();update();}, dropDir);
             const typeBtn = tDD.querySelector('.dropdown-button');
-            if (h.type === 'positive') typeBtn.classList.add('badge-pos');
-            else typeBtn.classList.add('badge-neg');
-            typeTd.appendChild(tDD);
-            tr.appendChild(typeTd);
+            if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
+            typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-            // Importance
-            const impTd = document.createElement("td");
-            const iDD = document.createElement("div");
-            iDD.className = "dropdown";
-            makeDropdown(iDD, 
-                [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }],
-                (h.weight || 2) - 1,
-                (v) => { h.weight = v; save(); update(); },
-                dropDir
-            );
+            const impTd = document.createElement("td"); const iDD = document.createElement("div"); iDD.className = "dropdown";
+            makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
             const impBtn = iDD.querySelector('.dropdown-button');
-            const w = h.weight || 2;
-            if (w === 1) impBtn.classList.add('badge-imp-low');
-            if (w === 2) impBtn.classList.add('badge-imp-med');
-            if (w === 3) impBtn.classList.add('badge-imp-high');
-            impTd.appendChild(iDD);
-            tr.appendChild(impTd);
+            const w = h.weight||2;
+            if(w===1) impBtn.classList.add('badge-imp-low'); if(w===2) impBtn.classList.add('badge-imp-med'); if(w===3) impBtn.classList.add('badge-imp-high');
+            impTd.appendChild(iDD); tr.appendChild(impTd);
 
-            // Goal
-            const goalTd = document.createElement("td");
-            const gIn = document.createElement("input");
-            gIn.type = "number";
-            gIn.className = "goal-input";
-            gIn.value = h.goal || 28;
-            gIn.addEventListener("wheel", (e) => e.preventDefault());
-            gIn.oninput = (e) => { 
-                h.goal = +e.target.value; 
-                debouncedSave(); 
-                updateStats(); 
-                if (!isEditMode) updateProgress(tr, h); 
-            };
-            goalTd.appendChild(gIn);
-            tr.appendChild(goalTd);
+            const goalTd = document.createElement("td"); const gIn = document.createElement("input");
+            gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
+            gIn.addEventListener("wheel", (e)=>e.preventDefault());
+            gIn.oninput = (e)=>{ h.goal = +e.target.value; debouncedSave(); updateStats(); if(!isEditMode) updateProgress(tr,h); };
+            goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
-        // 3. Checkboxes
         for (let d = 0; d < days; d++) {
             const td = document.createElement("td");
             const isToday = isThisMonth && d + 1 === today;
             if (isToday) td.classList.add("today-col");
             
             const cb = document.createElement("input");
-            cb.type = "checkbox";
-            cb.checked = h.days[d];
+            cb.type = "checkbox"; cb.checked = h.days[d];
             if (h.type === "negative") cb.classList.add("neg-habit");
             
-            // Future Disable Logic
-            const isFutureYear = y > NOW.getFullYear();
-            const isFutureMonth = y === NOW.getFullYear() && currentMonth > NOW.getMonth();
-            const isFutureDay = isThisMonth && d > NOW.getDate() - 1;
-            
-            if (isFutureYear || isFutureMonth || isFutureDay) {
-                cb.classList.add("future-day");
-                cb.disabled = true;
-            }
+            const isFuture = (y > NOW.getFullYear()) || (y === NOW.getFullYear() && currentMonth > NOW.getMonth()) || (isThisMonth && d > NOW.getDate() - 1);
+            if (isFuture) { cb.classList.add("future-day"); cb.disabled = true; }
 
-            cb.onchange = () => {
-                h.days[d] = cb.checked;
-                save(); 
-                updateStats();
-                if (!isEditMode) updateProgress(tr, h); 
-                renderGraph();
-            };
-            td.appendChild(cb);
-            tr.appendChild(td);
+            cb.onchange = () => { h.days[d] = cb.checked; save(); updateStats(); if (!isEditMode) updateProgress(tr, h); renderGraph(); };
+            td.appendChild(cb); tr.appendChild(td);
         }
 
-        // 4. End Column
         const endTd = document.createElement("td");
         if (isEditMode) {
             const actionWrap = document.createElement("div");
-            actionWrap.style.display = "flex";
-            actionWrap.style.gap = "4px";
-            actionWrap.style.justifyContent = "center";
-            actionWrap.style.alignItems = "center";
-
-            // Up/Down/Delete Buttons
-            const btnUp = document.createElement("button");
-            btnUp.className = "toggle-edit-btn";
-            btnUp.innerHTML = `<i data-lucide="arrow-up" style="width: 14px; height: 14px;"></i>`;
-            btnUp.disabled = i === 0; 
-            btnUp.onclick = (e) => {
-                e.stopPropagation();
-                [habits[i], habits[i - 1]] = [habits[i - 1], habits[i]];
-                save();
-                update();
-            };
-
-            const btnDown = document.createElement("button");
-            btnDown.className = "toggle-edit-btn";
-            btnDown.innerHTML = `<i data-lucide="arrow-down" style="width: 14px; height: 14px;"></i>`;
-            btnDown.disabled = i === habits.length - 1;
-            btnDown.onclick = (e) => {
-                e.stopPropagation();
-                [habits[i], habits[i + 1]] = [habits[i + 1], habits[i]];
-                save();
-                update();
-            };
-
-            const btnDel = document.createElement("button");
-            btnDel.className = "toggle-edit-btn";
-            btnDel.innerHTML = `<i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>`;
-            btnDel.style.color = "#ef4444";
-            btnDel.style.marginLeft = "8px"; 
-            btnDel.onclick = () => {
-                if (confirm("Delete habit?")) {
-                    habits.splice(i, 1);
-                    save();
-                    update();
-                }
-            };
-
-            actionWrap.appendChild(btnUp);
-            actionWrap.appendChild(btnDown);
-            actionWrap.appendChild(btnDel);
+            actionWrap.style.display = "flex"; actionWrap.style.gap = "4px"; actionWrap.style.justifyContent = "center";
+            const btnUp = document.createElement("button"); btnUp.className = "toggle-edit-btn";
+            btnUp.innerHTML = `<i data-lucide="arrow-up" style="width:14px;"></i>`; btnUp.disabled = i===0;
+            btnUp.onclick = (e)=>{ e.stopPropagation(); [habits[i],habits[i-1]]=[habits[i-1],habits[i]]; save(); update(); };
+            const btnDown = document.createElement("button"); btnDown.className = "toggle-edit-btn";
+            btnDown.innerHTML = `<i data-lucide="arrow-down" style="width:14px;"></i>`; btnDown.disabled = i===habits.length-1;
+            btnDown.onclick = (e)=>{ e.stopPropagation(); [habits[i],habits[i+1]]=[habits[i+1],habits[i]]; save(); update(); };
+            const btnDel = document.createElement("button"); btnDel.className = "toggle-edit-btn";
+            btnDel.innerHTML = `<i data-lucide="trash-2" style="width:14px;"></i>`; btnDel.style.color="#ef4444"; btnDel.style.marginLeft="8px";
+            btnDel.onclick = ()=>{ if(confirm("Delete?")) { habits.splice(i,1); save(); update(); }};
+            actionWrap.appendChild(btnUp); actionWrap.appendChild(btnDown); actionWrap.appendChild(btnDel);
             endTd.appendChild(actionWrap);
         } else {
             endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
             setTimeout(() => updateProgress(tr, h), 0);
         }
-        tr.appendChild(endTd);
-        habitBody.appendChild(tr);
+        tr.appendChild(endTd); habitBody.appendChild(tr);
     });
 }
 
 function updateProgress(tr, h) {
     const done = h.days.filter(Boolean).length;
     let pct = 0;
-    if (h.type === "positive") {
-        const target = h.goal || h.days.length;
-        pct = (done / target) * 100;
-    } else {
-        pct = ((h.days.length - done) / h.days.length) * 100;
-    }
+    if (h.type === "positive") { const target = h.goal || h.days.length; pct = (done / target) * 100; }
+    else { pct = ((h.days.length - done) / h.days.length) * 100; }
     if (pct > 100) pct = 100;
-    const fill = tr.querySelector(".progress-fill");
-    if (fill) fill.style.width = pct + "%";
+    const fill = tr.querySelector(".progress-fill"); if(fill) fill.style.width = pct + "%";
 }
 
 /* =========================================================
-   5. RINGS & STATS
+   5. STATS, RINGS & GRAPH
 ========================================================= */
 function setRing(id, pct) {
     const path = document.getElementById(id.replace("ring-", "path-"));
@@ -422,150 +268,81 @@ function setRing(id, pct) {
 function updateStats() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
-    // If it's a future month, todayIdx is -1 (start). If past, it's the last day.
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : (habits[0]?.days.length - 1 || 0);
 
-    // 1. INIT COUNTERS
-    let earnedMonth = 0, totalPossibleMonth = 0; // Header: Monthly
-    let earnedSoFar = 0, totalPossibleSoFar = 0; // Ring 1: Efficiency
-    let todayDone = 0, todayTotal = 0;           // Footer: Positive Done
-    let todaySlips = 0, negTotal = 0;            // Footer: Negative Slips
-    let momentumSum = 0;                         // Ring 3: Momentum
+    let earnedMonth = 0, totalPossibleMonth = 0, earnedSoFar = 0, totalPossibleSoFar = 0;
+    let todayDone = 0, todayTotal = 0, todaySlips = 0, negTotal = 0, momentumSum = 0;
 
-    // 2. LOOP HABITS
     habits.forEach(h => {
         const w = Number(h.weight) || 2; 
         const checkedDays = h.days.filter(Boolean).length;
         
-        // --- A. MONTHLY PROGRESS (Header) ---
         let ratioMonth = 0;
-        if (h.type === "positive") {
-            const target = h.goal || h.days.length;
-            ratioMonth = checkedDays / target;
-            if (ratioMonth > 1) ratioMonth = 1; 
-        } else {
-            ratioMonth = (h.days.length - checkedDays) / h.days.length;
-        }
-        earnedMonth += ratioMonth * w;
-        totalPossibleMonth += w;
+        if (h.type === "positive") { const target = h.goal || h.days.length; ratioMonth = checkedDays / target; if(ratioMonth>1)ratioMonth=1; }
+        else { ratioMonth = (h.days.length - checkedDays) / h.days.length; }
+        earnedMonth += ratioMonth * w; totalPossibleMonth += w;
 
-        // --- B. EFFICIENCY (History up to today) ---
-        // Prevents future unchecked days from dragging down the score
         let daysPassed = todayIdx + 1;
         let ratioSoFar = 0;
-        if(h.type === 'positive') {
-             const checksSoFar = h.days.slice(0, daysPassed).filter(Boolean).length;
-             ratioSoFar = checksSoFar / daysPassed;
-        } else {
-             const slipsSoFar = h.days.slice(0, daysPassed).filter(Boolean).length;
-             ratioSoFar = (daysPassed - slipsSoFar) / daysPassed;
-        }
+        if(h.type === 'positive') { const checksSoFar = h.days.slice(0, daysPassed).filter(Boolean).length; ratioSoFar = checksSoFar / daysPassed; }
+        else { const slipsSoFar = h.days.slice(0, daysPassed).filter(Boolean).length; ratioSoFar = (daysPassed - slipsSoFar) / daysPassed; }
         if(ratioSoFar < 0) ratioSoFar = 0;
-        earnedSoFar += ratioSoFar * w;
-        totalPossibleSoFar += w;
+        earnedSoFar += ratioSoFar * w; totalPossibleSoFar += w;
 
-        // --- C. TODAY COUNTS (Footer) ---
-        if (h.type === "positive") {
-            todayTotal++;
-            if (h.days[todayIdx]) todayDone++; 
-        } else {
-            negTotal++;
-            if (h.days[todayIdx]) todaySlips++;
-        }
+        if (h.type === "positive") { todayTotal++; if (h.days[todayIdx]) todayDone++; }
+        else { negTotal++; if (h.days[todayIdx]) todaySlips++; }
 
-        // --- D. MOMENTUM (Weighted Recent) ---
         let hMom = 0, wSum = 0;
         const weights = [0.1, 0.2, 0.3, 0.4]; 
         weights.forEach((weight, i) => {
-            const lookback = 3 - i; 
-            const idx = todayIdx - lookback;
+            const idx = todayIdx - (3 - i);
             if (idx >= 0 && idx < h.days.length) { 
                 const isSuccess = h.type === "positive" ? h.days[idx] : !h.days[idx];
-                hMom += (isSuccess ? 1 : 0) * weight; 
-                wSum += weight; 
+                hMom += (isSuccess ? 1 : 0) * weight; wSum += weight; 
             }
         });
         const normalizedMom = wSum > 0 ? (hMom / wSum) : 0;
         momentumSum += normalizedMom * w;
     });
 
-    // 3. COMPUTE PERCENTAGES
     const monthPct = totalPossibleMonth ? (earnedMonth / totalPossibleMonth) * 100 : 0;
     const efficiencyPct = totalPossibleSoFar ? (earnedSoFar / totalPossibleSoFar) * 100 : 0;
-    // Today Ring: (Positive Done + Negative Avoided) / Total
     const todayPerformance = (todayDone + (negTotal - todaySlips)) / (todayTotal + negTotal || 1) * 100;
     const momPct = totalPossibleMonth ? (momentumSum / totalPossibleMonth) * 100 : 0;
 
-    // 4. UPDATE UI ELEMENTS
-    
-    // Header Text
-    const successEl = document.getElementById("successRate");
-    if (successEl) successEl.textContent = Math.round(monthPct) + "%";
-
-    // Footer Text
+    const successEl = document.getElementById("successRate"); if (successEl) successEl.textContent = Math.round(monthPct) + "%";
     const footerCounter = document.querySelector('.counter');
     if (footerCounter) {
-        const slipText = negTotal > 0 
-            ? `<span style="opacity:0.3; margin:0 6px">|</span> <span style="color:#ef4444">${todaySlips}/${negTotal}</span> slips`
-            : ``;
+        const slipText = negTotal > 0 ? `<span style="opacity:0.3; margin:0 6px">|</span> <span style="color:#ef4444">${todaySlips}/${negTotal}</span> slips` : ``;
         footerCounter.innerHTML = `Today: <span style="color:var(--green)">${todayDone}/${todayTotal}</span> done ${slipText}`;
     }
 
-    // Rings
-    setRing("ring-efficiency", efficiencyPct); 
-    setRing("ring-normalized", todayPerformance); 
-    setRing("ring-momentum", momPct);
-    
-    // Graph Summary Text
+    setRing("ring-efficiency", efficiencyPct); setRing("ring-normalized", todayPerformance); setRing("ring-momentum", momPct);
     document.getElementById("todaySummary").innerHTML = todayScoreText();
 
-    // 5. STREAK CALCULATION
+    // --- STREAK & HEATMAP ---
     let currentStreak = 0;
-    // Loop backwards from today to find consecutive positive days
     for (let d = todayIdx; d >= 0; d--) {
         let dayScore = 0;
-        habits.forEach(h => {
-             if (h.days[d]) dayScore += (h.type === 'positive' ? 1 : -1);
-        });
-        
-        if (dayScore > 0) {
-            currentStreak++;
-        } else {
-            // If today is 0 (haven't started yet), don't break streak unless yesterday was also 0
-            if (d === todayIdx && dayScore === 0) continue; 
-            break;
-        }
+        habits.forEach(h => { if (h.days[d]) dayScore += (h.type === 'positive' ? 1 : -1); });
+        if (dayScore > 0) currentStreak++;
+        else { if (d === todayIdx && dayScore === 0) continue; break; }
     }
-    const streakEl = document.getElementById("streakValue");
-    if(streakEl) streakEl.innerText = currentStreak;
+    const streakEl = document.getElementById("streakValue"); if(streakEl) streakEl.innerText = currentStreak;
 
-    // 6. MINI HEATMAP RENDER (Last 14 Days)
     const heatGrid = document.getElementById("streakHeatmap");
     if (heatGrid) {
         heatGrid.innerHTML = "";
         const daysToShow = 14; 
-        
         for (let i = 0; i < daysToShow; i++) {
-            // Calculate which day index to show (ending at todayIdx)
             const dayIndex = todayIdx - (daysToShow - 1) + i;
-            const div = document.createElement("div");
-            div.className = "heat-box";
-            
+            const div = document.createElement("div"); div.className = "heat-box";
             if (dayIndex >= 0 && dayIndex < habits[0]?.days.length) {
-                let dScore = 0;
-                let maxPossible = 0;
-                habits.forEach(h => {
-                    maxPossible++;
-                    if (h.days[dayIndex]) dScore += (h.type === 'positive' ? 1 : -1);
-                });
-
+                let dScore = 0, maxPossible = 0;
+                habits.forEach(h => { maxPossible++; if (h.days[dayIndex]) dScore += (h.type === 'positive' ? 1 : -1); });
                 if (dScore > 0) {
-                    // Calculate intensity (0.0 to 1.0)
                     const intensity = dScore / (maxPossible || 1);
-                    if (intensity < 0.4) div.classList.add("active-low");
-                    else if (intensity < 0.8) div.classList.add("active-med");
-                    else div.classList.add("active-high");
-                    
+                    if (intensity < 0.4) div.classList.add("active-low"); else if (intensity < 0.8) div.classList.add("active-med"); else div.classList.add("active-high");
                     div.title = `Day ${dayIndex + 1}: ${dScore} pts`;
                 }
             }
@@ -574,102 +351,64 @@ function updateStats() {
     }
 }
 
-/* =========================================================
-   6. GRAPH (Fixed Timeline & Aligned)
-========================================================= */
-function renderGraph() {
-    const svg = document.getElementById("activityGraph");
-    if (!svg) return;
+function todayScoreText() {
+    const y = parseInt(yearInput.value) || NOW.getFullYear();
+    const today = NOW.getDate() - 1;
+    let score = 0;
+    habits.forEach(h => { if(h.days[today]) score += (h.type === 'positive' ? 1 : -1); });
+    return `${score > 0 ? '+' : ''}${score} Net Score`;
+}
 
-    // 1. Setup Data
+function renderGraph() {
+    const svg = document.getElementById("activityGraph"); if (!svg) return;
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const totalDaysInMonth = getDays(y, currentMonth); 
     
     let scores = [];
     for (let d = 0; d < totalDaysInMonth; d++) {
         let dailyScore = 0;
-        habits.forEach(h => {
-            if (h.days[d]) dailyScore += (h.type === 'positive' ? 1 : -1);
-        });
+        habits.forEach(h => { if (h.days[d]) dailyScore += (h.type === 'positive' ? 1 : -1); });
         scores.push(dailyScore);
     }
-
-    // 2. Setup Dims
     const container = svg.parentElement;
-    const width = container.offsetWidth; 
-    const height = 150; 
-    
-    // 3. Align with Columns
+    const width = container.offsetWidth; const height = 150; 
     const dayHeaders = document.querySelectorAll('table thead th');
     let xPositions = [];
     let startIndex = -1;
-    for(let i=0; i<dayHeaders.length; i++) {
-            if(dayHeaders[i].innerText.trim() === "1") {
-                startIndex = i;
-                break;
-            }
-    }
+    for(let i=0; i<dayHeaders.length; i++) { if(dayHeaders[i].innerText.trim() === "1") { startIndex = i; break; } }
 
     if (startIndex > -1 && dayHeaders.length >= startIndex + totalDaysInMonth) {
         for (let d = 0; d < totalDaysInMonth; d++) {
             const th = dayHeaders[startIndex + d];
-            if (th) {
-                const centerX = th.offsetLeft + (th.offsetWidth / 2);
-                xPositions.push(centerX);
-            }
+            if (th) { const centerX = th.offsetLeft + (th.offsetWidth / 2); xPositions.push(centerX); }
         }
     }
-
-    // Fallback alignment
     if (xPositions.length === 0) {
-        const leftOffset = width * 0.22; 
-        const graphWidth = width - leftOffset;
-        for (let d = 0; d < totalDaysInMonth; d++) {
-            xPositions.push(leftOffset + ((d + 0.5) / totalDaysInMonth) * graphWidth);
-        }
+        const leftOffset = width * 0.22; const graphWidth = width - leftOffset;
+        for (let d = 0; d < totalDaysInMonth; d++) { xPositions.push(leftOffset + ((d + 0.5) / totalDaysInMonth) * graphWidth); }
     }
 
-    // 4. Scaling
-    const padding = 20; 
-    const floorY = height - 30; // Fixed baseline
-    
+    const padding = 20; const floorY = height - 30; 
     let maxScore = Math.max(...scores, 5); 
     const pxPerUnit = (floorY - padding) / Math.max(maxScore, 1);
     const mapY = (val) => floorY - (val * pxPerUnit);
 
-    // 5. Points
-    const points = scores.map((val, i) => ({ 
-        x: xPositions[i] || 0, 
-        y: mapY(val), 
-        val 
-    }));
+    const points = scores.map((val, i) => ({ x: xPositions[i] || 0, y: mapY(val), val }));
+    if (points.length < 2) { svg.innerHTML = ``; return; }
 
-    if (points.length < 2) {
-        svg.innerHTML = ``;
-        return;
-    }
-
-    // 6. Spline Curve
     let dPath = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[Math.max(i - 1, 0)];
         const p1 = points[i];
         const p2 = points[i + 1];
         const p3 = points[Math.min(i + 2, points.length - 1)];
-
-        const cp1x = p1.x + (p2.x - p0.x) * 0.15;
-        const cp1y = p1.y + (p2.y - p0.y) * 0.15;
-        const cp2x = p2.x - (p3.x - p1.x) * 0.15;
-        const cp2y = p2.y - (p3.y - p1.y) * 0.15;
-
+        const cp1x = p1.x + (p2.x - p0.x) * 0.15; const cp1y = p1.y + (p2.y - p0.y) * 0.15;
+        const cp2x = p2.x - (p3.x - p1.x) * 0.15; const cp2y = p2.y - (p3.y - p1.y) * 0.15;
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
-
     const dArea = `${dPath} L ${points[points.length-1].x} ${floorY} L ${points[0].x} ${floorY} Z`;
 
-    // 7. Render
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-
     let svgContent = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -681,65 +420,29 @@ function renderGraph() {
         <path class="graph-area" d="${dArea}" />
         <path class="graph-path" d="${dPath}" />
     `;
-
     points.forEach((p, i) => {
         if (p.val !== 0) {
-            svgContent += `
-                <text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>
-                <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>
-            `;
+            svgContent += `<text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>
+            <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>`;
         }
     });
-
     svg.innerHTML = svgContent;
 }
 
-// Redraw graph on resize
 window.addEventListener('resize', debounce(() => renderGraph(), 100));
 
-/* =========================================================
-   7. INIT & LISTENERS
-========================================================= */
-yearInput.addEventListener("input", () => {
-    loadHabits();
-    update();
-});
-
+yearInput.addEventListener("input", () => { loadHabits(); update(); });
 document.getElementById("addHabit").onclick = () => {
-    habits.push({
-        name: "New Habit",
-        type: "positive",
-        weight: 2,
-        goal: 28,
-        days: Array(getDays(yearInput.value || NOW.getFullYear(), currentMonth)).fill(false),
-    });
-    save();
-    update();
+    habits.push({ name: "New Habit", type: "positive", weight: 2, goal: 28, days: Array(getDays(yearInput.value || NOW.getFullYear(), currentMonth)).fill(false) });
+    save(); update();
 };
-
-makeDropdown(
-    document.getElementById("monthDropdown"),
-    monthNames.map((m, i) => ({ label: m, value: i })),
-    currentMonth,
-    (m) => {
-        currentMonth = m;
-        loadHabits();
-        update();
-    },
-    null // Auto mode for header
-);
-
-document.addEventListener("click", () =>
-    document.querySelectorAll(".dropdown-menu").forEach((m) => (m.style.display = "none"))
-);
+makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { currentMonth = m; loadHabits(); update(); }, null);
+document.addEventListener("click", () => document.querySelectorAll(".dropdown-menu").forEach((m) => (m.style.display = "none")));
 
 function update() {
-    renderHeader();
-    renderHabits();
-    updateStats();
-    renderGraph();
+    renderHeader(); renderHabits(); updateStats(); renderGraph();
+    // RE-INIT ICONS AT END OF UPDATE
     lucide.createIcons();
 }
 
-loadHabits();
-update();
+loadHabits(); update();

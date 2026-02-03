@@ -10,19 +10,17 @@
     --green: #63e6a4;
     --cyan: #4fd1ff;
     --yellow: #facc15;
-    --orange: #fb923c;
+    --orange: #fb923c; /* NEW */
     --radius: 24px;
 }
 
 html { font-size: 13px; }
 * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-/* FOCUS MANAGEMENT */
 *:focus { outline: none !important; }
 *:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; }
 td[contenteditable]:focus { background: rgba(255, 255, 255, 0.1); border-radius: 4px; outline: none; }
 
-/* SCROLLBARS */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
@@ -37,142 +35,72 @@ body {
 .app { width: 98%; max-width: 1600px; margin: 0 auto; padding: 20px; }
 
 /* =========================================================
-   2. HEADER & INPUTS (TOP BAR)
+   2. HEADER & INPUTS (GLASS PILLS & GRADIENT)
 ========================================================= */
-.top { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-end; 
-    margin-bottom: 24px; 
-}
+.top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
+.date-picker { display: flex; gap: 12px; align-items: center; }
 
-.date-picker { 
-    display: flex; 
-    gap: 12px; 
-    align-items: center; 
-}
-
-/* --- GLASS PILL INPUTS (Year & Month) --- */
-/* Applies to Year Input and Header Dropdown Button */
+/* Glass Pill Style */
 .date-picker input[type="number"],
 .dropdown-button {
     background: rgba(255, 255, 255, 0.03); 
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff !important; 
     height: 40px; 
-    line-height: 38px; /* Vertically center text */
+    line-height: 38px;
     padding: 0 20px; 
-    
-    /* THE PILL SHAPE */
-    border-radius: 10px; 
-    
-    font-size: 13px; 
-    font-weight: 600;
-    outline: none; 
-    cursor: pointer;
+    border-radius: 100px; /* PILL */
+    font-size: 13px; font-weight: 600;
+    outline: none; cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    
-    /* Flex alignment for dropdown button content */
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between;
-    min-width: 130px; /* Standard width for month picker */
+    display: flex; align-items: center; justify-content: space-between;
+    min-width: 130px;
 }
 
-/* Specific tweaks for Year Input */
 .date-picker input[type="number"] {
-    width: 90px; 
-    min-width: auto;
-    text-align: center;
-    -moz-appearance: textfield; 
-    appearance: textfield;
-    display: block; /* Input is block, not flex */
+    width: 90px; min-width: auto; text-align: center;
+    -moz-appearance: textfield; appearance: textfield;
+    display: block;
 }
-.date-picker input[type="number"]::-webkit-inner-spin-button, 
-.date-picker input[type="number"]::-webkit-outer-spin-button { 
-    -webkit-appearance: none; margin: 0; 
+.date-picker input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.date-picker input[type="number"]:hover, .dropdown-button:hover {
+    background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px); box-shadow: 0 6px 15px rgba(0,0,0,0.3);
 }
 
-/* HOVER EFFECTS */
-.date-picker input[type="number"]:hover,
-.dropdown-button:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-}
-
-/* FOCUS EFFECTS */
-.date-picker input[type="number"]:focus,
-.dropdown-button:focus {
-    border-color: var(--green);
-    background: rgba(99, 230, 164, 0.05);
-}
-
-/* Dropdown Arrow Fix */
 .dropdown-button::after {
     content: ''; width: 16px; height: 16px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: center;
-    margin-left: 10px;
+    background-repeat: no-repeat; background-position: center; margin-left: 10px;
 }
 
-/* --- HEADLINE (GRADIENT & ICON) --- */
-.headline {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end; /* Align right */
-    text-align: right;
-}
+/* Gradient Headline */
+.headline { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
 
 .headline-label {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px; 
-    color: var(--green); 
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 2px; 
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 8px; color: var(--green); 
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 2px; 
 }
 
-.headline-icon {
-    width: 16px;
-    height: 16px;
-    stroke-width: 3px;
-}
+.headline-icon { width: 16px; height: 16px; stroke-width: 3px; }
 
 .gradient-text {
-    font-size: 52px; 
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -2px;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-    
-    /* White to Green Gradient */
-    background: linear-gradient(135deg, #ffffff 10%, var(--green) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 52px; font-weight: 800; margin: 0;
+    letter-spacing: -2px; font-variant-numeric: tabular-nums; line-height: 1;
+    background: linear-gradient(135deg, #ffffff 20%, var(--green) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
     color: #fff; 
 }
-
-.headline .sub {
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 500;
-    margin-top: 4px;
-}
+.headline .sub { font-size: 13px; color: var(--muted); font-weight: 500; margin-top: 4px; }
 
 /* =========================================================
-   3. DROPDOWN MENUS
+   3. DROPDOWNS
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
-
 .dropdown-menu {
     position: absolute; top: calc(100% + 8px); left: 0; 
     background: #181818; border: 1px solid var(--border);
@@ -183,23 +111,10 @@ body {
 .dropdown-item:hover { background: rgba(255,255,255,0.08); color: white; }
 
 /* =========================================================
-   4. ANALYTICS & GRAPH
+   4. ANALYTICS & WIDGETS
 ========================================================= */
-.analytics { 
-    display: flex; 
-    gap: 0; /* We will use specific margins/padding instead */
-    margin-bottom: 24px; 
-    overflow-x: auto; 
-    padding-bottom: 10px; 
-    align-items: center; /* Center vertically */
-}
-.ring-block { 
-    display: flex; 
-    align-items: center; 
-    gap: 14px; 
-    flex-shrink: 0; 
-    margin-right: 40px; /* Spacing between rings */
-}
+.analytics { display: flex; margin-bottom: 24px; overflow-x: auto; padding-bottom: 10px; align-items: center; }
+.ring-block { display: flex; align-items: center; gap: 14px; flex-shrink: 0; margin-right: 40px; }
 .ring { width: 72px; height: 72px; position: relative; display: flex; align-items: center; justify-content: center; }
 .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 .ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; }
@@ -210,160 +125,77 @@ body {
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
 .ring-label { font-size: 12px; font-weight: 600; color: #fff; }
 
-/* --- NEW STREAK WIDGET --- */
+/* STREAK & HEATMAP WIDGET */
 .streak-widget {
-    display: flex;
-    align-items: center;
-    gap: 24px;
-    padding-left: 40px;
-    border-left: 1px solid var(--border); /* The Divider Line */
-    height: 60px; /* Match ring optical height */
+    display: flex; align-items: center; gap: 24px;
+    padding-left: 40px; border-left: 1px solid var(--border);
+    height: 60px;
 }
-
-/* Left side: The Big Number & Icon */
-.streak-info {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
+.streak-info { display: flex; flex-direction: column; justify-content: center; }
 .streak-count {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 28px;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 28px; font-weight: 800; color: #fff; line-height: 1; font-variant-numeric: tabular-nums;
 }
-
-.streak-icon {
-    color: var(--orange);
-    fill: rgba(251, 146, 60, 0.2); /* Subtle fill */
-    width: 20px;
-    height: 20px;
-}
-
+.streak-icon { color: var(--orange); fill: rgba(251, 146, 60, 0.2); width: 20px; height: 20px; }
 .streak-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-top: 4px;
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
 }
-
-/* Right side: The Mini Heatmap */
 .heatmap-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 Days per row */
-    grid-template-rows: repeat(2, 1fr);    /* 2 Rows = 14 Days total */
-    gap: 4px;
+    display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4px;
 }
-
 .heat-box {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    background: rgba(255,255,255,0.1); /* Empty State */
-    transition: all 0.2s ease;
+    width: 10px; height: 10px; border-radius: 2px;
+    background: rgba(255,255,255,0.1); transition: all 0.2s ease;
 }
-
 .heat-box.active-low { background: rgba(99, 230, 164, 0.3); }
 .heat-box.active-med { background: rgba(99, 230, 164, 0.6); }
 .heat-box.active-high { background: var(--green); box-shadow: 0 0 4px rgba(99, 230, 164, 0.4); }
 
-/* Mobile Responsive: Hide heatmap on very small screens if needed */
-@media (max-width: 600px) {
-    .streak-widget { border-left: none; padding-left: 0; margin-top: 20px; }
-    .analytics { flex-wrap: wrap; }
-}
-
 /* GRAPH CARD */
 .today-focus {
-    background: var(--surface); 
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border); border-radius: var(--radius); 
     padding: 24px 32px; margin-bottom: 20px;
-    display: flex; flex-direction: column;
-    height: 240px; 
-    position: relative;
-    overflow: visible;
+    display: flex; flex-direction: column; height: 240px; position: relative; overflow: visible;
 }
-.habits {
-    background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 32px; margin-bottom: 20px;
-}
-.section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
-
-.today-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 10px; z-index: 2;
-}
-
+.today-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; z-index: 2; }
 .today-header-title { display: flex; gap: 10px; align-items: center; }
 .today-header-title h2 { margin: 0; font-size: 18px; }
-
-.graph-summary {
-    font-size: 13px; font-weight: 600; color: var(--muted);
-    background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px;
-}
-
-/* GRAPH CONTAINER */
-.graph-container {
-    flex: 1;
-    width: 100%; 
-    margin: 0; padding: 0;
-    position: relative;
-    display: flex; align-items: flex-end;
-}
+.graph-summary { font-size: 13px; font-weight: 600; color: var(--muted); background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; }
+.graph-container { flex: 1; width: 100%; margin: 0; padding: 0; position: relative; display: flex; align-items: flex-end; }
 svg#activityGraph { overflow: visible; display: block; width: 100%; height: 100%; }
-
-.graph-path {
-    fill: none; stroke: var(--green); stroke-width: 3px;
-    stroke-linecap: round; stroke-linejoin: round;
-    filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
-    transition: d 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-}
+.graph-path { fill: none; stroke: var(--green); stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2)); transition: d 0.4s cubic-bezier(0.25, 1, 0.5, 1); }
 .graph-area { fill: url(#gradient-area); opacity: 0.2; stroke: none; }
-.graph-label {
-    fill: #fff; font-size: 11px; font-weight: 700;
-    text-anchor: middle; opacity: 0; transition: opacity 0.2s;
-}
+.graph-label { fill: #fff; font-size: 11px; font-weight: 700; text-anchor: middle; opacity: 0; transition: opacity 0.2s; }
 .graph-label.visible { opacity: 1; }
 
 /* =========================================================
    5. TABLE & LAYOUT
 ========================================================= */
+.habits {
+    background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 32px; margin-bottom: 20px;
+}
+.section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
 table { border-collapse: collapse; width: 100%; min-width: 800px; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
 
-/* Sticky First Column */
 th:first-child, td:first-child {
     position: sticky; left: 0; z-index: 10; background: #121212; 
-    min-width: 180px; max-width: 180px;
-    text-align: left; 
-    border-right: 1px solid var(--border);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    padding-left: 12px;
+    min-width: 180px; max-width: 180px; text-align: left; 
+    border-right: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px;
 }
 tbody tr:hover td:first-child { background-color: #121212; }
-
-/* Sticky Header */
 th { position: sticky; top: 0; background: #121212; z-index: 11; }
 thead th:first-child { z-index: 20; }
-
 .sticky-header-content { display: flex; align-items: center; gap: 10px; height: 100%; }
-
 .today-col { background: rgba(99, 230, 164, 0.05) !important; }
 tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
-
 .future-day { opacity: 0.15; pointer-events: none; }
 .today-col input { transform: scale(1.15); box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); }
 
-/* FOOTER ELEMENTS */
 .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
 button#addHabit {
     background: var(--green); color: #000; border: none; padding: 12px 24px;
@@ -373,38 +205,24 @@ button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .counter { font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 #completed { color: var(--green); } 
 #total { color: var(--text); }
-
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
 input[type="checkbox"].neg-habit { accent-color: #ef4444; }
-
 .progress-bar { width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 0 auto; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.4s ease; }
 
-/* ACTION BUTTONS (Edit Mode) */
 .toggle-edit-btn {
-    background: rgba(255,255,255,0.05); 
-    border: none; cursor: pointer; color: var(--muted);
-    padding: 0; 
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-    border-radius: 6px;
-    width: 24px; height: 24px; 
+    background: rgba(255,255,255,0.05); border: none; cursor: pointer; color: var(--muted);
+    padding: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; border-radius: 6px; width: 24px; height: 24px; 
 }
 .toggle-edit-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
 .toggle-edit-btn:disabled { opacity: 0.2; cursor: default; background: transparent; }
 
-/* MINIMAL UI ELEMENTS (Table Overrides) */
-/* Override general pill style for table dropdowns to be compact */
 td .dropdown-button {
-    background: transparent; border: 1px solid transparent; 
-    padding: 0 8px; 
-    height: 28px; line-height: 26px; 
-    min-width: auto; width: auto;
-    font-size: 12px; font-weight: 600; border-radius: 6px; /* Reset radius */
-    justify-content: center; gap: 6px; 
-    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
-    display: inline-flex; align-items: center;
-    box-shadow: none;
+    background: transparent; border: 1px solid transparent; padding: 0 8px; 
+    height: 28px; line-height: 26px; min-width: auto; width: auto;
+    font-size: 12px; font-weight: 600; border-radius: 6px;
+    justify-content: center; gap: 6px; display: inline-flex; align-items: center; box-shadow: none;
 }
 td .dropdown-button::after { display: none; }
 td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
@@ -416,19 +234,12 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
 .goal-input {
-    height: 28px; width: 60px; font-size: 12px; font-weight: 600;
-    padding: 0; margin: 0;
-    background: transparent; 
-    border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-radius: 6px; 
-    color: var(--muted) !important; 
-    text-align: center; 
-    transition: all 0.2s ease;
+    height: 28px; width: 60px; font-size: 12px; font-weight: 600; padding: 0; margin: 0;
+    background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; 
+    color: var(--muted) !important; text-align: center; transition: all 0.2s ease;
     -moz-appearance: textfield; appearance: textfield;
 }
 .goal-input:hover, .goal-input:focus {
-    color: #fff !important; 
-    border-color: rgba(255, 255, 255, 0.3); 
-    background: rgba(255, 255, 255, 0.1);
+    color: #fff !important; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1);
 }
-.goal-input::-webkit-inner-spin-button, .goal-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
