@@ -226,19 +226,17 @@ function setRing(id, pct) {
 function updateStats() {
     const isThisMonth = currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : (habits[0]?.days.length - 1 || 0);
-    
+
     let earned = 0, totalPossible = 0;
     let todayDone = 0, todayTotal = 0; // Positive Only
     let negSlips = 0, negTotal = 0;    // Negative Only
     let momentumSum = 0;
 
     habits.forEach(h => {
-        // --- SAFE MATH FIX: Force 'w' to be a Number ---
-        // If we don't do this, "2" + "2" might become "22" causing the 0% bug
+        // Safe Math: Force 'weight' to be a Number
         const w = Number(h.weight) || 2; 
-        
         const daysInMonth = h.days.length;
-        
+
         // 1. MONTHLY PROGRESS MATH
         const checkedDays = h.days.filter(Boolean).length;
         
@@ -256,7 +254,7 @@ function updateStats() {
             if (h.days[todayIdx]) todayDone++; 
         } else {
             negTotal++;
-            if (h.days[todayIdx]) negSlips++; // Count slip only if checked
+            if (h.days[todayIdx]) negSlips++;
         }
 
         // 3. MOMENTUM MATH
@@ -277,13 +275,19 @@ function updateStats() {
     const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
     const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
 
+    // --- FIX: UPDATE THE HEADER TEXT ---
+    // This targets the <h1 id="successRate"> in your HTML
+    const successEl = document.getElementById("successRate");
+    if (successEl) successEl.textContent = Math.round(mScore) + "%";
+    // -----------------------------------
+
     // UPDATE UI TEXT
     document.getElementById("completed").textContent = todayDone;
     document.getElementById("total").textContent = todayTotal;
-    
+
     document.getElementById("todaySummary").innerHTML = 
         `${todayDone} of ${todayTotal} habits done <span style="opacity:0.5; margin:0 8px">|</span> ${negSlips} of ${negTotal} slips`;
-    
+
     // UPDATE RINGS
     setRing("ring-monthly", mScore); 
     setRing("ring-normalized", tScore); 
