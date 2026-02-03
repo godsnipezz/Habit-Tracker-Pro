@@ -193,3 +193,32 @@ button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
 .progress-bar { width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 0 auto; }
 .progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.4s ease; }
+
+/* --- NEW STYLES FOR UX IMPROVEMENTS --- */
+
+/* 1. Toggle Button for Edit Mode */
+.toggle-edit-btn {
+    background: none; border: none; cursor: pointer; color: var(--muted);
+    padding: 4px; margin-right: 8px; transition: color 0.2s;
+    vertical-align: middle;
+}
+.toggle-edit-btn:hover { color: #fff; }
+
+/* 2. Negative Habit Styling (Red Checkbox = Slip) */
+/* We use a specific class added by JS to change the color */
+input[type="checkbox"].neg-habit {
+    accent-color: #ef4444; /* Red color for negative slips */
+}
+
+/* 3. Visual Cues for "Today" vs "Future" */
+.future-day {
+    opacity: 0.15; /* Dim future days significantly */
+    pointer-events: none; /* specific double-check */
+}
+.today-col input {
+    transform: scale(1.15); /* Make today's checkbox slightly bigger */
+    box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); /* Subtle glow */
+}
+
+/* 4. Hide columns when not in edit mode */
+.hidden-col { display: none; }

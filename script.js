@@ -95,21 +95,61 @@ function makeDropdown(el, options, selectedIndex, onChange) {
   el.appendChild(menu);
 }
 
+let isEditMode = false; // State to track if we are editing settings
+
 function renderHeader() {
   const dayHeader = document.getElementById("dayHeader");
   const days = getDays(yearInput.value, currentMonth);
   const today = NOW.getDate();
-  const isThisMonth =
-    currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
+  const isThisMonth = currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
 
-  dayHeader.innerHTML = `<th>Habit</th><th>Type</th><th>Imp</th><th>Goal</th>`;
+  dayHeader.innerHTML = "";
+
+  // 1. Habit Column with Settings Toggle
+  const nameTh = document.createElement("th");
+  nameTh.style.display = "flex";
+  nameTh.style.alignItems = "center";
+  nameTh.style.justifyContent = "space-between";
+  
+  // Create the Gear Icon Button
+  const settingsBtn = document.createElement("button");
+  settingsBtn.className = "toggle-edit-btn";
+  settingsBtn.innerHTML = isEditMode ? "Done" : "⚙️";
+  settingsBtn.onclick = () => {
+      isEditMode = !isEditMode;
+      update(); // Re-render to show/hide columns
+  };
+  
+  const labelSpan = document.createElement("span");
+  labelSpan.textContent = "Habit";
+  
+  nameTh.appendChild(settingsBtn);
+  nameTh.appendChild(labelSpan);
+  dayHeader.appendChild(nameTh);
+
+  // 2. Conditional Columns (Only show in Edit Mode)
+  if (isEditMode) {
+      ["Type", "Imp", "Goal"].forEach(t => {
+          const th = document.createElement("th");
+          th.textContent = t;
+          dayHeader.appendChild(th);
+      });
+  }
+
+  // 3. Day Columns
   for (let d = 1; d <= days; d++) {
     const th = document.createElement("th");
     th.textContent = d;
     if (isThisMonth && d === today) th.classList.add("today-col");
     dayHeader.appendChild(th);
   }
-  dayHeader.innerHTML += `<th>Progress</th><th></th>`;
+  
+  // 4. Spacer/Progress Column
+  // If in edit mode, we don't need the progress bar, we need delete button space
+  // But to keep alignment simple, we'll just keep the header empty or "Actions"
+  const endTh = document.createElement("th");
+  endTh.textContent = isEditMode ? "Del" : "";
+  dayHeader.appendChild(endTh);
 }
 
 function renderHabits() {
@@ -117,125 +157,124 @@ function renderHabits() {
   habitBody.innerHTML = "";
   const days = getDays(yearInput.value, currentMonth);
   const today = NOW.getDate();
-  const isThisMonth =
-    currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
+  const isThisMonth = currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
 
   habits.forEach((h, i) => {
     if (!h.days || h.days.length !== days) h.days = Array(days).fill(false);
     const tr = document.createElement("tr");
 
-    // Habit Name
+    // --- 1. Habit Name ---
     const nameTd = document.createElement("td");
-    nameTd.contentEditable = true;
+    nameTd.contentEditable = isEditMode; // Only editable when settings open
     nameTd.textContent = h.name;
+    nameTd.style.cursor = isEditMode ? "text" : "default";
     nameTd.onblur = () => {
       h.name = nameTd.textContent;
       save();
     };
     tr.appendChild(nameTd);
 
-    // Type (Positive/Negative)
-    const typeTd = document.createElement("td");
-    const tDD = document.createElement("div");
-    tDD.className = "dropdown";
-    makeDropdown(
-      tDD,
-      [
-        { label: "🟢 Pos", value: "positive" },
-        { label: "🔴 Neg", value: "negative" },
-      ],
-      h.type === "negative" ? 1 : 0,
-      (v) => {
-        h.type = v;
-        save();
-        update();
-      },
-    );
-    typeTd.appendChild(tDD);
-    tr.appendChild(typeTd);
+    // --- 2. Edit Columns (Type, Imp, Goal) ---
+    if (isEditMode) {
+        // Type
+        const typeTd = document.createElement("td");
+        const tDD = document.createElement("div");
+        tDD.className = "dropdown";
+        makeDropdown(tDD, 
+          [{ label: "🟢 Pos", value: "positive" }, { label: "🔴 Neg", value: "negative" }],
+          h.type === "negative" ? 1 : 0,
+          (v) => { h.type = v; save(); update(); }
+        );
+        typeTd.appendChild(tDD);
+        tr.appendChild(typeTd);
 
-    // Importance
-    const impTd = document.createElement("td");
-    const iDD = document.createElement("div");
-    iDD.className = "dropdown";
-    makeDropdown(
-      iDD,
-      [
-        { label: "L", value: 1 },
-        { label: "M", value: 2 },
-        { label: "H", value: 3 },
-      ],
-      (h.weight || 2) - 1,
-      (v) => {
-        h.weight = v;
-        save();
-        update();
-      },
-    );
-    impTd.appendChild(iDD);
-    tr.appendChild(impTd);
+        // Importance
+        const impTd = document.createElement("td");
+        const iDD = document.createElement("div");
+        iDD.className = "dropdown";
+        makeDropdown(iDD, 
+          [{ label: "L", value: 1 }, { label: "M", value: 2 }, { label: "H", value: 3 }],
+          (h.weight || 2) - 1,
+          (v) => { h.weight = v; save(); update(); }
+        );
+        impTd.appendChild(iDD);
+        tr.appendChild(impTd);
 
-    // Monthly Goal
-    const goalTd = document.createElement("td");
-    const gIn = document.createElement("input");
-    gIn.type = "number";
-    gIn.className = "goal-input";
-    gIn.value = h.goal || 28;
-    gIn.oninput = (e) => {
-      h.goal = +e.target.value;
-      save();
-      updateStats();
-    };
-    goalTd.appendChild(gIn);
-    tr.appendChild(goalTd);
+        // Goal
+        const goalTd = document.createElement("td");
+        const gIn = document.createElement("input");
+        gIn.type = "number";
+        gIn.className = "goal-input";
+        gIn.value = h.goal || 28;
+        gIn.oninput = (e) => { h.goal = +e.target.value; save(); updateStats(); };
+        goalTd.appendChild(gIn);
+        tr.appendChild(goalTd);
+    }
 
-    // Daily Checkboxes
+    // --- 3. Checkboxes ---
     for (let d = 0; d < days; d++) {
       const td = document.createElement("td");
-      if (isThisMonth && d + 1 === today) td.classList.add("today-col");
+      
+      const isToday = isThisMonth && d + 1 === today;
+      const isFuture = isThisMonth && d + 1 > today;
+
+      if (isToday) td.classList.add("today-col");
+      
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = h.days[d];
 
-      // DATA ISOLATION: Disable if date hasn't happened yet
-      const isFutureYear = +yearInput.value > NOW.getFullYear();
-      const isFutureMonth =
-        +yearInput.value === NOW.getFullYear() && currentMonth > NOW.getMonth();
-      const isFutureDay = isThisMonth && d > NOW.getDate() - 1;
+      // UX FIX: Negative habits turn RED when checked
+      if (h.type === "negative") {
+          cb.classList.add("neg-habit");
+      }
 
+      // UX FIX: Dim future days
+      if (isFuture) {
+          cb.classList.add("future-day");
+          cb.disabled = true; // Hard disable logic
+      }
+
+      // Logic isolation (existing code)
+      const isFutureYear = +yearInput.value > NOW.getFullYear();
+      const isFutureMonth = +yearInput.value === NOW.getFullYear() && currentMonth > NOW.getMonth();
+      const isFutureDay = isThisMonth && d > NOW.getDate() - 1;
       cb.disabled = isFutureYear || isFutureMonth || isFutureDay;
 
       cb.onchange = () => {
         h.days[d] = cb.checked;
         save();
         updateStats();
-        updateProgress(tr, h);
+        // If not in edit mode, we can update the mini progress bar if we kept it
+        if (!isEditMode) updateProgress(tr, h); 
       };
       td.appendChild(cb);
       tr.appendChild(td);
     }
 
-    // Progress Bar
-    const progTd = document.createElement("td");
-    progTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
-    tr.appendChild(progTd);
-
-    // Delete Button
-    const del = document.createElement("td");
-    del.innerHTML = "🗑";
-    del.style.cursor = "pointer";
-    del.style.opacity = "0.3";
-    del.onclick = () => {
-      if (confirm("Delete habit?")) {
-        habits.splice(i, 1);
-        save();
-        update();
-      }
-    };
-    tr.appendChild(del);
+    // --- 4. End Column (Delete or Progress) ---
+    const endTd = document.createElement("td");
+    if (isEditMode) {
+        // Show Delete Button
+        endTd.innerHTML = "🗑";
+        endTd.style.cursor = "pointer";
+        endTd.style.opacity = "0.7";
+        endTd.onclick = () => {
+            if (confirm("Delete habit?")) {
+                habits.splice(i, 1);
+                save();
+                update();
+            }
+        };
+    } else {
+        // Show Mini Progress Bar
+        endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
+        // We need to delay the width update slightly or call it immediately
+        setTimeout(() => updateProgress(tr, h), 0);
+    }
+    tr.appendChild(endTd);
 
     habitBody.appendChild(tr);
-    updateProgress(tr, h);
   });
 }
 
