@@ -93,7 +93,7 @@ function renderHeader() {
 
   dayHeader.innerHTML = "";
 
-  // 1. Habit Column (Wrapper for perfect alignment)
+  // 1. Habit Column
   const nameTh = document.createElement("th");
   const wrapper = document.createElement("div");
   wrapper.className = "sticky-header-content";
@@ -162,24 +162,20 @@ function renderHabits() {
     nameTd.onblur = () => { h.name = nameTd.textContent; save(); };
     tr.appendChild(nameTd);
 
-    // --- 2. Edit Columns (Minimal UI) ---
+    // --- 2. Edit Columns ---
     if (isEditMode) {
         // TYPE
         const typeTd = document.createElement("td");
         const tDD = document.createElement("div");
         tDD.className = "dropdown";
-        
         makeDropdown(tDD, 
             [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }],
             h.type === "negative" ? 1 : 0,
             (v) => { h.type = v; save(); update(); }
         );
-
-        // Apply Badge Style
         const typeBtn = tDD.querySelector('.dropdown-button');
         if (h.type === 'positive') typeBtn.classList.add('badge-pos');
         else typeBtn.classList.add('badge-neg');
-        
         typeTd.appendChild(tDD);
         tr.appendChild(typeTd);
 
@@ -187,30 +183,33 @@ function renderHabits() {
         const impTd = document.createElement("td");
         const iDD = document.createElement("div");
         iDD.className = "dropdown";
-        
         makeDropdown(iDD, 
             [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }],
             (h.weight || 2) - 1,
             (v) => { h.weight = v; save(); update(); }
         );
-
-        // Apply Badge Style
         const impBtn = iDD.querySelector('.dropdown-button');
         const w = h.weight || 2;
         if (w === 1) impBtn.classList.add('badge-imp-low');
         if (w === 2) impBtn.classList.add('badge-imp-med');
         if (w === 3) impBtn.classList.add('badge-imp-high');
-
         impTd.appendChild(iDD);
         tr.appendChild(impTd);
 
-        // GOAL
+        // --- CUSTOM GOAL SPINNER COMPONENT ---
         const goalTd = document.createElement("td");
+        
+        // 1. Wrapper
+        const wrapper = document.createElement("div");
+        wrapper.className = "goal-wrapper";
+
+        // 2. Input
         const gIn = document.createElement("input");
         gIn.type = "number";
         gIn.className = "goal-input";
         gIn.value = h.goal || 28;
         
+        // Input Logic
         gIn.oninput = (e) => { 
             h.goal = +e.target.value; save(); updateStats(); 
         };
@@ -218,7 +217,37 @@ function renderHabits() {
             if (e.key === "Enter") gIn.blur(); 
         };
 
-        goalTd.appendChild(gIn);
+        // 3. Spinner Container
+        const spinContainer = document.createElement("div");
+        spinContainer.className = "goal-spinners";
+
+        // 4. Up Button
+        const upBtn = document.createElement("div");
+        upBtn.className = "spin-btn";
+        upBtn.innerHTML = `<i data-lucide="chevron-up"></i>`;
+        upBtn.onclick = (e) => {
+            e.stopPropagation();
+            gIn.stepUp(); // Built-in method
+            // Trigger change manually
+            gIn.dispatchEvent(new Event('input'));
+        };
+
+        // 5. Down Button
+        const downBtn = document.createElement("div");
+        downBtn.className = "spin-btn";
+        downBtn.innerHTML = `<i data-lucide="chevron-down"></i>`;
+        downBtn.onclick = (e) => {
+            e.stopPropagation();
+            gIn.stepDown();
+            gIn.dispatchEvent(new Event('input'));
+        };
+
+        spinContainer.appendChild(upBtn);
+        spinContainer.appendChild(downBtn);
+
+        wrapper.appendChild(gIn);
+        wrapper.appendChild(spinContainer);
+        goalTd.appendChild(wrapper);
         tr.appendChild(goalTd);
     }
 
@@ -236,7 +265,6 @@ function renderHabits() {
 
       if (h.type === "negative") cb.classList.add("neg-habit");
       
-      // Disable future days
       const isFutureYear = +yearInput.value > NOW.getFullYear();
       const isFutureMonth = +yearInput.value === NOW.getFullYear() && currentMonth > NOW.getMonth();
       const isFutureDay = isThisMonth && d > NOW.getDate() - 1;

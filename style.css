@@ -42,7 +42,7 @@ body {
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* Year Input - Custom SVG Arrows */
+/* Year Input */
 input[type="number"] {
     -webkit-appearance: none; appearance: none;
     background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
@@ -187,41 +187,75 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* GOAL INPUT - NATIVE ARROWS, STATIC, NO ANIMATION */
+/* --- CUSTOM GOAL COMPONENT --- */
+
+/* The Wrapper that looks like a Pill */
+.goal-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 28px; /* Strict height match */
+    width: 65px;  /* Comfortable width */
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0 2px 0 6px; /* Left padding for number */
+    transition: all 0.2s;
+}
+
+.goal-wrapper:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* The actual number input (Clean) */
 .goal-input {
-    /* EXACT SIZE MATCH with Badges */
-    height: 28px; 
-    width: 60px; 
-    font-size: 12px; 
+    width: 30px;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 12px;
     font-weight: 600;
-    
-    /* Layout */
-    padding: 0 4px; 
-    margin: 0;
-    
-    /* Style */
-    background: transparent; 
-    border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-radius: 6px; 
-    color: var(--muted) !important; 
-    caret-color: white; /* Ensure cursor is visible */
     text-align: center;
-    
-    /* DISABLE ANIMATIONS */
-    transition: none;
+    padding: 0;
+    -moz-appearance: textfield; /* Firefox hide arrows */
 }
 
-.goal-input:hover, .goal-input:focus {
-    color: #fff !important; 
-    border-color: rgba(255, 255, 255, 0.3); 
-    background: rgba(255, 255, 255, 0.05); 
-    outline: none;
-}
-
-/* Ensure spinners are always standard and visible */
+/* Chrome/Safari hide arrows permanently */
 .goal-input::-webkit-inner-spin-button, 
-.goal-input::-webkit-outer-spin-button {
-    opacity: 1;
-    cursor: pointer;
-    margin-left: 2px;
+.goal-input::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
 }
+
+.goal-input:focus { color: #fff; }
+.goal-wrapper:hover .goal-input { color: #fff; }
+
+/* The Arrow Container */
+.goal-spinners {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    gap: 0;
+    width: 16px;
+}
+
+/* The Arrow Buttons */
+.spin-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px; /* Half height */
+    width: 100%;
+    cursor: pointer;
+    color: var(--muted);
+    opacity: 0; /* Hidden by default for ultra-minimal look */
+    transition: all 0.1s;
+}
+/* Show on hover */
+.goal-wrapper:hover .spin-btn { opacity: 0.6; }
+.spin-btn:hover { opacity: 1; color: #fff; background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+/* SVG Icon sizing inside button */
+.spin-btn svg { width: 10px; height: 10px; }
