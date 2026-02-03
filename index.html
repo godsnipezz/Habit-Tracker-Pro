@@ -13,10 +13,10 @@
     />
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css" />
-    <link rel="coni" type="image/x-icon" href="favicon.ico">
   </head>
   <body>
     <div class="app">
+      
       <header class="top">
         <div class="date-picker">
           <input type="number" id="year" placeholder="YYYY" />
@@ -107,7 +107,7 @@
                 <div class="streak-label">Current Streak</div>
             </div>
 
-            <div id="dailyQuote" class="quote-text">Loading...</div>
+            <div id="dailyQuote" class="quote-text">Consistency is key.</div>
             
             <div class="heatmap-grid" id="streakHeatmap"></div>
         </div>
@@ -115,12 +115,15 @@
 
       <section class="habits">
         <div class="section-title">Monthly overview</div>
+        
         <div class="table-wrapper">
-          <table>
+          <table id="habitTable">
             <thead>
-              <tr id="dayHeader"></tr>
+              <tr id="dayHeader">
+                </tr>
             </thead>
-            <tbody id="habitBody"></tbody>
+            <tbody id="habitBody">
+              </tbody>
           </table>
         </div>
 
