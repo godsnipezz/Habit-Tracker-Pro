@@ -109,15 +109,13 @@ body {
     background: var(--surface); 
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border); border-radius: var(--radius); 
-    
-    /* CRITICAL: Match the horizontal padding of the .habits container exactly */
     padding: 24px 32px; 
-    
     margin-bottom: 20px;
     display: flex; flex-direction: column;
     height: 240px; 
     position: relative;
-    overflow: hidden;
+    /* REMOVED overflow: hidden so labels/lines aren't cut off */
+    /* overflow: hidden; */ 
 }
 .habits {
     background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);

@@ -447,6 +447,7 @@ function todayScoreText() {
 //  UPDATED GRAPH LOGIC (The Fix)
 // =========================================================
 // --- GRAPH RENDERING LOGIC ---
+// --- GRAPH RENDERING LOGIC ---
 function renderGraph() {
     const svg = document.getElementById("activityGraph");
     if (!svg) return;
@@ -455,7 +456,6 @@ function renderGraph() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const totalDaysInMonth = getDays(y, currentMonth); 
     
-    // Fill data for the FULL month (0 to 28/30/31)
     let scores = [];
     for (let d = 0; d < totalDaysInMonth; d++) {
         let dailyScore = 0;
@@ -466,57 +466,49 @@ function renderGraph() {
     }
 
     // 2. Setup Dimensions
-    const width = 800;  // Internal SVG width
-    const height = 150; // Internal SVG height
+    const width = 800;  
+    const height = 150; 
     
-    // 3. DYNAMIC ALIGNMENT (The "Perfect Match" Fix)
-    // We try to detect how wide the "Habit" column is to offset the graph
+    // 3. DYNAMIC ALIGNMENT (Match Table Columns)
     let leftOffset = 0;
     const table = document.querySelector('table');
     const firstHeader = document.querySelector('th:first-child');
     
     if (table && firstHeader) {
-        // Calculate the ratio between SVG width (800) and actual pixel width
         const ratio = width / table.offsetWidth;
-        // The offset in SVG units = First Column Pixel Width * Ratio
         leftOffset = firstHeader.offsetWidth * ratio;
     } else {
-        // Fallback if table isn't rendered yet: ~20% offset
         leftOffset = width * 0.22; 
     }
 
-    // 4. Y-AXIS SCALING (The "Visibility" Fix)
-    const padding = 20; 
-    const bottomBuffer = 20; // Keeps graph off the absolute bottom edge
+    // 4. Y-AXIS SCALING (LIFT THE GRAPH)
+    const padding = 20; // Space for top labels
+    const bottomBuffer = 50; // <--- INCREASED from 20 to 50 to lift graph up
     
-    // Force a healthy range so small numbers (1, 2) look distinct
+    // Force valid range so low scores (1, 2) have height
     let maxData = Math.max(...scores);
-    // If your max score is 3, we scale as if it's 6 so it hits the middle, not the roof.
-    // If max score is 0, we use 5 to keep the baseline flat.
-    let maxVal = Math.max(maxData * 1.5, 6); 
-    let minVal = Math.min(...scores, 0); 
+    let maxVal = Math.max(maxData + 2, 6); // Min peak height of 6
+    let minVal = Math.min(...scores, 0);   // Anchor bottom to 0
     
     const range = maxVal - minVal;
     
-    // Mapping Y (Inverted: 0 is bottom)
+    // Map Y (Inverted: 0 is bottom)
+    // The "Floor" (0) will now be at (height - bottomBuffer)
     const mapY = (val) => height - bottomBuffer - ((val - minVal) / range) * (height - padding - bottomBuffer);
     
     // 5. X-AXIS SCALING
-    // Available width for the days = Total Width - Left Offset
     const graphWidth = width - leftOffset;
-    // Align points to the CENTER of the day columns
     const mapX = (i) => leftOffset + ((i + 0.5) / totalDaysInMonth) * graphWidth;
 
     // 6. Generate Points
     const points = scores.map((val, i) => ({ x: mapX(i), y: mapY(val), val }));
 
-    // Edge case: Empty data
     if (points.length < 2) {
         svg.innerHTML = ``;
         return;
     }
 
-    // 7. Build Curve (Monotone Cubic Spline for stability)
+    // 7. Build Curve (Spline)
     let dPath = `M ${points[0].x} ${points[0].y}`;
     
     for (let i = 0; i < points.length - 1; i++) {
@@ -525,7 +517,6 @@ function renderGraph() {
         const p2 = points[i + 1];
         const p3 = points[Math.min(i + 2, points.length - 1)];
 
-        // Use slight tension (0.15) for smooth timeline flow
         const cp1x = p1.x + (p2.x - p0.x) * 0.15;
         const cp1y = p1.y + (p2.y - p0.y) * 0.15;
 
@@ -536,7 +527,7 @@ function renderGraph() {
     }
 
     // 8. Gradient Area
-    // Drop strictly to the baseline (height - bottomBuffer)
+    // Anchor area to the new, lifted baseline
     const baseline = height - bottomBuffer;
     const dArea = `${dPath} L ${points[points.length-1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
 
