@@ -241,6 +241,19 @@ function renderHabits() {
         }
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
+
+    // AUTO-SCROLL TO TODAY (Mobile UX Fix)
+    // Centers the "Today" column on load so you don't have to scroll
+    setTimeout(() => {
+        const todayCol = document.querySelector(".today-col");
+        if (todayCol) {
+            todayCol.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "center"
+            });
+        }
+    }, 100);
 }
 
 function updateProgress(tr, h) {

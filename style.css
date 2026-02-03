@@ -280,3 +280,102 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     color: #fff !important; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1);
 }
 .goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* =========================================================
+   9. MOBILE RESPONSIVENESS (Minimalist Polish)
+========================================================= */
+@media (max-width: 768px) {
+    
+    .app { padding: 16px; max-width: 100%; overflow-x: hidden; }
+
+    /* 1. HEADER: Clean Stack */
+    /* Moves Date Picker to bottom, Stats to top for hierarchy */
+    .top {
+        flex-direction: column-reverse;
+        gap: 20px;
+        align-items: stretch; /* Full width align */
+    }
+
+    /* Full width inputs for easy tapping */
+    .date-picker { width: 100%; gap: 10px; }
+    .date-picker input[type="number"], 
+    .dropdown-button {
+        flex: 1; /* Both share 50% width */
+        text-align: center;
+        justify-content: center;
+    }
+
+    /* Align Stats to Left for Dashboard feel */
+    .headline { align-items: flex-start; text-align: left; }
+    .headline-label { justify-content: flex-start; }
+    .gradient-text { font-size: 48px; }
+
+    /* 2. RINGS: Minimal Grid */
+    /* Instead of scrolling, we wrap them neatly */
+    .analytics {
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: space-between;
+        margin-right: 0;
+    }
+
+    .ring-block {
+        margin-right: 0;
+        flex: 1 1 28%; /* 3 items fit perfectly */
+        min-width: 80px;
+        flex-direction: column; /* Stack Ring + Label */
+        gap: 8px;
+    }
+    
+    /* 3. STREAK WIDGET: Vertical Card */
+    .streak-widget {
+        width: 100%;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+        padding-left: 0;
+        margin-top: 8px;
+        height: auto;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .streak-info {
+        width: 100%;
+        flex-direction: row; /* Keep Flame & Label horizontal */
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .quote-text {
+        width: 100%;
+        padding: 8px 0;
+        border-top: 1px dashed rgba(255,255,255,0.1);
+        border-bottom: 1px dashed rgba(255,255,255,0.1);
+    }
+    
+    /* Center the heatmap */
+    .heatmap-grid { margin: 0 auto; }
+
+    /* 4. TABLE: Compact Sticky Column */
+    /* Prevents the name column from eating 50% of the screen */
+    th:first-child, td:first-child {
+        min-width: 130px;
+        max-width: 130px;
+        font-size: 12px; /* Slightly smaller text */
+        padding-left: 8px;
+    }
+
+    /* 5. FOOTER: Easy Action */
+    .footer {
+        flex-direction: column;
+        gap: 16px;
+    }
+    button#addHabit { width: 100%; text-align: center; }
+    .counter { align-self: center; }
+    
+    /* 6. TOUCH TARGETS */
+    /* Invisible padding for easier checkboxes */
+    input[type="checkbox"] { margin: 0; }
+    td { padding: 0; } /* Remove cell padding to give checkboxes max room */
+}
