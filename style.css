@@ -42,7 +42,7 @@ body {
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* Year Input */
+/* Year Input - Custom SVG Arrows */
 input[type="number"] {
     -webkit-appearance: none; appearance: none;
     background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
@@ -52,7 +52,7 @@ input[type="number"] {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 8px center;
 }
-/* Only hide arrows for the YEAR input specifically */
+/* Hide native spinner ONLY for the top Year input */
 .date-picker input[type="number"]::-webkit-inner-spin-button, 
 .date-picker input[type="number"]::-webkit-outer-spin-button { 
     -webkit-appearance: none; margin: 0; 
@@ -187,30 +187,28 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* GOAL INPUT - ARROWS RESTORED */
+/* GOAL INPUT - NATIVE ARROWS, STATIC, NO ANIMATION */
 .goal-input {
     /* EXACT SIZE MATCH with Badges */
     height: 28px; 
-    width: 60px; /* Slightly wider to fit the arrows comfortably */
+    width: 60px; 
     font-size: 12px; 
     font-weight: 600;
     
-    /* Style */
+    /* Layout */
     padding: 0 4px; 
     margin: 0;
+    
+    /* Style */
     background: transparent; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 6px; 
     color: var(--muted) !important; 
+    caret-color: white; /* Ensure cursor is visible */
     text-align: center;
-    transition: all 0.2s; 
     
-    /* VITAL: Make browser controls white on dark theme */
-    color-scheme: dark; 
-    
-    /* Restore standard input appearance for arrows */
-    -moz-appearance: textfield; 
-    appearance: auto;
+    /* DISABLE ANIMATIONS */
+    transition: none;
 }
 
 .goal-input:hover, .goal-input:focus {
@@ -218,4 +216,12 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     border-color: rgba(255, 255, 255, 0.3); 
     background: rgba(255, 255, 255, 0.05); 
     outline: none;
+}
+
+/* Ensure spinners are always standard and visible */
+.goal-input::-webkit-inner-spin-button, 
+.goal-input::-webkit-outer-spin-button {
+    opacity: 1;
+    cursor: pointer;
+    margin-left: 2px;
 }
