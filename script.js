@@ -26,17 +26,21 @@ let habits = JSON.parse(localStorage.getItem(storageKey())) || [];
 const save = () => localStorage.setItem(storageKey(), JSON.stringify(habits));
 
 /**
- * Creates a custom dropdown that stays anchored to its parent container.
+ * Creates a custom dropdown that intelligently opens UP or DOWN
+ * depending on screen position.
  */
 function makeDropdown(el, options, selectedIndex, onChange) {
   el.innerHTML = "";
   el.style.position = "relative";
+  
   const btn = document.createElement("div");
   btn.className = "dropdown-button";
   btn.innerHTML = options[selectedIndex]?.label || "Select";
+  
   const menu = document.createElement("div");
   menu.className = "dropdown-menu";
   menu.style.display = "none";
+  
   options.forEach((opt) => {
     const item = document.createElement("div");
     item.className = "dropdown-item";
@@ -49,13 +53,44 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     };
     menu.appendChild(item);
   });
+
   btn.onclick = (e) => {
     e.stopPropagation();
+    
+    // 1. Close any other open dropdowns first
     document.querySelectorAll(".dropdown-menu").forEach((m) => {
       if (m !== menu) m.style.display = "none";
     });
-    menu.style.display = menu.style.display === "block" ? "none" : "block";
+
+    // 2. Toggle the current menu
+    const isHidden = menu.style.display === "none";
+    
+    if (isHidden) {
+      menu.style.display = "block";
+
+      // --- SMART POSITIONING LOGIC ---
+      // Get the button's position relative to the viewport
+      const rect = btn.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // If there is less than 220px of space below, open UPWARDS
+      if (spaceBelow < 220) {
+        menu.style.top = "auto";
+        menu.style.bottom = "calc(100% + 8px)"; // Anchors it to the top of the button
+        menu.style.transformOrigin = "bottom left"; // Makes animation look natural
+      } else {
+        // Otherwise, open DOWNWARDS (Default)
+        menu.style.top = "calc(100% + 8px)";
+        menu.style.bottom = "auto";
+        menu.style.transformOrigin = "top left";
+      }
+      // -------------------------------
+
+    } else {
+      menu.style.display = "none";
+    }
   };
+
   el.appendChild(btn);
   el.appendChild(menu);
 }
