@@ -306,6 +306,7 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     .dropdown-button {
         flex: 1; /* Month takes remaining space */
         justify-content: center;
+        min-width: 0; /* Prevents flex blowout */
     }
 
     .headline { align-items: flex-start; text-align: left; width: 100%; }
@@ -349,34 +350,38 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     .quote-text { width: 100%; padding: 10px 0; border-top: 1px dashed rgba(255,255,255,0.1); border-bottom: 1px dashed rgba(255,255,255,0.1); }
     
     /* 3. GRAPH: Horizontal Scroll Fix */
-    /* This prevents the graph from overflowing the card */
     .today-focus {
         height: auto;
         min-height: 240px;
-        overflow: hidden; /* Contains the scrollbar inside */
+        overflow: hidden; 
     }
     
     .graph-container {
-        display: block; /* Allows scrolling */
+        display: block; 
         overflow-x: auto; /* ENABLE SCROLL */
         width: 100%;
-        padding-bottom: 10px; /* Space for scrollbar */
+        padding-bottom: 10px; 
     }
 
     svg#activityGraph {
-        min-width: 600px; /* FORCE WIDTH so it doesn't squash */
+        min-width: 600px; /* Force width so it doesn't squash */
         height: 100%;
         display: block;
     }
 
-    /* 4. TABLE: Un-cramped */
+    /* 4. TABLE: HIDE METADATA ON MOBILE */
+    /* This is the magic fix. Hide Type/Imp/Goal on mobile */
+    .metadata-col {
+        display: none !important;
+    }
+
     /* Restore padding so checkboxes breathe */
     th, td { padding: 4px; } 
 
     /* Slim Sticky Column */
     th:first-child, td:first-child {
-        min-width: 110px; 
-        max-width: 110px;
+        min-width: 100px; /* Much smaller now that we hid metadata */
+        max-width: 100px;
         padding-left: 8px;
         font-size: 12px;
     }
@@ -388,7 +393,8 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 
     /* 6. TOUCH TARGETS */
     input[type="checkbox"] { 
-        margin: 0 auto; /* Center in cell */
+        margin: 0 auto; 
         display: block; 
+        width: 18px; height: 18px; /* Slightly bigger */
     }
 }

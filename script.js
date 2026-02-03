@@ -142,8 +142,12 @@ function renderHeader() {
     nameTh.appendChild(wrapper); dayHeader.appendChild(nameTh);
 
     if (isEditMode) {
+        // ADDED CLASS: metadata-col
         ["Type", "Imp", "Goal"].forEach(t => {
-            const th = document.createElement("th"); th.textContent = t; dayHeader.appendChild(th);
+            const th = document.createElement("th"); 
+            th.textContent = t; 
+            th.className = "metadata-col"; // Tag for CSS
+            dayHeader.appendChild(th);
         });
     }
 
@@ -179,25 +183,32 @@ function renderHabits() {
         nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
         tr.appendChild(nameTd);
 
-        // LAST 2 ROWS OPEN UP
+        // Dropdown Logic
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
         if (isEditMode) {
-            const typeTd = document.createElement("td"); const tDD = document.createElement("div"); tDD.className = "dropdown";
+            // ADDED CLASS: metadata-col to all these TDs
+            const typeTd = document.createElement("td"); 
+            typeTd.className = "metadata-col";
+            const tDD = document.createElement("div"); tDD.className = "dropdown";
             makeDropdown(tDD, [{label:"Positive",value:"positive"},{label:"Negative",value:"negative"}], h.type==="negative"?1:0, (v)=>{h.type=v;save();update();}, dropDir);
             const typeBtn = tDD.querySelector('.dropdown-button');
             if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
             typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-            const impTd = document.createElement("td"); const iDD = document.createElement("div"); iDD.className = "dropdown";
+            const impTd = document.createElement("td"); 
+            impTd.className = "metadata-col";
+            const iDD = document.createElement("div"); iDD.className = "dropdown";
             makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
             const impBtn = iDD.querySelector('.dropdown-button');
             const w = h.weight||2;
             if(w===1) impBtn.classList.add('badge-imp-low'); if(w===2) impBtn.classList.add('badge-imp-med'); if(w===3) impBtn.classList.add('badge-imp-high');
             impTd.appendChild(iDD); tr.appendChild(impTd);
 
-            const goalTd = document.createElement("td"); const gIn = document.createElement("input");
+            const goalTd = document.createElement("td"); 
+            goalTd.className = "metadata-col";
+            const gIn = document.createElement("input");
             gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
             gIn.addEventListener("wheel", (e)=>e.preventDefault());
             gIn.oninput = (e)=>{ h.goal = +e.target.value; debouncedSave(); updateStats(); if(!isEditMode) updateProgress(tr,h); };
@@ -241,21 +252,13 @@ function renderHabits() {
         }
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
-
-    // AUTO-SCROLL TO TODAY (Mobile UX Fix)
-    // Centers the "Today" column on load so you don't have to scroll
+    
+    // AUTO-SCROLL TO TODAY
     setTimeout(() => {
         const todayCol = document.querySelector(".today-col");
-        if (todayCol) {
-            todayCol.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest",
-                inline: "center"
-            });
-        }
+        if (todayCol) todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     }, 100);
 }
-
 function updateProgress(tr, h) {
     const done = h.days.filter(Boolean).length;
     let pct = 0;
@@ -384,7 +387,10 @@ function renderGraph() {
         scores.push(dailyScore);
     }
     const container = svg.parentElement;
-    const width = container.scrollWidth || container.offsetWidth; const height = 150; 
+    
+    // CHANGE: Use scrollWidth to support the wider mobile graph
+    const width = container.scrollWidth || container.offsetWidth; 
+    const height = 150;
     const dayHeaders = document.querySelectorAll('table thead th');
     let xPositions = [];
     let startIndex = -1;
