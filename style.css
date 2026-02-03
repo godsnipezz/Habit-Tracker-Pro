@@ -109,7 +109,11 @@ body {
     background: var(--surface); 
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border); border-radius: var(--radius); 
-    padding: 24px 32px; margin-bottom: 20px;
+    
+    /* CRITICAL: Match the horizontal padding of the .habits container exactly */
+    padding: 24px 32px; 
+    
+    margin-bottom: 20px;
     display: flex; flex-direction: column;
     height: 240px; 
     position: relative;
@@ -136,10 +140,9 @@ body {
 /* GRAPH CONTAINER */
 .graph-container {
     flex: 1;
-    width: 100%; 
-    /* Remove negative margins so it stays inside the box boundaries */
-    margin: 0; 
-    padding: 0 10px; /* Slight side padding to match table header inset */
+    width: 100%;
+    margin: 0;
+    padding: 0; /* Remove padding here so SVG aligns with outer box */
     position: relative;
     display: flex; align-items: flex-end;
 }
@@ -148,6 +151,8 @@ svg#activityGraph {
     overflow: visible; 
     width: 100%;
     height: 100%;
+    /* Ensure no tiny gaps shift the SVG */
+    display: block; 
 }
 
 .graph-path {

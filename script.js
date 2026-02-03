@@ -455,59 +455,78 @@ function renderGraph() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const totalDaysInMonth = getDays(y, currentMonth); 
     
-    // FILL DATA FOR THE FULL MONTH (Fixed Timeline)
+    // Fill data for the FULL month (0 to 28/30/31)
     let scores = [];
     for (let d = 0; d < totalDaysInMonth; d++) {
         let dailyScore = 0;
         habits.forEach(h => {
-            // Calculate score for every day, past or future (future will naturally be 0)
             if (h.days[d]) dailyScore += (h.type === 'positive' ? 1 : -1);
         });
         scores.push(dailyScore);
     }
 
     // 2. Setup Dimensions
-    const width = 800;  
-    const height = 150; 
-    const padding = 20; // Space for labels
-    const bottomBuffer = 30; // Extra space at bottom so graph doesn't hit edge
+    const width = 800;  // Internal SVG width
+    const height = 150; // Internal SVG height
+    
+    // 3. DYNAMIC ALIGNMENT (The "Perfect Match" Fix)
+    // We try to detect how wide the "Habit" column is to offset the graph
+    let leftOffset = 0;
+    const table = document.querySelector('table');
+    const firstHeader = document.querySelector('th:first-child');
+    
+    if (table && firstHeader) {
+        // Calculate the ratio between SVG width (800) and actual pixel width
+        const ratio = width / table.offsetWidth;
+        // The offset in SVG units = First Column Pixel Width * Ratio
+        leftOffset = firstHeader.offsetWidth * ratio;
+    } else {
+        // Fallback if table isn't rendered yet: ~20% offset
+        leftOffset = width * 0.22; 
+    }
 
-    // 3. Y-AXIS SCALING (Visibility Fix)
-    // We force a minimum range of 8 so small graphs don't look flat.
-    // If you have 3 habits done, maxVal is 3. We treat it as 8 to scale it gently.
+    // 4. Y-AXIS SCALING (The "Visibility" Fix)
+    const padding = 20; 
+    const bottomBuffer = 20; // Keeps graph off the absolute bottom edge
+    
+    // Force a healthy range so small numbers (1, 2) look distinct
     let maxData = Math.max(...scores);
-    let maxVal = Math.max(maxData + 2, 8); // Minimum peak of 8 for aesthetics
+    // If your max score is 3, we scale as if it's 6 so it hits the middle, not the roof.
+    // If max score is 0, we use 5 to keep the baseline flat.
+    let maxVal = Math.max(maxData * 1.5, 6); 
     let minVal = Math.min(...scores, 0); 
     
     const range = maxVal - minVal;
     
-    // Map Value to Y (Inverted because SVG Y=0 is top)
+    // Mapping Y (Inverted: 0 is bottom)
     const mapY = (val) => height - bottomBuffer - ((val - minVal) / range) * (height - padding - bottomBuffer);
     
-    // 4. X-AXIS SCALING (Alignment Fix)
-    // We map 1..TotalDays to the width.
-    // (i + 0.5) puts the point in the CENTER of the day's "column"
-    const mapX = (dayIdx) => ((dayIdx + 0.5) / totalDaysInMonth) * width;
+    // 5. X-AXIS SCALING
+    // Available width for the days = Total Width - Left Offset
+    const graphWidth = width - leftOffset;
+    // Align points to the CENTER of the day columns
+    const mapX = (i) => leftOffset + ((i + 0.5) / totalDaysInMonth) * graphWidth;
 
-    // 5. Generate Points
+    // 6. Generate Points
     const points = scores.map((val, i) => ({ x: mapX(i), y: mapY(val), val }));
 
+    // Edge case: Empty data
     if (points.length < 2) {
         svg.innerHTML = ``;
         return;
     }
 
-    // 6. Build Curve (Spline)
+    // 7. Build Curve (Monotone Cubic Spline for stability)
     let dPath = `M ${points[0].x} ${points[0].y}`;
     
-    // We use a simpler smoothing for the timeline to handle the zeroes gracefully
     for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[Math.max(i - 1, 0)];
         const p1 = points[i];
         const p2 = points[i + 1];
         const p3 = points[Math.min(i + 2, points.length - 1)];
 
-        const cp1x = p1.x + (p2.x - p0.x) * 0.15; // Tighter tension (0.15) for cleaner zeroes
+        // Use slight tension (0.15) for smooth timeline flow
+        const cp1x = p1.x + (p2.x - p0.x) * 0.15;
         const cp1y = p1.y + (p2.y - p0.y) * 0.15;
 
         const cp2x = p2.x - (p3.x - p1.x) * 0.15;
@@ -516,11 +535,12 @@ function renderGraph() {
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
 
-    // 7. Gradient Area (Close the loop to the bottom baseline)
-    const baseline = height - bottomBuffer + 5; // Slightly below line
+    // 8. Gradient Area
+    // Drop strictly to the baseline (height - bottomBuffer)
+    const baseline = height - bottomBuffer;
     const dArea = `${dPath} L ${points[points.length-1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
 
-    // 8. Render SVG Content
+    // 9. Render SVG
     let svgContent = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -529,17 +549,19 @@ function renderGraph() {
             </linearGradient>
         </defs>
         
-        <line x1="0" y1="${mapY(0)}" x2="${width}" y2="${mapY(0)}" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+        <line x1="${leftOffset}" y1="${baseline}" x2="${width}" y2="${baseline}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+        
+        <line x1="${leftOffset}" y1="0" x2="${leftOffset}" y2="${height}" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="4 4" />
 
         <path class="graph-area" d="${dArea}" />
         <path class="graph-path" d="${dPath}" />
     `;
 
-    // 9. Render Labels (Only non-zeros to keep it clean)
+    // 10. Labels
     points.forEach((p, i) => {
         if (p.val !== 0) {
             svgContent += `
-                <text x="${p.x}" y="${p.y - 10}" class="graph-label visible">${p.val}</text>
+                <text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>
                 <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>
             `;
         }
