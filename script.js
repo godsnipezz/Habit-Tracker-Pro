@@ -17,6 +17,9 @@ let currentMonth = NOW.getMonth();
 const yearInput = document.getElementById("year");
 yearInput.value = NOW.getFullYear();
 
+// BUG FIX: Prevent mouse wheel from accidentally changing the year
+yearInput.addEventListener("wheel", (e) => e.preventDefault());
+
 const getDays = (y, m) => new Date(y, m + 1, 0).getDate();
 const storageKey = () => `habits-${yearInput.value}-${currentMonth}`;
 
@@ -35,6 +38,8 @@ function makeDropdown(el, options, selectedIndex, onChange) {
   
   const btn = document.createElement("div");
   btn.className = "dropdown-button";
+  // BUG FIX: Allow keyboard focus (Tab)
+  btn.tabIndex = 0; 
   btn.innerHTML = options[selectedIndex]?.label || "Select";
   
   const menu = document.createElement("div");
@@ -54,48 +59,48 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     menu.appendChild(item);
   });
 
-  btn.onclick = (e) => {
+  // Toggle Logic
+  const toggleMenu = (e) => {
     e.stopPropagation();
-    
-    // 1. Close any other open dropdowns first
     document.querySelectorAll(".dropdown-menu").forEach((m) => {
       if (m !== menu) m.style.display = "none";
     });
 
-    // 2. Toggle the current menu
     const isHidden = menu.style.display === "none";
-    
     if (isHidden) {
       menu.style.display = "block";
-
-      // --- SMART POSITIONING LOGIC ---
-      // Get the button's position relative to the viewport
+      // Smart Positioning
       const rect = btn.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      
-      // If there is less than 220px of space below, open UPWARDS
       if (spaceBelow < 220) {
         menu.style.top = "auto";
-        menu.style.bottom = "calc(100% + 8px)"; // Anchors it to the top of the button
-        menu.style.transformOrigin = "bottom left"; // Makes animation look natural
+        menu.style.bottom = "calc(100% + 8px)";
+        menu.style.transformOrigin = "bottom left";
       } else {
-        // Otherwise, open DOWNWARDS (Default)
         menu.style.top = "calc(100% + 8px)";
         menu.style.bottom = "auto";
         menu.style.transformOrigin = "top left";
       }
-      // -------------------------------
-
     } else {
       menu.style.display = "none";
     }
+  };
+
+  btn.onclick = toggleMenu;
+  
+  // BUG FIX: Allow "Enter" key to open dropdown
+  btn.onkeydown = (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          toggleMenu(e);
+      }
   };
 
   el.appendChild(btn);
   el.appendChild(menu);
 }
 
-let isEditMode = false; // State to track if we are editing settings
+let isEditMode = false;
 
 function renderHeader() {
   const dayHeader = document.getElementById("dayHeader");
@@ -107,17 +112,18 @@ function renderHeader() {
 
   // 1. Habit Column with Settings Toggle
   const nameTh = document.createElement("th");
-  nameTh.style.display = "flex";
-  nameTh.style.alignItems = "center";
-  nameTh.style.justifyContent = "space-between";
+  nameTh.className = "sticky-col-header"; // New class for flex alignment
   
   // Create the Gear Icon Button
   const settingsBtn = document.createElement("button");
   settingsBtn.className = "toggle-edit-btn";
-  settingsBtn.innerHTML = isEditMode ? "Done" : "⚙️";
+  settingsBtn.innerHTML = isEditMode 
+    ? `<i data-lucide="check" style="width: 16px; height: 16px;"></i>` 
+    : `<i data-lucide="settings-2" style="width: 16px; height: 16px;"></i>`;
+    
   settingsBtn.onclick = () => {
       isEditMode = !isEditMode;
-      update(); // Re-render to show/hide columns
+      update(); 
   };
   
   const labelSpan = document.createElement("span");
@@ -127,7 +133,7 @@ function renderHeader() {
   nameTh.appendChild(labelSpan);
   dayHeader.appendChild(nameTh);
 
-  // 2. Conditional Columns (Only show in Edit Mode)
+  // 2. Conditional Columns
   if (isEditMode) {
       ["Type", "Imp", "Goal"].forEach(t => {
           const th = document.createElement("th");
@@ -145,11 +151,11 @@ function renderHeader() {
   }
   
   // 4. Spacer/Progress Column
-  // If in edit mode, we don't need the progress bar, we need delete button space
-  // But to keep alignment simple, we'll just keep the header empty or "Actions"
   const endTh = document.createElement("th");
   endTh.textContent = isEditMode ? "Del" : "";
   dayHeader.appendChild(endTh);
+
+  lucide.createIcons();
 }
 
 function renderHabits() {
@@ -165,16 +171,17 @@ function renderHabits() {
 
     // --- 1. Habit Name ---
     const nameTd = document.createElement("td");
-    nameTd.contentEditable = isEditMode; // Only editable when settings open
+    nameTd.contentEditable = isEditMode; 
     nameTd.textContent = h.name;
     nameTd.style.cursor = isEditMode ? "text" : "default";
+    nameTd.className = "habit-name-cell"; // Helper for styling
     nameTd.onblur = () => {
       h.name = nameTd.textContent;
       save();
     };
     tr.appendChild(nameTd);
 
-    // --- 2. Edit Columns (Type, Imp, Goal) ---
+    // --- 2. Edit Columns ---
     if (isEditMode) {
         // Type
         const typeTd = document.createElement("td");
@@ -214,7 +221,6 @@ function renderHabits() {
     // --- 3. Checkboxes ---
     for (let d = 0; d < days; d++) {
       const td = document.createElement("td");
-      
       const isToday = isThisMonth && d + 1 === today;
       const isFuture = isThisMonth && d + 1 > today;
 
@@ -224,18 +230,12 @@ function renderHabits() {
       cb.type = "checkbox";
       cb.checked = h.days[d];
 
-      // UX FIX: Negative habits turn RED when checked
-      if (h.type === "negative") {
-          cb.classList.add("neg-habit");
-      }
-
-      // UX FIX: Dim future days
+      if (h.type === "negative") cb.classList.add("neg-habit");
       if (isFuture) {
           cb.classList.add("future-day");
-          cb.disabled = true; // Hard disable logic
+          cb.disabled = true;
       }
 
-      // Logic isolation (existing code)
       const isFutureYear = +yearInput.value > NOW.getFullYear();
       const isFutureMonth = +yearInput.value === NOW.getFullYear() && currentMonth > NOW.getMonth();
       const isFutureDay = isThisMonth && d > NOW.getDate() - 1;
@@ -245,20 +245,19 @@ function renderHabits() {
         h.days[d] = cb.checked;
         save();
         updateStats();
-        // If not in edit mode, we can update the mini progress bar if we kept it
         if (!isEditMode) updateProgress(tr, h); 
       };
       td.appendChild(cb);
       tr.appendChild(td);
     }
 
-    // --- 4. End Column (Delete or Progress) ---
+    // --- 4. End Column ---
     const endTd = document.createElement("td");
     if (isEditMode) {
-        // Show Delete Button
-        endTd.innerHTML = "🗑";
+        endTd.innerHTML = `<i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>`;
         endTd.style.cursor = "pointer";
         endTd.style.opacity = "0.7";
+        endTd.style.color = "#ef4444";
         endTd.onclick = () => {
             if (confirm("Delete habit?")) {
                 habits.splice(i, 1);
@@ -267,21 +266,19 @@ function renderHabits() {
             }
         };
     } else {
-        // Show Mini Progress Bar
         endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
-        // We need to delay the width update slightly or call it immediately
         setTimeout(() => updateProgress(tr, h), 0);
     }
     tr.appendChild(endTd);
 
     habitBody.appendChild(tr);
   });
+  lucide.createIcons();
 }
 
 function updateProgress(tr, h) {
   const done = h.days.filter(Boolean).length;
-  const pct =
-    h.type === "positive"
+  const pct = h.type === "positive"
       ? (done / h.days.length) * 100
       : ((h.days.length - done) / h.days.length) * 100;
   const fill = tr.querySelector(".progress-fill");
@@ -291,7 +288,7 @@ function updateProgress(tr, h) {
 function setRing(id, pct) {
   const path = document.getElementById(id.replace("ring-", "path-"));
   const text = document.getElementById(id.replace("ring-", "") + "Pct");
-  const circ = 213.6; // Circumference for r=34
+  const circ = 213.6; 
   path.style.strokeDasharray = `${circ} ${circ}`;
   path.style.strokeDashoffset = circ - (pct / 100) * circ;
   text.textContent = Math.round(pct) + "%";
@@ -302,27 +299,19 @@ function updateStats() {
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : (habits[0]?.days.length - 1 || 0);
 
     let earned = 0, totalPossible = 0;
-    let todayDone = 0, todayTotal = 0; // Positive Only
-    let negSlips = 0, negTotal = 0;    // Negative Only
+    let todayDone = 0, todayTotal = 0; 
+    let negSlips = 0, negTotal = 0;   
     let momentumSum = 0;
 
     habits.forEach(h => {
-        // Safe Math: Force 'weight' to be a Number
         const w = Number(h.weight) || 2; 
         const daysInMonth = h.days.length;
-
-        // 1. MONTHLY PROGRESS MATH
         const checkedDays = h.days.filter(Boolean).length;
-        
-        // Positive: Count Checks. Negative: Count Empty Boxes.
-        const successCount = h.type === "positive" 
-            ? checkedDays 
-            : (daysInMonth - checkedDays);
+        const successCount = h.type === "positive" ? checkedDays : (daysInMonth - checkedDays);
 
         earned += (successCount / daysInMonth) * w;
         totalPossible += w;
 
-        // 2. TODAY'S SUMMARY MATH
         if (h.type === "positive") {
             todayTotal++;
             if (h.days[todayIdx]) todayDone++; 
@@ -331,7 +320,6 @@ function updateStats() {
             if (h.days[todayIdx]) negSlips++;
         }
 
-        // 3. MOMENTUM MATH
         let hMom = 0, wSum = 0;
         [0.1, 0.2, 0.3, 0.4].forEach((weight, i) => {
             const idx = todayIdx - (3 - i);
@@ -344,34 +332,27 @@ function updateStats() {
         momentumSum += (wSum ? hMom / wSum : 0) * w;
     });
 
-    // CALCULATE SCORES
     const mScore = totalPossible ? (earned / totalPossible) * 100 : 0;
     const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
     const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
 
-    // --- FIX: UPDATE THE HEADER TEXT ---
-    // This targets the <h1 id="successRate"> in your HTML
     const successEl = document.getElementById("successRate");
     if (successEl) successEl.textContent = Math.round(mScore) + "%";
-    // -----------------------------------
 
-    // UPDATE UI TEXT
     document.getElementById("completed").textContent = todayDone;
     document.getElementById("total").textContent = todayTotal;
 
     document.getElementById("todaySummary").innerHTML = 
         `${todayDone} of ${todayTotal} habits done <span style="opacity:0.5; margin:0 8px">|</span> ${negSlips} of ${negTotal} slips`;
 
-    // UPDATE RINGS
     setRing("ring-monthly", mScore); 
     setRing("ring-normalized", tScore); 
     setRing("ring-momentum", momScore);
 }
 
-// CRITICAL: Year Listener forces data refresh and resets rings for future years
 yearInput.addEventListener("input", () => {
   const stored = localStorage.getItem(storageKey());
-  habits = stored ? JSON.parse(stored) : []; // Explicitly reset to empty if no data
+  habits = stored ? JSON.parse(stored) : []; 
   update();
 });
 
@@ -387,7 +368,6 @@ document.getElementById("addHabit").onclick = () => {
   update();
 };
 
-// CRITICAL: Month Dropdown also forces data refresh
 makeDropdown(
   document.getElementById("monthDropdown"),
   monthNames.map((m, i) => ({ label: m, value: i })),
@@ -407,11 +387,8 @@ function update() {
   lucide.createIcons();
 }
 
-// Close menus when clicking away
 document.addEventListener("click", () =>
-  document
-    .querySelectorAll(".dropdown-menu")
-    .forEach((m) => (m.style.display = "none")),
+  document.querySelectorAll(".dropdown-menu").forEach((m) => (m.style.display = "none"))
 );
 
 update();
