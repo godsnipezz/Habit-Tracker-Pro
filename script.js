@@ -245,8 +245,8 @@ function renderHabits() {
         nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
         tr.appendChild(nameTd);
 
-        // Calculate Dropdown Direction: Last 3 rows = UP, others = DOWN
-        const isBottomRow = i >= habits.length - 3;
+        // Calculate Dropdown Direction: Last 2 rows = UP, others = DOWN
+        const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
         // 2. Edit Controls
