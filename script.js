@@ -448,6 +448,8 @@ function todayScoreText() {
 // =========================================================
 // --- GRAPH RENDERING LOGIC ---
 // --- GRAPH RENDERING LOGIC ---
+// --- GRAPH RENDERING LOGIC ---
+// --- GRAPH RENDERING LOGIC ---
 function renderGraph() {
     const svg = document.getElementById("activityGraph");
     if (!svg) return;
@@ -466,49 +468,68 @@ function renderGraph() {
     }
 
     // 2. Setup Dimensions
-    const width = 800;  
+    // Use actual container width to match table
+    const container = svg.parentElement;
+    const width = container.offsetWidth; 
     const height = 150; 
     
-    // 3. DYNAMIC ALIGNMENT (Match Table Columns)
-    let leftOffset = 0;
-    const table = document.querySelector('table');
-    const firstHeader = document.querySelector('th:first-child');
+    // 3. DYNAMIC ALIGNMENT
+    const dayHeaders = document.querySelectorAll('table thead th');
+    let xPositions = [];
     
-    if (table && firstHeader) {
-        const ratio = width / table.offsetWidth;
-        leftOffset = firstHeader.offsetWidth * ratio;
-    } else {
-        leftOffset = width * 0.22; 
+    // Try to find the "1" header to start measuring
+    let startIndex = -1;
+    for(let i=0; i<dayHeaders.length; i++) {
+            if(dayHeaders[i].innerText.trim() === "1") {
+                startIndex = i;
+                break;
+            }
     }
 
-    // 4. Y-AXIS SCALING (LIFT THE GRAPH)
-    const padding = 20; // Space for top labels
-    const bottomBuffer = 50; // <--- INCREASED from 20 to 50 to lift graph up
-    
-    // Force valid range so low scores (1, 2) have height
-    let maxData = Math.max(...scores);
-    let maxVal = Math.max(maxData + 2, 6); // Min peak height of 6
-    let minVal = Math.min(...scores, 0);   // Anchor bottom to 0
-    
-    const range = maxVal - minVal;
-    
-    // Map Y (Inverted: 0 is bottom)
-    // The "Floor" (0) will now be at (height - bottomBuffer)
-    const mapY = (val) => height - bottomBuffer - ((val - minVal) / range) * (height - padding - bottomBuffer);
-    
-    // 5. X-AXIS SCALING
-    const graphWidth = width - leftOffset;
-    const mapX = (i) => leftOffset + ((i + 0.5) / totalDaysInMonth) * graphWidth;
+    if (startIndex > -1 && dayHeaders.length >= startIndex + totalDaysInMonth) {
+        for (let d = 0; d < totalDaysInMonth; d++) {
+            const th = dayHeaders[startIndex + d];
+            if (th) {
+                // Find center relative to the container
+                // We assume the graph container and table are aligned
+                const centerX = th.offsetLeft + (th.offsetWidth / 2);
+                xPositions.push(centerX);
+            }
+        }
+    }
 
-    // 6. Generate Points
-    const points = scores.map((val, i) => ({ x: mapX(i), y: mapY(val), val }));
+    // Fallback if headers aren't found (rare)
+    if (xPositions.length === 0) {
+        const leftOffset = width * 0.22; 
+        const graphWidth = width - leftOffset;
+        for (let d = 0; d < totalDaysInMonth; d++) {
+            xPositions.push(leftOffset + ((d + 0.5) / totalDaysInMonth) * graphWidth);
+        }
+    }
+
+    // 4. Y-AXIS SCALING
+    const padding = 20; 
+    const floorY = height - 30; // Fixed baseline 30px from bottom
+    
+    let maxScore = Math.max(...scores, 5); // Min peak of 5
+    // Calculate pixels per score unit
+    const pxPerUnit = (floorY - padding) / Math.max(maxScore, 1);
+
+    const mapY = (val) => floorY - (val * pxPerUnit);
+
+    // 5. Generate Points
+    const points = scores.map((val, i) => ({ 
+        x: xPositions[i] || 0, 
+        y: mapY(val), 
+        val 
+    }));
 
     if (points.length < 2) {
         svg.innerHTML = ``;
         return;
     }
 
-    // 7. Build Curve (Spline)
+    // 6. Build Curve
     let dPath = `M ${points[0].x} ${points[0].y}`;
     
     for (let i = 0; i < points.length - 1; i++) {
@@ -526,12 +547,12 @@ function renderGraph() {
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
 
-    // 8. Gradient Area
-    // Anchor area to the new, lifted baseline
-    const baseline = height - bottomBuffer;
-    const dArea = `${dPath} L ${points[points.length-1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
+    // 7. Gradient Area
+    const dArea = `${dPath} L ${points[points.length-1].x} ${floorY} L ${points[0].x} ${floorY} Z`;
 
-    // 9. Render SVG
+    // 8. Render SVG (Clean: No Vertical Lines)
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
     let svgContent = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -540,15 +561,13 @@ function renderGraph() {
             </linearGradient>
         </defs>
         
-        <line x1="${leftOffset}" y1="${baseline}" x2="${width}" y2="${baseline}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-        
-        <line x1="${leftOffset}" y1="0" x2="${leftOffset}" y2="${height}" stroke="rgba(255,255,255,0.05)" stroke-width="1" stroke-dasharray="4 4" />
+        <line x1="0" y1="${floorY}" x2="${width}" y2="${floorY}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
 
         <path class="graph-area" d="${dArea}" />
         <path class="graph-path" d="${dPath}" />
     `;
 
-    // 10. Labels
+    // 9. Labels (Non-zero only)
     points.forEach((p, i) => {
         if (p.val !== 0) {
             svgContent += `
@@ -560,6 +579,8 @@ function renderGraph() {
 
     svg.innerHTML = svgContent;
 }
+
+window.addEventListener('resize', debounce(() => renderGraph(), 100));
 
 // EVENTS
 yearInput.addEventListener("input", () => {

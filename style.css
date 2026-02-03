@@ -106,16 +106,12 @@ body {
 
 /* UPDATED TODAY CARD (GRAPH) */
 .today-focus {
-    background: var(--surface); 
-    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border); border-radius: var(--radius); 
     padding: 24px 32px; 
     margin-bottom: 20px;
-    display: flex; flex-direction: column;
     height: 240px; 
     position: relative;
-    /* REMOVED overflow: hidden so labels/lines aren't cut off */
-    /* overflow: hidden; */ 
+    overflow: visible; /* Important for labels */
+    display: flex; flex-direction: column;
 }
 .habits {
     background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -137,22 +133,19 @@ body {
 
 /* GRAPH CONTAINER */
 .graph-container {
-    flex: 1;
     width: 100%;
-    margin: 0;
-    padding: 0; /* Remove padding here so SVG aligns with outer box */
+    margin: 0; padding: 0;
+    flex: 1; /* Fills remaining height */
     position: relative;
-    display: flex; align-items: flex-end;
+    /* Removed padding-top so it uses flex space */
 }
 
 svg#activityGraph {
-    overflow: visible; 
     width: 100%;
     height: 100%;
-    /* Ensure no tiny gaps shift the SVG */
-    display: block; 
+    display: block;
+    overflow: visible;
 }
-
 .graph-path {
     fill: none;
     stroke: var(--green);
