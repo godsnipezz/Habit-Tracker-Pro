@@ -38,61 +38,125 @@ body {
 /* =========================================================
    2. HEADER & INPUTS (TOP BAR)
 ========================================================= */
-.top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
-.date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
-
-.date-picker input[type="number"] {
-    background: rgba(255, 255, 255, 0.05); 
-    border: 1px solid var(--border);
-    color: #ffffff !important; 
-    height: 42px; 
-    padding: 0 10px; 
-    line-height: 40px;
-    border-radius: 12px; 
-    width: 90px; 
-    font-size: 14px; 
-    font-weight: 600;
-    outline: none; 
-    cursor: text;
-    text-align: center; 
-    -moz-appearance: textfield; appearance: textfield;
+.top { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-end; 
+    margin-bottom: 24px; 
 }
 
-.date-picker input[type="number"]::-webkit-inner-spin-button, 
-.date-picker input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.date-picker { 
+    display: flex; 
+    gap: 12px; 
+    align-items: center; 
+}
 
+/* --- GLASS PILL INPUTS (Year & Month) --- */
+/* Applies to Year Input and Header Dropdown Button */
+.date-picker input[type="number"],
+.dropdown-button {
+    background: rgba(255, 255, 255, 0.03); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff !important; 
+    height: 40px; 
+    line-height: 38px; /* Vertically center text */
+    padding: 0 20px; 
+    
+    /* THE PILL SHAPE */
+    border-radius: 100px; 
+    
+    font-size: 13px; 
+    font-weight: 600;
+    outline: none; 
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    
+    /* Flex alignment for dropdown button content */
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    min-width: 130px; /* Standard width for month picker */
+}
+
+/* Specific tweaks for Year Input */
+.date-picker input[type="number"] {
+    width: 90px; 
+    min-width: auto;
+    text-align: center;
+    -moz-appearance: textfield; 
+    appearance: textfield;
+    display: block; /* Input is block, not flex */
+}
+.date-picker input[type="number"]::-webkit-inner-spin-button, 
+.date-picker input[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
+
+/* HOVER EFFECTS */
+.date-picker input[type="number"]:hover,
+.dropdown-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+}
+
+/* FOCUS EFFECTS */
+.date-picker input[type="number"]:focus,
+.dropdown-button:focus {
+    border-color: var(--green);
+    background: rgba(99, 230, 164, 0.05);
+}
+
+/* Dropdown Arrow Fix */
+.dropdown-button::after {
+    content: ''; width: 16px; height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: center;
+    margin-left: 10px;
+}
+
+/* --- HEADLINE (GRADIENT & ICON) --- */
 .headline {
     display: flex;
     flex-direction: column;
-    /* Ensure it aligns left near the date picker */
-    align-items: flex-start; 
+    align-items: flex-end; /* Align right */
+    text-align: right;
 }
+
 .headline-label {
     display: flex;
     align-items: center;
-    gap: 8px; /* Space between icon and text */
-    color: var(--green); /* Make the label pop with color */
+    justify-content: flex-end;
+    gap: 8px; 
+    color: var(--green); 
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 2px; /* Tight spacing to the big number */
+    margin-bottom: 2px; 
 }
-/* The Big Number with Gradient */
+
+.headline-icon {
+    width: 16px;
+    height: 16px;
+    stroke-width: 3px;
+}
+
 .gradient-text {
-    font-size: 52px; /* Made slightly larger for impact */
+    font-size: 52px; 
     font-weight: 800;
     margin: 0;
     letter-spacing: -2px;
     font-variant-numeric: tabular-nums;
     line-height: 1;
-
-    /* THE WHITE-GREEN MIX */
+    
+    /* White to Green Gradient */
     background: linear-gradient(135deg, #ffffff 20%, var(--green) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    /* Fallback for browsers that don't support background-clip: text */
     color: #fff; 
 }
 
@@ -104,21 +168,9 @@ body {
 }
 
 /* =========================================================
-   3. DROPDOWNS
+   3. DROPDOWN MENUS
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
-
-.dropdown-button { 
-    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: #fff; height: 42px; padding: 0 15px; border-radius: 12px; cursor: pointer;
-    font-size: 14px; font-weight: 600; min-width: 130px; 
-    display: flex; align-items: center; justify-content: space-between;
-}
-.dropdown-button::after {
-    content: ''; width: 16px; height: 16px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: center;
-}
 
 .dropdown-menu {
     position: absolute; top: calc(100% + 8px); left: 0; 
@@ -142,20 +194,24 @@ body {
     filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); 
 }
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
+.ring-label { font-size: 12px; font-weight: 600; color: #fff; }
 
-/* UPDATED TODAY CARD (GRAPH) */
+/* GRAPH CARD */
 .today-focus {
-    padding: 24px 32px; 
-    margin-bottom: 20px;
+    background: var(--surface); 
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border); border-radius: var(--radius); 
+    padding: 24px 32px; margin-bottom: 20px;
+    display: flex; flex-direction: column;
     height: 240px; 
     position: relative;
-    overflow: visible; /* Important for labels */
-    display: flex; flex-direction: column;
+    overflow: visible;
 }
 .habits {
     background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 32px; margin-bottom: 20px;
 }
+.section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
 
 .today-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -172,27 +228,19 @@ body {
 
 /* GRAPH CONTAINER */
 .graph-container {
-    width: 100%;
+    flex: 1;
+    width: 100%; 
     margin: 0; padding: 0;
-    flex: 1; /* Fills remaining height */
     position: relative;
-    /* Removed padding-top so it uses flex space */
+    display: flex; align-items: flex-end;
 }
+svg#activityGraph { overflow: visible; display: block; width: 100%; height: 100%; }
 
-svg#activityGraph {
-    width: 100%;
-    height: 100%;
-    display: block;
-    overflow: visible;
-}
 .graph-path {
-    fill: none;
-    stroke: var(--green);
-    stroke-width: 3px;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: none; stroke: var(--green); stroke-width: 3px;
+    stroke-linecap: round; stroke-linejoin: round;
     filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
-    transition: d 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Smoother animation */
+    transition: d 0.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 .graph-area { fill: url(#gradient-area); opacity: 0.2; stroke: none; }
 .graph-label {
@@ -208,6 +256,7 @@ svg#activityGraph {
 table { border-collapse: collapse; width: 100%; min-width: 800px; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
 
+/* Sticky First Column */
 th:first-child, td:first-child {
     position: sticky; left: 0; z-index: 10; background: #121212; 
     min-width: 180px; max-width: 180px;
@@ -218,6 +267,7 @@ th:first-child, td:first-child {
 }
 tbody tr:hover td:first-child { background-color: #121212; }
 
+/* Sticky Header */
 th { position: sticky; top: 0; background: #121212; z-index: 11; }
 thead th:first-child { z-index: 20; }
 
@@ -236,7 +286,7 @@ button#addHabit {
     border-radius: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s;
 }
 button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
-.counter { font-size: 14px; font-weight: 600; color: var(--muted); }
+.counter { font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 #completed { color: var(--green); } 
 #total { color: var(--text); }
 
@@ -259,16 +309,18 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 .toggle-edit-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
 .toggle-edit-btn:disabled { opacity: 0.2; cursor: default; background: transparent; }
 
-/* MINIMAL UI ELEMENTS */
+/* MINIMAL UI ELEMENTS (Table Overrides) */
+/* Override general pill style for table dropdowns to be compact */
 td .dropdown-button {
     background: transparent; border: 1px solid transparent; 
     padding: 0 8px; 
     height: 28px; line-height: 26px; 
     min-width: auto; width: auto;
-    font-size: 12px; font-weight: 600; border-radius: 6px;
+    font-size: 12px; font-weight: 600; border-radius: 6px; /* Reset radius */
     justify-content: center; gap: 6px; 
     transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
     display: inline-flex; align-items: center;
+    box-shadow: none;
 }
 td .dropdown-button::after { display: none; }
 td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
