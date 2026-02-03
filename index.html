@@ -13,13 +13,12 @@
     />
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css" />
-    <link rel="icon" href="favicon.ico" />
   </head>
   <body>
     <div class="app">
       <header class="top">
         <div class="date-picker">
-          <input type="number" id="year" />
+          <input type="number" id="year" placeholder="YYYY" />
           <div class="dropdown" id="monthDropdown"></div>
         </div>
 
@@ -43,13 +42,7 @@
           <div class="ring" id="ring-monthly">
             <svg viewBox="0 0 80 80">
               <defs>
-                <linearGradient
-                  id="grad-green"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
+                <linearGradient id="grad-green" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#63e6a4" />
                   <stop offset="100%" stop-color="#34d399" />
                 </linearGradient>
@@ -73,13 +66,7 @@
           <div class="ring" id="ring-normalized">
             <svg viewBox="0 0 80 80">
               <defs>
-                <linearGradient
-                  id="grad-cyan"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
+                <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#4fd1ff" />
                   <stop offset="100%" stop-color="#0ea5e9" />
                 </linearGradient>
@@ -103,13 +90,7 @@
           <div class="ring" id="ring-momentum">
             <svg viewBox="0 0 80 80">
               <defs>
-                <linearGradient
-                  id="grad-yellow"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="0%"
-                >
+                <linearGradient id="grad-yellow" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stop-color="#facc15" />
                   <stop offset="100%" stop-color="#fbbf24" />
                 </linearGradient>
@@ -151,8 +132,5 @@
     </div>
 
     <script src="script.js"></script>
-    <script>
-      lucide.createIcons();
-    </script>
   </body>
 </html>

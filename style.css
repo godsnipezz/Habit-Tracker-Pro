@@ -6,7 +6,8 @@
     --surface: rgba(255, 255, 255, 0.05);
     --border: rgba(255, 255, 255, 0.1);
     --text: #ffffff;
-    --muted: rgba(255, 255, 255, 0.5);
+    /* Increased contrast for better readability */
+    --muted: rgba(255, 255, 255, 0.65); 
     --green: #63e6a4;
     --cyan: #4fd1ff;
     --yellow: #facc15;
@@ -41,13 +42,13 @@ body {
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* YEAR INPUT - Pure Text Style */
+/* YEAR INPUT */
 .date-picker input[type="number"] {
     background: rgba(255, 255, 255, 0.05); 
     border: 1px solid var(--border);
     color: #ffffff !important; 
     height: 42px; 
-    padding: 0 10px; /* Balanced padding */
+    padding: 0 10px; 
     line-height: 40px;
     border-radius: 12px; 
     width: 90px; 
@@ -55,19 +56,14 @@ body {
     font-weight: 600;
     outline: none; 
     cursor: text;
-    text-align: center; /* CENTERED TEXT */
-    
-    /* Remove all arrows/spinners */
+    text-align: center; 
     -moz-appearance: textfield;
     appearance: textfield;
-    background-image: none; 
 }
 
-/* Force Hide Spinners (Chrome/Safari/Edge) */
 .date-picker input[type="number"]::-webkit-inner-spin-button, 
 .date-picker input[type="number"]::-webkit-outer-spin-button { 
-    -webkit-appearance: none; 
-    margin: 0; 
+    -webkit-appearance: none; margin: 0; 
 }
 
 .headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
@@ -108,7 +104,7 @@ body {
 .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 .ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; }
 .ring-progress { 
-    fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; 
+    fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
     filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); 
 }
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
@@ -121,7 +117,7 @@ body {
    5. TABLE & LAYOUT
 ========================================================= */
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
-table { border-collapse: collapse; width: 100%; }
+table { border-collapse: collapse; width: 100%; min-width: 800px; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
 
 /* STICKY COLUMNS & HEADERS */
@@ -133,6 +129,9 @@ th:first-child, td:first-child {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     padding-left: 12px;
 }
+/* Ensure sticky background matches row hover */
+tbody tr:hover td:first-child { background-color: #121212; }
+
 th { position: sticky; top: 0; background: #121212; z-index: 11; }
 thead th:first-child { z-index: 20; }
 
@@ -141,7 +140,7 @@ thead th:first-child { z-index: 20; }
 /* HIGHLIGHTS & STATES */
 .today-col { background: rgba(99, 230, 164, 0.05) !important; }
 tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
-tbody tr:hover td:first-child { background-color: #121212; }
+
 .future-day { opacity: 0.15; pointer-events: none; }
 .today-col input { transform: scale(1.15); box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); }
 
@@ -194,22 +193,19 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* GOAL INPUT - Pure Text Style */
+/* GOAL INPUT */
 .goal-input {
     height: 28px; 
-    width: 60px; /* Slimmer since no arrows */
+    width: 60px; 
     font-size: 12px; 
     font-weight: 600;
-    padding: 0; 
-    margin: 0;
+    padding: 0; margin: 0;
     background: transparent; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 6px; 
     color: var(--muted) !important; 
-    text-align: center; /* CENTERED TEXT */
+    text-align: center; 
     transition: all 0.2s ease;
-    
-    /* Remove default arrows */
     -moz-appearance: textfield; 
     appearance: textfield;
 }
@@ -220,9 +216,7 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* Force Hide Spinners (Chrome/Safari/Edge) */
 .goal-input::-webkit-inner-spin-button, 
 .goal-input::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+    -webkit-appearance: none; margin: 0;
 }
