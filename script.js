@@ -446,3 +446,36 @@ function update() {
 }
 
 loadHabits(); update();
+
+/* =========================================================
+   8. DYNAMIC QUOTES
+========================================================= */
+const motivationalQuotes = [
+    "Consistency is key.",
+    "Focus on the process.",
+    "Small wins matter.",
+    "Day one or one day.",
+    "Keep showing up.",
+    "Progress, not perfection.",
+    "Build momentum.",
+    "Stay hard.",
+    "Discipline equals freedom.",
+    "Just do it.",
+    "One percent better.",
+    "Don't break the chain.",
+    "Focus.",
+    "Execute.",
+    "Less talk, more action."
+];
+
+function setDailyQuote() {
+    const el = document.getElementById("dailyQuote");
+    if (el) {
+        // Pick random index
+        const randomIndex = Math.floor(Math.random() * motivationalQuotes.length);
+        el.innerText = motivationalQuotes[randomIndex];
+    }
+}
+
+// Run on load
+setDailyQuote();
