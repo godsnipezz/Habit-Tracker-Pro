@@ -233,14 +233,16 @@ function updateStats() {
     let momentumSum = 0;
 
     habits.forEach(h => {
-        const w = Number(h.weight) || 2;
+        // --- SAFE MATH FIX: Force 'w' to be a Number ---
+        // If we don't do this, "2" + "2" might become "22" causing the 0% bug
+        const w = Number(h.weight) || 2; 
+        
         const daysInMonth = h.days.length;
         
-        // 1. MONTHLY PROGRESS MATH (for the Monthly Ring)
-        // Count how many days are checked (true)
+        // 1. MONTHLY PROGRESS MATH
         const checkedDays = h.days.filter(Boolean).length;
         
-        // Success for Positive = Checked days. Success for Negative = Unchecked days.
+        // Positive: Count Checks. Negative: Count Empty Boxes.
         const successCount = h.type === "positive" 
             ? checkedDays 
             : (daysInMonth - checkedDays);
@@ -248,16 +250,16 @@ function updateStats() {
         earned += (successCount / daysInMonth) * w;
         totalPossible += w;
 
-        // 2. TODAY'S SUMMARY MATH (for the text counter)
+        // 2. TODAY'S SUMMARY MATH
         if (h.type === "positive") {
             todayTotal++;
             if (h.days[todayIdx]) todayDone++; 
         } else {
             negTotal++;
-            if (h.days[todayIdx]) negSlips++; // Count as a slip if checked
+            if (h.days[todayIdx]) negSlips++; // Count slip only if checked
         }
 
-        // 3. MOMENTUM MATH (Weighted last 4 days)
+        // 3. MOMENTUM MATH
         let hMom = 0, wSum = 0;
         [0.1, 0.2, 0.3, 0.4].forEach((weight, i) => {
             const idx = todayIdx - (3 - i);
@@ -270,21 +272,19 @@ function updateStats() {
         momentumSum += (wSum ? hMom / wSum : 0) * w;
     });
 
-    // CALCULATE FINAL PERCENTAGES
+    // CALCULATE SCORES
     const mScore = totalPossible ? (earned / totalPossible) * 100 : 0;
-    // Today Ring rewards Pos checked AND Neg unchecked
     const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
     const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
 
-    // UPDATE THE UI TEXT
+    // UPDATE UI TEXT
     document.getElementById("completed").textContent = todayDone;
     document.getElementById("total").textContent = todayTotal;
     
-    // Aesthetic Summary Text
-    document.getElementById("todaySummary").textContent = 
-        `${todayDone} of ${todayTotal} habits done | ${negSlips} of ${negTotal} slips`;
+    document.getElementById("todaySummary").innerHTML = 
+        `${todayDone} of ${todayTotal} habits done <span style="opacity:0.5; margin:0 8px">|</span> ${negSlips} of ${negTotal} slips`;
     
-    // UPDATE THE PROGRESS RINGS
+    // UPDATE RINGS
     setRing("ring-monthly", mScore); 
     setRing("ring-normalized", tScore); 
     setRing("ring-momentum", momScore);
