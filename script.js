@@ -1,5 +1,5 @@
 /* =========================================================
-   1. UTILS & SETUP
+   1. UTILS & SETUP (Keep existing)
 ========================================================= */
 const monthNames = [
   "January", "February", "March", "April", "May", "June",
@@ -27,7 +27,7 @@ let habits = [];
 let isEditMode = false;
 
 /* =========================================================
-   2. DATA PERSISTENCE
+   2. DATA PERSISTENCE (Keep existing)
 ========================================================= */
 const loadHabits = () => {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
@@ -37,12 +37,10 @@ const loadHabits = () => {
     if (stored) {
         habits = JSON.parse(stored);
     } else {
-        // Persistence: Copy from previous month if current is empty
         habits = []; 
         let checkY = y;
         let checkM = currentMonth;
 
-        // Check last 12 months for data
         for (let i = 0; i < 12; i++) {
             checkM--;
             if (checkM < 0) { checkM = 11; checkY--; }
@@ -56,7 +54,7 @@ const loadHabits = () => {
                     type: h.type || 'positive',
                     weight: h.weight || 2,
                     goal: h.goal || 28,
-                    days: [] // Reset days
+                    days: [] 
                 }));
                 break;
             }
@@ -77,7 +75,7 @@ const debouncedSave = debounce(() => save(), 500);
 function makeDropdown(el, options, selectedIndex, onChange) {
     el.innerHTML = "";
     el.style.position = "relative";
-
+    // ... (Keep existing dropdown code) ...
     const btn = document.createElement("div");
     btn.className = "dropdown-button";
     btn.tabIndex = 0;
@@ -106,7 +104,6 @@ function makeDropdown(el, options, selectedIndex, onChange) {
             if (m !== menu) m.style.display = "none";
         });
         menu.style.display = menu.style.display === "none" ? "block" : "none";
-        
         if(menu.style.display === 'block') {
              menu.style.top = "calc(100% + 8px)";
              menu.style.bottom = "auto";
@@ -125,6 +122,8 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     el.appendChild(menu);
 }
 
+// ... (renderHeader and renderHabits remain exactly the same as previous) ...
+
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
     const y = parseInt(yearInput.value) || NOW.getFullYear();
@@ -134,7 +133,6 @@ function renderHeader() {
 
     dayHeader.innerHTML = "";
 
-    // 1. Habit Column
     const nameTh = document.createElement("th");
     const wrapper = document.createElement("div");
     wrapper.className = "sticky-header-content";
@@ -161,7 +159,6 @@ function renderHeader() {
     nameTh.appendChild(wrapper);
     dayHeader.appendChild(nameTh);
 
-    // 2. Edit Columns
     if (isEditMode) {
         ["Type", "Imp", "Goal"].forEach(t => {
             const th = document.createElement("th");
@@ -170,7 +167,6 @@ function renderHeader() {
         });
     }
 
-    // 3. Day Columns
     for (let d = 1; d <= days; d++) {
         const th = document.createElement("th");
         th.textContent = d;
@@ -178,7 +174,6 @@ function renderHeader() {
         dayHeader.appendChild(th);
     }
 
-    // 4. End Column (Actions)
     const endTh = document.createElement("th");
     endTh.textContent = isEditMode ? "Actions" : "";
     endTh.style.minWidth = isEditMode ? "90px" : "auto";
@@ -204,7 +199,6 @@ function renderHabits() {
 
         const tr = document.createElement("tr");
 
-        // --- 1. Habit Name ---
         const nameTd = document.createElement("td");
         nameTd.contentEditable = isEditMode; 
         nameTd.textContent = h.name;
@@ -212,9 +206,7 @@ function renderHabits() {
         nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
         tr.appendChild(nameTd);
 
-        // --- 2. Edit Columns ---
         if (isEditMode) {
-            // TYPE
             const typeTd = document.createElement("td");
             const tDD = document.createElement("div");
             tDD.className = "dropdown";
@@ -229,7 +221,6 @@ function renderHabits() {
             typeTd.appendChild(tDD);
             tr.appendChild(typeTd);
 
-            // IMP
             const impTd = document.createElement("td");
             const iDD = document.createElement("div");
             iDD.className = "dropdown";
@@ -246,7 +237,6 @@ function renderHabits() {
             impTd.appendChild(iDD);
             tr.appendChild(impTd);
 
-            // GOAL
             const goalTd = document.createElement("td");
             const gIn = document.createElement("input");
             gIn.type = "number";
@@ -263,7 +253,6 @@ function renderHabits() {
             tr.appendChild(goalTd);
         }
 
-        // --- 3. Checkboxes ---
         for (let d = 0; d < days; d++) {
             const td = document.createElement("td");
             const isToday = isThisMonth && d + 1 === today;
@@ -296,7 +285,6 @@ function renderHabits() {
             tr.appendChild(td);
         }
 
-        // --- 4. End Column (ACTIONS) ---
         const endTd = document.createElement("td");
         if (isEditMode) {
             const actionWrap = document.createElement("div");
@@ -305,7 +293,6 @@ function renderHabits() {
             actionWrap.style.justifyContent = "center";
             actionWrap.style.alignItems = "center";
 
-            // UP
             const btnUp = document.createElement("button");
             btnUp.className = "toggle-edit-btn";
             btnUp.innerHTML = `<i data-lucide="arrow-up" style="width: 14px; height: 14px;"></i>`;
@@ -317,7 +304,6 @@ function renderHabits() {
                 update();
             };
 
-            // DOWN
             const btnDown = document.createElement("button");
             btnDown.className = "toggle-edit-btn";
             btnDown.innerHTML = `<i data-lucide="arrow-down" style="width: 14px; height: 14px;"></i>`;
@@ -329,7 +315,6 @@ function renderHabits() {
                 update();
             };
 
-            // DELETE
             const btnDel = document.createElement("button");
             btnDel.className = "toggle-edit-btn";
             btnDel.innerHTML = `<i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>`;
@@ -441,9 +426,7 @@ function updateStats() {
     document.getElementById("completed").textContent = todayDone;
     document.getElementById("total").textContent = todayTotal;
 
-    // We updated this to be simpler since the graph summary is now in the graph card
-    document.getElementById("todaySummary").innerHTML = 
-        `${todayScoreText()}`;
+    document.getElementById("todaySummary").innerHTML = todayScoreText();
 
     setRing("ring-monthly", mScore); 
     setRing("ring-normalized", tScore); 
@@ -451,7 +434,6 @@ function updateStats() {
 }
 
 function todayScoreText() {
-    // Helper to calculate daily score for the graph text
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const today = NOW.getDate() - 1;
     let score = 0;
@@ -461,67 +443,80 @@ function todayScoreText() {
     return `${score > 0 ? '+' : ''}${score} Net Score`;
 }
 
-// --- GRAPH RENDERING LOGIC ---
+// =========================================================
+//  UPDATED GRAPH LOGIC (The Fix)
+// =========================================================
 function renderGraph() {
     const svg = document.getElementById("activityGraph");
     if (!svg) return;
 
-    // 1. Calculate Daily Scores
+    // 1. Data Setup
     const y = parseInt(yearInput.value) || NOW.getFullYear();
-    const days = getDays(y, currentMonth);
-    const scores = new Array(days).fill(0);
+    // Use FULL month for X-Axis scaling (1 to 28/30/31)
+    const totalDaysInMonth = getDays(y, currentMonth); 
     
-    const todayDate = NOW.getDate(); 
+    // We only PLOT data up to Today to prevent "future drop-off"
     const isCurrentMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
+    const daysWithData = isCurrentMonth ? NOW.getDate() : totalDaysInMonth;
 
-    for (let d = 0; d < days; d++) {
+    let scores = [];
+    for (let d = 0; d < daysWithData; d++) {
         let dailyScore = 0;
         habits.forEach(h => {
-            if (h.days[d]) {
-                dailyScore += (h.type === 'positive' ? 1 : -1);
-            }
+            if (h.days[d]) dailyScore += (h.type === 'positive' ? 1 : -1);
         });
-        scores[d] = dailyScore;
+        scores.push(dailyScore);
     }
 
     // 2. Setup Dimensions
     const width = 800;  
     const height = 150; 
     const padding = 20;
-    
-    // Auto-Scale Y-Axis
-    let maxVal = Math.max(...scores, 5); 
-    let minVal = Math.min(...scores, 0); 
-    const range = maxVal - minVal;
-    
-    const mapY = (val) => height - padding - ((val - minVal) / (range || 1)) * (height - padding * 2);
-    const mapX = (dayIdx) => (dayIdx / (days - 1)) * width;
 
-    // 3. Generate Path Points
+    // 3. Y-AXIS SCALING (Accommodate new tasks)
+    // We scale based on TOTAL HABITS available, not just the achieved score.
+    // This means if you add 10 habits, the graph space "shrinks" to fit potentially higher peaks.
+    // We take Math.max(scores) just in case a previous month had more habits than currently exist.
+    let maxVal = Math.max(habits.length, ...scores, 5); 
+    let minVal = Math.min(...scores, 0); 
+    
+    // Buffer for aesthetics
+    const range = maxVal - minVal + (maxVal * 0.1); 
+    
+    const mapY = (val) => height - padding - ((val - minVal) / range) * (height - padding * 2);
+    
+    // 4. X-AXIS SCALING (Dates act as X axis)
+    // Map X based on TOTAL DAYS in month, not just daysWithData.
+    // This keeps Day 15 always in the middle, regardless of today's date.
+    const mapX = (dayIdx) => (dayIdx / (totalDaysInMonth - 1)) * width;
+
+    // 5. Generate Points
     const points = scores.map((val, i) => ({ x: mapX(i), y: mapY(val), val }));
 
-    // 4. Build Smooth Path (Cubic Bezier)
+    if (points.length < 2) {
+        svg.innerHTML = ``; // Not enough data
+        return;
+    }
+
+    // 6. Build Curve
     let dPath = `M ${points[0].x} ${points[0].y}`;
-    
     for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[Math.max(i - 1, 0)];
         const p1 = points[i];
         const p2 = points[i + 1];
         const p3 = points[Math.min(i + 2, points.length - 1)];
 
-        const cp1x = p1.x + (p2.x - p0.x) / 6;
-        const cp1y = p1.y + (p2.y - p0.y) / 6;
-
-        const cp2x = p2.x - (p3.x - p1.x) / 6;
-        const cp2y = p2.y - (p3.y - p1.y) / 6;
+        const cp1x = p1.x + (p2.x - p0.x) * 0.2;
+        const cp1y = p1.y + (p2.y - p0.y) * 0.2;
+        const cp2x = p2.x - (p3.x - p1.x) * 0.2;
+        const cp2y = p2.y - (p3.y - p1.y) * 0.2;
 
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
 
-    // 5. Build Gradient Area
-    const dArea = `${dPath} L ${width} ${height} L 0 ${height} Z`;
+    // 7. Gradient Area (Close loop to bottom)
+    const dArea = `${dPath} L ${points[points.length-1].x} ${height} L 0 ${height} Z`;
 
-    // 6. Render SVG Content
     let svgContent = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -533,16 +528,28 @@ function renderGraph() {
         <path class="graph-path" d="${dPath}" />
     `;
 
-    // 7. Add Labels (Non-zero only)
+    // 8. Labels
     points.forEach((p, i) => {
-        if (p.val !== 0 || (isCurrentMonth && i === todayDate - 1)) {
-            svgContent += `<text x="${p.x}" y="${p.y - 10}" class="graph-label visible">${p.val}</text>`;
+        // Simple de-clutter: Show first, last, and peaks
+        const isPeak = (i > 0 && i < points.length - 1) && 
+                       (p.val > points[i-1].val && p.val > points[i+1].val);
+        
+        if (p.val !== 0 || i === points.length - 1 || isPeak) {
+             svgContent += `<text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>`;
         }
     });
+
+    // 9. (Optional) Date Axis Indicator at bottom
+    // Just to show "1" and "30" to reinforce the axis concept
+    svgContent += `
+        <text x="0" y="${height}" fill="#666" font-size="10" font-weight="600">Day 1</text>
+        <text x="${width-30}" y="${height}" fill="#666" font-size="10" font-weight="600">Day ${totalDaysInMonth}</text>
+    `;
 
     svg.innerHTML = svgContent;
 }
 
+// EVENTS
 yearInput.addEventListener("input", () => {
     loadHabits();
     update();
@@ -583,5 +590,6 @@ function update() {
     lucide.createIcons();
 }
 
+// INIT
 loadHabits();
 update();
