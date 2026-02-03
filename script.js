@@ -75,7 +75,7 @@ const debouncedSave = debounce(() => save(), 500);
 function makeDropdown(el, options, selectedIndex, onChange) {
     el.innerHTML = "";
     el.style.position = "relative";
-    // ... (Keep existing dropdown code) ...
+
     const btn = document.createElement("div");
     btn.className = "dropdown-button";
     btn.tabIndex = 0;
@@ -100,13 +100,39 @@ function makeDropdown(el, options, selectedIndex, onChange) {
 
     const toggleMenu = (e) => {
         e.stopPropagation();
+        
+        // 1. Close all other menus first
         document.querySelectorAll(".dropdown-menu").forEach((m) => {
             if (m !== menu) m.style.display = "none";
         });
-        menu.style.display = menu.style.display === "none" ? "block" : "none";
-        if(menu.style.display === 'block') {
-             menu.style.top = "calc(100% + 8px)";
-             menu.style.bottom = "auto";
+
+        // 2. Determine if we are opening
+        const isClosed = menu.style.display === "none";
+        
+        if (isClosed) {
+            menu.style.display = "block";
+            
+            // --- SMART POSITIONING LOGIC ---
+            // Get the button's position relative to the viewport
+            const rect = btn.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            
+            // If we have less than 180px below (space for ~4 items), flip UP
+            const requiredSpace = 180; 
+
+            if (spaceBelow < requiredSpace) {
+                // FLIP UP
+                menu.style.top = "auto";
+                menu.style.bottom = "calc(100% + 8px)";
+                menu.style.transformOrigin = "bottom left";
+            } else {
+                // FLIP DOWN (Default)
+                menu.style.top = "calc(100% + 8px)";
+                menu.style.bottom = "auto";
+                menu.style.transformOrigin = "top left";
+            }
+        } else {
+            menu.style.display = "none";
         }
     };
 
