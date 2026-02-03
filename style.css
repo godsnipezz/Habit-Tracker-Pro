@@ -41,13 +41,13 @@ body {
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* YEAR INPUT - Clean Aesthetic Style */
+/* YEAR INPUT - Pure Text Style */
 .date-picker input[type="number"] {
     background: rgba(255, 255, 255, 0.05); 
     border: 1px solid var(--border);
     color: #ffffff !important; 
     height: 42px; 
-    padding: 0 15px; 
+    padding: 0 10px; /* Balanced padding */
     line-height: 40px;
     border-radius: 12px; 
     width: 90px; 
@@ -55,18 +55,15 @@ body {
     font-weight: 600;
     outline: none; 
     cursor: text;
+    text-align: center; /* CENTERED TEXT */
     
-    /* Hide native ugly buttons so we can use the custom SVG */
+    /* Remove all arrows/spinners */
     -moz-appearance: textfield;
     appearance: textfield;
-    
-    /* Clean SVG Arrows */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; 
-    background-position: right 12px center;
+    background-image: none; 
 }
 
-/* Force Hide Ugly Spinners on Webkit (Chrome/Edge/Safari) */
+/* Force Hide Spinners (Chrome/Safari/Edge) */
 .date-picker input[type="number"]::-webkit-inner-spin-button, 
 .date-picker input[type="number"]::-webkit-outer-spin-button { 
     -webkit-appearance: none; 
@@ -127,7 +124,7 @@ body {
 table { border-collapse: collapse; width: 100%; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
 
-/* STICKY COLUMNS & HEADERS - FIX: Z-Index Layers */
+/* STICKY COLUMNS & HEADERS */
 th:first-child, td:first-child {
     position: sticky; left: 0; z-index: 10; background: #121212; 
     min-width: 180px; max-width: 180px;
@@ -173,7 +170,7 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 .toggle-edit-btn:hover { color: #fff; }
 
 /* =========================================================
-   6. MINIMAL EDIT MODE UI 
+   6. MINIMAL EDIT MODE UI
 ========================================================= */
 
 /* BADGES (Pos/Neg, High/Med/Low) */
@@ -197,22 +194,22 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* GOAL INPUT */
+/* GOAL INPUT - Pure Text Style */
 .goal-input {
     height: 28px; 
-    width: 70px; 
+    width: 60px; /* Slimmer since no arrows */
     font-size: 12px; 
     font-weight: 600;
-    padding: 0 0 0 4px; 
+    padding: 0; 
     margin: 0;
     background: transparent; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 6px; 
     color: var(--muted) !important; 
-    text-align: center;
+    text-align: center; /* CENTERED TEXT */
     transition: all 0.2s ease;
     
-    /* Fix for CSS Warning: Define standard appearance */
+    /* Remove default arrows */
     -moz-appearance: textfield; 
     appearance: textfield;
 }
@@ -223,20 +220,9 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* ARROWS: Hidden by default, Visible (White) on Interaction */
+/* Force Hide Spinners (Chrome/Safari/Edge) */
 .goal-input::-webkit-inner-spin-button, 
 .goal-input::-webkit-outer-spin-button {
-    -webkit-appearance: inner-spin-button !important;
-    opacity: 0; /* Hidden initially */
-    margin-left: 2px;
-    height: 100%;
-    cursor: pointer;
-    filter: invert(1); /* Turns arrows WHITE */
-    transition: opacity 0.2s;
-}
-
-/* Reveal arrows when hovering OR when focused (typing) */
-.goal-input:hover::-webkit-inner-spin-button, 
-.goal-input:focus::-webkit-inner-spin-button {
-    opacity: 1; 
+    -webkit-appearance: none;
+    margin: 0;
 }

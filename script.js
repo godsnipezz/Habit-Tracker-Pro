@@ -7,7 +7,10 @@ let currentMonth = NOW.getMonth();
 const yearInput = document.getElementById("year");
 yearInput.value = NOW.getFullYear();
 
-// Prevent scroll wheel from changing Year accidentally
+/* PREVENT SCROLL WHEEL
+   Since we removed visual arrows, we also disable the scroll wheel
+   to ensure the number only changes when you intentionally type it.
+*/
 yearInput.addEventListener("wheel", (e) => e.preventDefault());
 
 const getDays = (y, m) => new Date(y, m + 1, 0).getDate();
@@ -200,7 +203,7 @@ function renderHabits() {
         gIn.className = "goal-input";
         gIn.value = h.goal || 28;
         
-        // BUG FIX: Prevent scrolling from changing the number accidentally
+        // Disable scroll wheel for Goal Input (Typing only!)
         gIn.addEventListener("wheel", (e) => e.preventDefault());
 
         gIn.oninput = (e) => { 
