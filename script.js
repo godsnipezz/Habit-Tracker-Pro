@@ -233,46 +233,58 @@ function updateStats() {
     let momentumSum = 0;
 
     habits.forEach(h => {
-        const w = h.weight || 2;
-        // Logic for the Progress Rings (Neg unchecked = Success)
-        const successCount = h.type === "positive" ? h.days.filter(Boolean).length : (h.days.length - h.days.filter(Boolean).length);
-        earned += (successCount / h.days.length) * w;
+        const w = Number(h.weight) || 2;
+        const daysInMonth = h.days.length;
+        
+        // 1. MONTHLY PROGRESS MATH (for the Monthly Ring)
+        // Count how many days are checked (true)
+        const checkedDays = h.days.filter(Boolean).length;
+        
+        // Success for Positive = Checked days. Success for Negative = Unchecked days.
+        const successCount = h.type === "positive" 
+            ? checkedDays 
+            : (daysInMonth - checkedDays);
+
+        earned += (successCount / daysInMonth) * w;
         totalPossible += w;
 
-        // --- THE FIX: SPLIT THE COUNTERS ---
+        // 2. TODAY'S SUMMARY MATH (for the text counter)
         if (h.type === "positive") {
-            todayTotal++; // This will be 10
+            todayTotal++;
             if (h.days[todayIdx]) todayDone++; 
         } else {
-            negTotal++; // This will be 3
-            if (h.days[todayIdx]) negSlips++; // Only counts if box is CHECKED
+            negTotal++;
+            if (h.days[todayIdx]) negSlips++; // Count as a slip if checked
         }
 
-        // Momentum Calculation
+        // 3. MOMENTUM MATH (Weighted last 4 days)
         let hMom = 0, wSum = 0;
         [0.1, 0.2, 0.3, 0.4].forEach((weight, i) => {
             const idx = todayIdx - (3 - i);
             if (idx >= 0) { 
-                hMom += (h.type === "positive" ? h.days[idx] : !h.days[idx]) * weight; 
+                const daySuccess = h.type === "positive" ? h.days[idx] : !h.days[idx];
+                hMom += (daySuccess ? 1 : 0) * weight; 
                 wSum += weight; 
             }
         });
         momentumSum += (wSum ? hMom / wSum : 0) * w;
     });
 
+    // CALCULATE FINAL PERCENTAGES
     const mScore = totalPossible ? (earned / totalPossible) * 100 : 0;
+    // Today Ring rewards Pos checked AND Neg unchecked
     const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
     const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
 
-    // --- UPDATE THE UI TEXT ---
-    // This updates the small numbers in the corner
+    // UPDATE THE UI TEXT
     document.getElementById("completed").textContent = todayDone;
     document.getElementById("total").textContent = todayTotal;
     
-    // This updates the main "Today" heading text
+    // Aesthetic Summary Text
     document.getElementById("todaySummary").textContent = 
         `${todayDone} of ${todayTotal} habits done | ${negSlips} of ${negTotal} slips`;
     
+    // UPDATE THE PROGRESS RINGS
     setRing("ring-monthly", mScore); 
     setRing("ring-normalized", tScore); 
     setRing("ring-momentum", momScore);
