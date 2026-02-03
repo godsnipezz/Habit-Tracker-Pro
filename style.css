@@ -282,13 +282,13 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* =========================================================
-   9. MOBILE RESPONSIVENESS (Grid Fix)
+   9. MOBILE RESPONSIVENESS (Final Polish)
 ========================================================= */
 @media (max-width: 768px) {
     
     .app { padding: 12px; width: 100%; overflow-x: hidden; }
 
-    /* 1. HEADER: Stacked & Left Aligned */
+    /* 1. HEADER: Adjusted Ratios */
     .top {
         flex-direction: column-reverse;
         gap: 16px;
@@ -297,24 +297,28 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     }
 
     .date-picker { width: 100%; gap: 10px; }
-    .date-picker input[type="number"], .dropdown-button {
-        flex: 1; 
-        text-align: center;
+    
+    /* FIX: Year is small, Month is wide */
+    .date-picker input[type="number"] {
+        flex: 0 0 80px; /* Fixed small width for Year */
+        padding: 0 10px;
+    }
+    .dropdown-button {
+        flex: 1; /* Month takes remaining space */
         justify-content: center;
     }
 
-    /* Stats Headline */
     .headline { align-items: flex-start; text-align: left; width: 100%; }
     .headline-label { justify-content: flex-start; }
     .gradient-text { font-size: 48px; }
 
-    /* 2. ANALYTICS: CSS GRID (Fixes the "ntum" bug) */
+    /* 2. ANALYTICS: Grid System */
     .analytics {
         display: grid;
-        grid-template-columns: repeat(3, 1fr); /* Exact 3 columns */
+        grid-template-columns: repeat(3, 1fr);
         gap: 10px;
         margin-bottom: 20px;
-        overflow: visible; /* Prevent clipping */
+        overflow: visible; 
         padding: 0;
     }
 
@@ -326,13 +330,11 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
         align-items: center;
         gap: 6px;
     }
-    
-    /* Make rings slightly smaller on mobile if needed */
     .ring { width: 60px; height: 60px; } 
 
-    /* 3. STREAK WIDGET: Spans Full Width */
+    /* Streak Widget */
     .streak-widget {
-        grid-column: 1 / -1; /* Force it to take full row below rings */
+        grid-column: 1 / -1;
         width: 100%;
         border-left: none;
         border-top: 1px solid var(--border);
@@ -340,43 +342,53 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
         padding-left: 0;
         margin-top: 4px;
         height: auto;
-        flex-direction: column; /* Stack vertically */
+        flex-direction: column;
         gap: 12px;
     }
-
-    .streak-info {
-        width: 100%;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .quote-text {
-        width: 100%;
-        padding: 10px 0;
-        border-top: 1px dashed rgba(255,255,255,0.1);
-        border-bottom: 1px dashed rgba(255,255,255,0.1);
+    .streak-info { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
+    .quote-text { width: 100%; padding: 10px 0; border-top: 1px dashed rgba(255,255,255,0.1); border-bottom: 1px dashed rgba(255,255,255,0.1); }
+    
+    /* 3. GRAPH: Horizontal Scroll Fix */
+    /* This prevents the graph from overflowing the card */
+    .today-focus {
+        height: auto;
+        min-height: 240px;
+        overflow: hidden; /* Contains the scrollbar inside */
     }
     
-    /* 4. TABLE: Slimmer Sticky Column */
-    /* This gives more room to the actual days */
+    .graph-container {
+        display: block; /* Allows scrolling */
+        overflow-x: auto; /* ENABLE SCROLL */
+        width: 100%;
+        padding-bottom: 10px; /* Space for scrollbar */
+    }
+
+    svg#activityGraph {
+        min-width: 600px; /* FORCE WIDTH so it doesn't squash */
+        height: 100%;
+        display: block;
+    }
+
+    /* 4. TABLE: Un-cramped */
+    /* Restore padding so checkboxes breathe */
+    th, td { padding: 4px; } 
+
+    /* Slim Sticky Column */
     th:first-child, td:first-child {
-        min-width: 110px; /* Reduced from 180px */
+        min-width: 110px; 
         max-width: 110px;
         padding-left: 8px;
         font-size: 12px;
     }
 
     /* 5. FOOTER: Stacked */
-    .footer {
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch; /* Full width */
-    }
+    .footer { flex-direction: column; gap: 16px; align-items: stretch; }
     button#addHabit { width: 100%; }
     .counter { text-align: center; }
 
-    /* Touch Targets */
-    input[type="checkbox"] { margin: 0; }
-    td { padding: 0; }
+    /* 6. TOUCH TARGETS */
+    input[type="checkbox"] { 
+        margin: 0 auto; /* Center in cell */
+        display: block; 
+    }
 }

@@ -384,7 +384,7 @@ function renderGraph() {
         scores.push(dailyScore);
     }
     const container = svg.parentElement;
-    const width = container.offsetWidth; const height = 150; 
+    const width = container.scrollWidth || container.offsetWidth; const height = 150; 
     const dayHeaders = document.querySelectorAll('table thead th');
     let xPositions = [];
     let startIndex = -1;
