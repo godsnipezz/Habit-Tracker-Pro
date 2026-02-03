@@ -13,11 +13,10 @@
     --radius: 24px;
 }
 
-/* GLOBAL SCALING */
 html { font-size: 13px; }
 * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-/* FOCUS MANAGEMENT */
+/* FOCUS RESET */
 *:focus { outline: none !important; }
 *:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; }
 td[contenteditable]:focus { background: rgba(255, 255, 255, 0.1); border-radius: 4px; outline: none; }
@@ -37,12 +36,12 @@ body {
 .app { width: 98%; max-width: 1600px; margin: 0 auto; padding: 20px; }
 
 /* =========================================================
-   2. HEADER & INPUTS (TOP BAR)
+   2. HEADER & INPUTS
 ========================================================= */
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* Year Input */
+/* Year Input - Custom SVG Arrows */
 input[type="number"] {
     -webkit-appearance: none; appearance: none;
     background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
@@ -52,7 +51,7 @@ input[type="number"] {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 8px center;
 }
-/* Hide native spinner ONLY for the top Year input */
+/* Hide native spinner for TOP YEAR INPUT only */
 .date-picker input[type="number"]::-webkit-inner-spin-button, 
 .date-picker input[type="number"]::-webkit-outer-spin-button { 
     -webkit-appearance: none; margin: 0; 
@@ -62,11 +61,10 @@ input[type="number"] {
 .headline .label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
 
 /* =========================================================
-   3. DROPDOWNS (MAIN & TABLE)
+   3. DROPDOWNS
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
 
-/* Main Month Dropdown */
 .dropdown-button { 
     background: rgba(255,255,255,0.05); border: 1px solid var(--border);
     color: #fff; height: 42px; padding: 0 15px; border-radius: 12px; cursor: pointer;
@@ -96,10 +94,7 @@ input[type="number"] {
 .ring { width: 72px; height: 72px; position: relative; display: flex; align-items: center; justify-content: center; }
 .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 .ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; }
-.ring-progress { 
-    fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; 
-    filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); 
-}
+.ring-progress { fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); }
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
 .today-focus, .habits {
     background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -112,10 +107,7 @@ input[type="number"] {
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
 table { border-collapse: collapse; width: 100%; }
 
-th, td { 
-    padding: 6px 4px; text-align: center; font-size: 13px; 
-    height: 44px; vertical-align: middle; 
-}
+th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
 
 /* STICKY COLUMN */
 th:first-child, td:first-child {
@@ -123,8 +115,7 @@ th:first-child, td:first-child {
     min-width: 180px; max-width: 180px;
     text-align: left; 
     border-right: 1px solid var(--border);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    padding-left: 12px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px;
 }
 th { position: sticky; top: 0; background: #121212; z-index: 11; }
 .sticky-header-content { display: flex; align-items: center; gap: 10px; height: 100%; }
@@ -137,7 +128,7 @@ tbody tr:hover td:first-child { background-color: #121212; }
 .future-day { opacity: 0.15; pointer-events: none; }
 .today-col input { transform: scale(1.15); box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); }
 
-/* FOOTER ELEMENTS */
+/* FOOTER */
 .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
 button#addHabit {
     background: var(--green); color: #000; border: none; padding: 12px 24px;
@@ -156,22 +147,19 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 
 .toggle-edit-btn {
     background: none; border: none; cursor: pointer; color: var(--muted);
-    padding: 4px; display: flex; align-items: center; justify-content: center;
-    transition: color 0.2s;
+    padding: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s;
 }
 .toggle-edit-btn:hover { color: #fff; }
 .hidden-col { display: none; }
 
 /* =========================================================
-   6. MINIMAL EDIT MODE UI (Refined Badges & Inputs)
+   6. MINIMAL EDIT UI (FIXED ARROWS)
 ========================================================= */
 
-/* BADGES (Pos/Neg, High/Med/Low) */
+/* BADGES */
 td .dropdown-button {
     background: transparent; border: 1px solid transparent; 
-    padding: 0 8px; 
-    height: 28px; /* EXACT HEIGHT */
-    line-height: 26px; /* Center text */
+    padding: 0 8px; height: 28px; line-height: 26px;
     min-width: auto; width: auto;
     font-size: 12px; font-weight: 600; border-radius: 6px;
     justify-content: center; gap: 6px; transition: all 0.2s ease;
@@ -180,82 +168,55 @@ td .dropdown-button {
 td .dropdown-button::after { display: none; }
 td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
 
-/* COLOR BADGES */
+/* PILLS */
 .badge-pos { color: #63e6a4; background: rgba(99, 230, 164, 0.1) !important; border: 1px solid rgba(99, 230, 164, 0.2) !important; }
 .badge-neg { color: #ef4444; background: rgba(239, 68, 68, 0.1) !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; }
 .badge-imp-low { color: #4fd1ff; background: rgba(79, 209, 255, 0.1) !important; }
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* --- CUSTOM GOAL COMPONENT --- */
-
-/* The Wrapper that looks like a Pill */
-.goal-wrapper {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 28px; /* Strict height match */
-    width: 65px;  /* Comfortable width */
-    background: transparent;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
-    padding: 0 2px 0 6px; /* Left padding for number */
-    transition: all 0.2s;
-}
-
-.goal-wrapper:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-/* The actual number input (Clean) */
+/* GOAL INPUT - WORKING ARROWS */
 .goal-input {
-    width: 30px;
-    height: 100%;
-    background: transparent;
-    border: none;
-    color: var(--muted);
-    font-size: 12px;
+    /* Exact match to badges */
+    height: 28px; 
+    width: 60px; /* Width to fit arrows */
+    font-size: 12px; 
     font-weight: 600;
+    padding: 0 0 0 8px; /* Push text left slightly */
+    margin: 0;
+    
+    background: transparent; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border-radius: 6px; 
+    color: var(--muted) !important; 
     text-align: center;
-    padding: 0;
-    -moz-appearance: textfield; /* Firefox hide arrows */
+    transition: border 0.2s;
+    
+    /* VITAL: This forces the arrows to render normally */
+    appearance: auto; 
+    -moz-appearance: textfield; /* Firefox quirk */
 }
 
-/* Chrome/Safari hide arrows permanently */
+/* Brighten on hover/focus */
+.goal-input:hover, .goal-input:focus {
+    color: #fff !important; 
+    border-color: rgba(255, 255, 255, 0.3); 
+    background: rgba(255, 255, 255, 0.05); 
+}
+
+/* THE ARROW FIX: 
+   1. Invert colors so they are white (visible on dark bg)
+   2. Ensure they occupy space and are clickable 
+*/
 .goal-input::-webkit-inner-spin-button, 
-.goal-input::-webkit-outer-spin-button { 
-    -webkit-appearance: none; margin: 0; 
-}
-
-.goal-input:focus { color: #fff; }
-.goal-wrapper:hover .goal-input { color: #fff; }
-
-/* The Arrow Container */
-.goal-spinners {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    justify-content: center;
-    gap: 0;
-    width: 16px;
-}
-
-/* The Arrow Buttons */
-.spin-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 12px; /* Half height */
-    width: 100%;
+.goal-input::-webkit-outer-spin-button {
+    -webkit-appearance: inner-spin-button !important; /* Force render */
+    opacity: 1; /* Always visible */
     cursor: pointer;
-    color: var(--muted);
-    opacity: 0; /* Hidden by default for ultra-minimal look */
-    transition: all 0.1s;
+    display: block;
+    width: 14px;
+    height: 100%;
+    margin: 0;
+    /* Invert black arrows to white */
+    filter: invert(1) brightness(2); 
 }
-/* Show on hover */
-.goal-wrapper:hover .spin-btn { opacity: 0.6; }
-.spin-btn:hover { opacity: 1; color: #fff; background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-/* SVG Icon sizing inside button */
-.spin-btn svg { width: 10px; height: 10px; }
