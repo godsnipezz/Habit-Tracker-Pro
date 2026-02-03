@@ -10,6 +10,7 @@ let currentMonth = NOW.getMonth();
 const yearInput = document.getElementById("year");
 yearInput.value = NOW.getFullYear();
 
+// Debounce helper to prevent lag on rapid resizing/typing
 const debounce = (func, wait) => {
   let timeout;
   return (...args) => {
@@ -37,9 +38,11 @@ const loadHabits = () => {
     if (stored) {
         habits = JSON.parse(stored);
     } else {
+        // Migration/Init logic
         habits = []; 
         let checkY = y;
         let checkM = currentMonth;
+        // Check previous months for habits to carry over
         for (let i = 0; i < 12; i++) {
             checkM--;
             if (checkM < 0) { checkM = 11; checkY--; }
@@ -47,6 +50,7 @@ const loadHabits = () => {
             const prevData = localStorage.getItem(prevKey);
             if (prevData) {
                 const parsedPrev = JSON.parse(prevData);
+                // Carry over structure but reset days
                 habits = parsedPrev.map(h => ({
                     name: h.name, type: h.type || 'positive',
                     weight: h.weight || 2, goal: h.goal || 28, days: [] 
@@ -88,18 +92,20 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
     const toggleMenu = (e) => {
         e.stopPropagation();
         document.querySelectorAll(".dropdown-menu").forEach((m) => { if (m !== menu) m.style.display = "none"; });
-        const isClosed = menu.style.display === "none";
         
+        const isClosed = menu.style.display === "none";
         if (isClosed) {
             menu.style.display = "block";
             let openUp = false;
+            
+            // Smart positioning
             if (fixedSide === 'up') openUp = true;
             else if (fixedSide === 'down') openUp = false;
             else {
                 const rect = btn.getBoundingClientRect();
-                const spaceBelow = window.innerHeight - rect.bottom;
-                if (spaceBelow < 200) openUp = true;
+                if (window.innerHeight - rect.bottom < 200) openUp = true;
             }
+            
             if (openUp) {
                 menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)";
                 menu.style.transformOrigin = "bottom left";
@@ -117,7 +123,7 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
 }
 
 /* =========================================================
-   4. RENDERING (SCROLL-TO-REVEAL LOGIC)
+   4. RENDERING (ORDER: SETTINGS -> HABIT NAME -> DAYS)
 ========================================================= */
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
@@ -128,41 +134,7 @@ function renderHeader() {
 
     dayHeader.innerHTML = "";
 
-    /* ===============================
-       1. HABIT NAME (ALWAYS FIRST)
-    =============================== */
-    const nameTh = document.createElement("th");
-    nameTh.className = "sticky-col";
-
-    const wrapper = document.createElement("div");
-    wrapper.className = "sticky-header-content";
-
-    const settingsBtn = document.createElement("button");
-    settingsBtn.className = "toggle-edit-btn";
-    settingsBtn.style.width = "auto";
-    settingsBtn.style.padding = "0 8px";
-    settingsBtn.innerHTML = isEditMode
-        ? `<i data-lucide="check" style="width:16px;"></i>`
-        : `<i data-lucide="settings-2" style="width:16px;"></i>`;
-
-    settingsBtn.onclick = (e) => {
-        e.stopPropagation();
-        isEditMode = !isEditMode;
-        update();
-    };
-
-    const labelSpan = document.createElement("span");
-    labelSpan.textContent = "Habit";
-
-    wrapper.appendChild(settingsBtn);
-    wrapper.appendChild(labelSpan);
-    nameTh.appendChild(wrapper);
-    dayHeader.appendChild(nameTh);
-
-    /* ===============================
-       2. EDIT SETTINGS (AFTER HABIT)
-       scroll-revealed
-    =============================== */
+    // 1. SETTINGS HEADERS (Hidden left initially)
     if (isEditMode) {
         ["Type", "Imp", "Goal"].forEach(t => {
             const th = document.createElement("th");
@@ -172,225 +144,164 @@ function renderHeader() {
         });
     }
 
-    /* ===============================
-       3. DAYS
-    =============================== */
+    // 2. HABIT NAME (Sticky Column)
+    const nameTh = document.createElement("th");
+    nameTh.className = "sticky-col"; 
+    
+    const wrapper = document.createElement("div");
+    wrapper.className = "sticky-header-content";
+
+    const settingsBtn = document.createElement("button");
+    settingsBtn.className = "toggle-edit-btn";
+    settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
+    settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
+    
+    // ACTION: Toggle Mode & TRIGGER AUTO-SCROLL
+    settingsBtn.onclick = (e) => { 
+        e.stopPropagation(); 
+        isEditMode = !isEditMode; 
+        update(); 
+        
+        // Auto-scroll to hide settings initially (Mobile UX)
+        if (isEditMode) {
+            setTimeout(() => {
+                const wrapper = document.querySelector(".table-wrapper");
+                if(wrapper) {
+                    wrapper.scrollLeft = 285; // Scroll past 3 metadata cols (3 * 95px)
+                }
+            }, 50);
+        }
+    };
+
+    const labelSpan = document.createElement("span"); labelSpan.textContent = "Habit";
+    wrapper.appendChild(settingsBtn); wrapper.appendChild(labelSpan);
+    nameTh.appendChild(wrapper); 
+    dayHeader.appendChild(nameTh);
+
+    // 3. DAYS HEADERS
     for (let d = 1; d <= days; d++) {
-        const th = document.createElement("th");
-        th.textContent = d;
+        const th = document.createElement("th"); th.textContent = d;
         if (isThisMonth && d === today) th.classList.add("today-col");
         dayHeader.appendChild(th);
     }
-
-    /* ===============================
-       4. ACTIONS / PROGRESS
-    =============================== */
+    
+    // 4. ACTIONS (Delete/Move buttons header)
     const endTh = document.createElement("th");
     endTh.textContent = isEditMode ? "Actions" : "";
     endTh.style.minWidth = isEditMode ? "90px" : "auto";
     dayHeader.appendChild(endTh);
 }
 
-
 function renderHabits() {
-    const habitBody = document.getElementById("habitBody");
-    habitBody.innerHTML = "";
-
+    const habitBody = document.getElementById("habitBody"); habitBody.innerHTML = "";
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const days = getDays(y, currentMonth);
     const today = NOW.getDate();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
     habits.forEach((h, i) => {
-        // Normalize days array
+        // Ensure data integrity
         if (!h.days || h.days.length !== days) {
             const newDays = Array(days).fill(false);
-            if (h.days) h.days.forEach((v, idx) => { if (idx < days) newDays[idx] = v; });
+            if(h.days) h.days.forEach((val, idx) => { if(idx < days) newDays[idx] = val; });
             h.days = newDays;
         }
 
         const tr = document.createElement("tr");
 
-        /* =================================================
-           1. HABIT NAME (ALWAYS FIRST, STICKY)
-        ================================================= */
-        const nameTd = document.createElement("td");
-        nameTd.className = "sticky-col";
-        nameTd.contentEditable = isEditMode;
-        nameTd.textContent = h.name;
-        nameTd.style.cursor = isEditMode ? "text" : "default";
-        nameTd.oninput = () => {
-            h.name = nameTd.textContent;
-            debouncedSave();
-        };
-        tr.appendChild(nameTd);
+        // 1. SETTINGS COLUMNS
+        const isBottomRow = i >= habits.length - 2;
+        const dropDir = isBottomRow ? 'up' : 'down';
 
-        /* =================================================
-           2. EDIT SETTINGS (AFTER HABIT, SCROLL-REVEAL)
-        ================================================= */
         if (isEditMode) {
-            const isBottomRow = i >= habits.length - 2;
-            const dropDir = isBottomRow ? "up" : "down";
-
             // Type
-            const typeTd = document.createElement("td");
-            typeTd.className = "metadata-col";
-            const tDD = document.createElement("div");
-            tDD.className = "dropdown";
-            makeDropdown(
-                tDD,
-                [
-                    { label: "Positive", value: "positive" },
-                    { label: "Negative", value: "negative" }
-                ],
-                h.type === "negative" ? 1 : 0,
-                v => { h.type = v; save(); update(); },
-                dropDir
-            );
-            typeTd.appendChild(tDD);
-            tr.appendChild(typeTd);
+            const typeTd = document.createElement("td"); typeTd.className = "metadata-col";
+            const tDD = document.createElement("div"); tDD.className = "dropdown";
+            makeDropdown(tDD, [{label:"Positive",value:"positive"},{label:"Negative",value:"negative"}], h.type==="negative"?1:0, (v)=>{h.type=v;save();update();}, dropDir);
+            
+            // APPLY COLOR BADGES
+            const typeBtn = tDD.querySelector('.dropdown-button');
+            if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
+            typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
             // Importance
-            const impTd = document.createElement("td");
-            impTd.className = "metadata-col";
-            const iDD = document.createElement("div");
-            iDD.className = "dropdown";
-            makeDropdown(
-                iDD,
-                [
-                    { label: "Low", value: 1 },
-                    { label: "Medium", value: 2 },
-                    { label: "High", value: 3 }
-                ],
-                (h.weight || 2) - 1,
-                v => { h.weight = v; save(); update(); },
-                dropDir
-            );
-            impTd.appendChild(iDD);
-            tr.appendChild(impTd);
+            const impTd = document.createElement("td"); impTd.className = "metadata-col";
+            const iDD = document.createElement("div"); iDD.className = "dropdown";
+            makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
+            
+            // APPLY COLOR BADGES
+            const impBtn = iDD.querySelector('.dropdown-button');
+            const w = h.weight||2;
+            if(w===1) impBtn.classList.add('badge-imp-low'); if(w===2) impBtn.classList.add('badge-imp-med'); if(w===3) impBtn.classList.add('badge-imp-high');
+            impTd.appendChild(iDD); tr.appendChild(impTd);
 
             // Goal
-            const goalTd = document.createElement("td");
-            goalTd.className = "metadata-col";
+            const goalTd = document.createElement("td"); goalTd.className = "metadata-col";
             const gIn = document.createElement("input");
-            gIn.type = "number";
-            gIn.className = "goal-input";
-            gIn.value = h.goal || 28;
-            gIn.addEventListener("wheel", e => e.preventDefault());
-            gIn.oninput = e => {
-                h.goal = +e.target.value;
-                debouncedSave();
-                updateStats();
-            };
-            goalTd.appendChild(gIn);
-            tr.appendChild(goalTd);
+            gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
+            gIn.addEventListener("wheel", (e)=>e.preventDefault());
+            gIn.oninput = (e)=>{ h.goal = +e.target.value; debouncedSave(); updateStats(); if(!isEditMode) updateProgress(tr,h); };
+            goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
-        /* =================================================
-           3. DAY CHECKBOXES
-        ================================================= */
+        // 2. HABIT NAME (Sticky)
+        const nameTd = document.createElement("td");
+        nameTd.className = "sticky-col"; 
+        nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
+        nameTd.style.cursor = isEditMode ? "text" : "default";
+        nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
+        tr.appendChild(nameTd);
+
+        // 3. DAYS CHECKBOXES
         for (let d = 0; d < days; d++) {
             const td = document.createElement("td");
-            if (isThisMonth && d + 1 === today) td.classList.add("today-col");
-
+            const isToday = isThisMonth && d + 1 === today;
+            if (isToday) td.classList.add("today-col");
+            
             const cb = document.createElement("input");
-            cb.type = "checkbox";
-            cb.checked = h.days[d];
+            cb.type = "checkbox"; cb.checked = h.days[d];
             if (h.type === "negative") cb.classList.add("neg-habit");
+            
+            const isFuture = (y > NOW.getFullYear()) || (y === NOW.getFullYear() && currentMonth > NOW.getMonth()) || (isThisMonth && d > NOW.getDate() - 1);
+            if (isFuture) { cb.classList.add("future-day"); cb.disabled = true; }
 
-            const isFuture =
-                (y > NOW.getFullYear()) ||
-                (y === NOW.getFullYear() && currentMonth > NOW.getMonth()) ||
-                (isThisMonth && d > NOW.getDate() - 1);
-
-            if (isFuture) {
-                cb.disabled = true;
-                cb.classList.add("future-day");
-            }
-
-            cb.onchange = () => {
-                h.days[d] = cb.checked;
-                save();
-                updateStats();
-                if (!isEditMode) updateProgress(tr, h);
-                renderGraph();
-            };
-
-            td.appendChild(cb);
-            tr.appendChild(td);
+            cb.onchange = () => { h.days[d] = cb.checked; save(); updateStats(); if (!isEditMode) updateProgress(tr, h); renderGraph(); };
+            td.appendChild(cb); tr.appendChild(td);
         }
 
-        /* =================================================
-           4. ACTIONS / PROGRESS
-        ================================================= */
+        // 4. ACTIONS (Delete/Move)
         const endTd = document.createElement("td");
         if (isEditMode) {
-            const wrap = document.createElement("div");
-            wrap.style.display = "flex";
-            wrap.style.gap = "4px";
-            wrap.style.justifyContent = "center";
-
-            const up = document.createElement("button");
-            up.className = "toggle-edit-btn";
-            up.innerHTML = `<i data-lucide="arrow-up" style="width:14px;"></i>`;
-            up.disabled = i === 0;
-            up.onclick = () => {
-                [habits[i], habits[i - 1]] = [habits[i - 1], habits[i]];
-                save();
-                update();
-            };
-
-            const down = document.createElement("button");
-            down.className = "toggle-edit-btn";
-            down.innerHTML = `<i data-lucide="arrow-down" style="width:14px;"></i>`;
-            down.disabled = i === habits.length - 1;
-            down.onclick = () => {
-                [habits[i], habits[i + 1]] = [habits[i + 1], habits[i]];
-                save();
-                update();
-            };
-
-            const del = document.createElement("button");
-            del.className = "toggle-edit-btn";
-            del.style.color = "#ef4444";
-            del.innerHTML = `<i data-lucide="trash-2" style="width:14px;"></i>`;
-            del.onclick = () => {
-                if (confirm("Delete?")) {
-                    habits.splice(i, 1);
-                    save();
-                    update();
-                }
-            };
-
-            wrap.append(up, down, del);
-            endTd.appendChild(wrap);
+            const actionWrap = document.createElement("div");
+            actionWrap.style.display = "flex"; actionWrap.style.gap = "4px"; actionWrap.style.justifyContent = "center";
+            const btnUp = document.createElement("button"); btnUp.className = "toggle-edit-btn";
+            btnUp.innerHTML = `<i data-lucide="arrow-up" style="width:14px;"></i>`; btnUp.disabled = i===0;
+            btnUp.onclick = (e)=>{ e.stopPropagation(); [habits[i],habits[i-1]]=[habits[i-1],habits[i]]; save(); update(); };
+            const btnDown = document.createElement("button"); btnDown.className = "toggle-edit-btn";
+            btnDown.innerHTML = `<i data-lucide="arrow-down" style="width:14px;"></i>`; btnDown.disabled = i===habits.length-1;
+            btnDown.onclick = (e)=>{ e.stopPropagation(); [habits[i],habits[i+1]]=[habits[i+1],habits[i]]; save(); update(); };
+            const btnDel = document.createElement("button"); btnDel.className = "toggle-edit-btn";
+            btnDel.innerHTML = `<i data-lucide="trash-2" style="width:14px;"></i>`; btnDel.style.color="#ef4444"; btnDel.style.marginLeft="8px";
+            btnDel.onclick = ()=>{ if(confirm("Delete?")) { habits.splice(i,1); save(); update(); }};
+            actionWrap.appendChild(btnUp); actionWrap.appendChild(btnDown); actionWrap.appendChild(btnDel);
+            endTd.appendChild(actionWrap);
         } else {
             endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
             setTimeout(() => updateProgress(tr, h), 0);
         }
-
-        tr.appendChild(endTd);
-        habitBody.appendChild(tr);
+        tr.appendChild(endTd); habitBody.appendChild(tr);
     });
 
-    /* =================================================
-       AUTO-SCROLL TO TODAY (VIEW MODE ONLY)
-       ✅ THIS IS YOUR ORIGINAL LOGIC — KEPT
-    ================================================= */
+    // Auto-scroll to today in View Mode
     if (!isEditMode) {
         setTimeout(() => {
             const todayCol = document.querySelector(".today-col");
             if (todayCol) {
-                todayCol.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                    inline: "center"
-                });
+                todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
             }
         }, 100);
     }
 }
-
 
 function updateProgress(tr, h) {
     const done = h.days.filter(Boolean).length;
@@ -441,6 +352,7 @@ function updateStats() {
         if (h.type === "positive") { todayTotal++; if (h.days[todayIdx]) todayDone++; }
         else { negTotal++; if (h.days[todayIdx]) todaySlips++; }
 
+        // Momentum Calc
         let hMom = 0, wSum = 0;
         const weights = [0.1, 0.2, 0.3, 0.4]; 
         weights.forEach((weight, i) => {
@@ -469,6 +381,7 @@ function updateStats() {
     setRing("ring-efficiency", efficiencyPct); setRing("ring-normalized", todayPerformance); setRing("ring-momentum", momPct);
     document.getElementById("todaySummary").innerHTML = todayScoreText();
 
+    // --- STREAK & HEATMAP ---
     let currentStreak = 0;
     for (let d = todayIdx; d >= 0; d--) {
         let dayScore = 0;
@@ -519,7 +432,10 @@ function renderGraph() {
         scores.push(dailyScore);
     }
     const container = svg.parentElement;
-    const width = container.scrollWidth || container.offsetWidth; 
+    
+    // SAFE WIDTH CALCULATION (Fallbacks preventing 0 width)
+    const rect = container.getBoundingClientRect();
+    const width = rect.width || container.scrollWidth || 600; 
     const height = 150; 
     
     const dayHeaders = document.querySelectorAll('table thead th');
@@ -543,7 +459,9 @@ function renderGraph() {
     const pxPerUnit = (floorY - padding) / Math.max(maxScore, 1);
     const mapY = (val) => floorY - (val * pxPerUnit);
 
-    const points = scores.map((val, i) => ({ x: xPositions[i] || 0, y: mapY(val), val }));
+    // Map points, handle case where width might still be calibrating
+    const points = scores.map((val, i) => ({ x: xPositions[i] || (i * (width/totalDaysInMonth)), y: mapY(val), val }));
+    
     if (points.length < 2) { svg.innerHTML = ``; return; }
 
     let dPath = `M ${points[0].x} ${points[0].y}`;
