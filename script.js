@@ -121,12 +121,6 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
 ========================================================= */
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
-    const wrapper = document.querySelector(".table-wrapper");
-    
-    // Toggle the CSS class based on mode
-    if (isEditMode) wrapper.classList.add("editing-active");
-    else wrapper.classList.remove("editing-active");
-
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const days = getDays(y, currentMonth);
     const today = NOW.getDate();
@@ -134,7 +128,7 @@ function renderHeader() {
 
     dayHeader.innerHTML = "";
 
-    // 1. EDIT SETTINGS (First in DOM)
+    // 1. EDIT SETTINGS (Placed FIRST, hidden behind sticky name)
     if (isEditMode) {
         ["Type", "Imp", "Goal"].forEach(t => {
             const th = document.createElement("th");
@@ -144,43 +138,34 @@ function renderHeader() {
         });
     }
 
-    // 2. HABIT NAME
+    // 2. HABIT NAME (Sticky Left)
     const nameTh = document.createElement("th");
     nameTh.className = "sticky-col"; 
     
-    const headerContent = document.createElement("div");
-    headerContent.className = "sticky-header-content";
+    const wrapper = document.createElement("div");
+    wrapper.className = "sticky-header-content";
 
     const settingsBtn = document.createElement("button");
     settingsBtn.className = "toggle-edit-btn";
     settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
     
-    // --- TOGGLE ACTION ---
     settingsBtn.onclick = (e) => { 
         e.stopPropagation(); 
         isEditMode = !isEditMode; 
-        update(); // Re-render
-
-        // SCROLL LOGIC
-        setTimeout(() => {
-            const wrap = document.querySelector(".table-wrapper");
-            if (isEditMode) {
-                // EDIT MODE: Scroll right 270px (Hide settings, Show Name)
-                wrap.scrollLeft = 270; 
-            } else {
-                // VIEW MODE: Scroll to Today
-                const todayCol = document.querySelector(".today-col");
-                if (todayCol) {
-                    todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-                }
-            }
-        }, 50); 
+        update(); 
+        
+        if (isEditMode) {
+            setTimeout(() => {
+                const wrapper = document.querySelector(".table-wrapper");
+                if(wrapper) wrapper.scrollLeft = 285; // Scroll past metadata (3 * 95px)
+            }, 50);
+        }
     };
 
     const labelSpan = document.createElement("span"); labelSpan.textContent = "Habit";
-    headerContent.appendChild(settingsBtn); headerContent.appendChild(labelSpan);
-    nameTh.appendChild(headerContent); 
+    wrapper.appendChild(settingsBtn); wrapper.appendChild(labelSpan);
+    nameTh.appendChild(wrapper); 
     dayHeader.appendChild(nameTh);
 
     // 3. DAYS
@@ -213,7 +198,7 @@ function renderHabits() {
 
         const tr = document.createElement("tr");
 
-        // 1. EDIT SETTINGS
+        // 1. EDIT SETTINGS (Placed FIRST, scrolls out from left)
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
@@ -226,7 +211,7 @@ function renderHabits() {
             if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
             typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-            // Imp
+            // Importance
             const impTd = document.createElement("td"); impTd.className = "metadata-col";
             const iDD = document.createElement("div"); iDD.className = "dropdown";
             makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
@@ -244,7 +229,7 @@ function renderHabits() {
             goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
-        // 2. HABIT NAME
+        // 2. HABIT NAME (Sticky)
         const nameTd = document.createElement("td");
         nameTd.className = "sticky-col"; 
         nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
@@ -292,13 +277,10 @@ function renderHabits() {
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
 
-    // AUTO-SCROLL TO TODAY ON LOAD (ONLY IF NOT EDITING)
     if (!isEditMode) {
         setTimeout(() => {
             const todayCol = document.querySelector(".today-col");
-            if (todayCol) {
-                todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-            }
+            if (todayCol) todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
         }, 100);
     }
 }
@@ -380,7 +362,6 @@ function updateStats() {
     setRing("ring-efficiency", efficiencyPct); setRing("ring-normalized", todayPerformance); setRing("ring-momentum", momPct);
     document.getElementById("todaySummary").innerHTML = todayScoreText();
 
-    // --- STREAK & HEATMAP ---
     let currentStreak = 0;
     for (let d = todayIdx; d >= 0; d--) {
         let dayScore = 0;
@@ -431,8 +412,6 @@ function renderGraph() {
         scores.push(dailyScore);
     }
     const container = svg.parentElement;
-    
-    // SUPPORT MOBILE SCROLL: Use scrollWidth
     const width = container.scrollWidth || container.offsetWidth; 
     const height = 150; 
     
@@ -505,7 +484,6 @@ document.addEventListener("click", () => document.querySelectorAll(".dropdown-me
 
 function update() {
     renderHeader(); renderHabits(); updateStats(); renderGraph();
-    // RE-INIT ICONS AT END OF UPDATE
     lucide.createIcons();
 }
 
@@ -515,21 +493,11 @@ loadHabits(); update();
    6. DYNAMIC QUOTES
 ========================================================= */
 const motivationalQuotes = [
-    "Consistency is key.",
-    "Focus on the process.",
-    "Small wins matter.",
-    "Day one or one day.",
-    "Keep showing up.",
-    "Progress, not perfection.",
-    "Build momentum.",
-    "Stay hard.",
-    "Discipline equals freedom.",
-    "Just do it.",
-    "One percent better.",
-    "Don't break the chain.",
-    "Focus.",
-    "Execute.",
-    "Less talk, more action."
+    "Consistency is key.", "Focus on the process.", "Small wins matter.",
+    "Day one or one day.", "Keep showing up.", "Progress, not perfection.",
+    "Build momentum.", "Stay hard.", "Discipline equals freedom.",
+    "Just do it.", "One percent better.", "Don't break the chain.",
+    "Focus.", "Execute.", "Less talk, more action."
 ];
 
 function setDailyQuote() {
@@ -539,6 +507,4 @@ function setDailyQuote() {
         el.innerText = motivationalQuotes[randomIndex];
     }
 }
-
-// Run on load
 setDailyQuote();

@@ -189,21 +189,21 @@ svg#activityGraph { overflow: visible; display: block; width: 100%; height: 100%
     max-width: 100%; 
     overflow-x: auto; 
     border-radius: 16px; 
-    position: relative; 
-    margin-top: 10px; 
-    
-    /* Smooth scrolling */
-    scroll-behavior: smooth;
+    position: relative;
+    /* This creates a new stacking context for the sticky col */
+    -webkit-overflow-scrolling: touch; 
 }
-
-table { border-collapse: collapse; width: 100%; min-width: 800px; }
+table { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 800px; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
 
 /* --- METADATA (Settings) --- */
 .metadata-col {
     background: #0f0f0f; 
-    min-width: 90px;
-    width: 90px;
+    min-width: 95px;
+    width: 95px;
+    /* Lower Z-index so it slides UNDER the Habit Name */
+    position: relative;
+    z-index: 10;
 }
 .metadata-col .dropdown { width: 100%; }
 .metadata-col .dropdown-button { width: 100%; min-width: 0; padding: 0 4px; justify-content: center; }
@@ -212,14 +212,14 @@ th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; ve
 .sticky-col {
     position: sticky; 
     left: 0; 
-    z-index: 30; 
-    background: #121212; 
+    /* High Z-index ensures it stays ABOVE the scrolling metadata */
+    z-index: 100 !important; 
+    background: #121212 !important; 
     min-width: 140px; max-width: 140px; 
     text-align: left; 
-    border-right: 1px solid var(--border); 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-left: 12px;
-    box-shadow: 4px 0 12px rgba(0,0,0,0.5); /* Stronger shadow */
-    transition: all 0.2s ease;
+    border-right: 2px solid var(--border); 
+    padding-left: 12px;
+    box-shadow: 10px 0 15px -5px rgba(0,0,0,0.7); /* Shadow to visual layer depth */
 }
 
 /* --- THE FIX: EDIT MODE STATE --- */
@@ -232,8 +232,8 @@ th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; ve
     border-right: 1px solid rgba(255,255,255,0.05);
 }
 tbody tr:hover .sticky-col { background-color: #121212; }
-thead .sticky-col { z-index: 40 !important; }
-th { position: sticky; top: 0; background: #121212; z-index: 11; }
+thead .sticky-col { z-index: 110 !important; }
+th { position: sticky; top: 0; background: #121212; z-index: 50; }
 
 .sticky-header-content { display: flex; align-items: center; gap: 10px; height: 100%; }
 .today-col { background: rgba(99, 230, 164, 0.05) !important; }
@@ -322,9 +322,16 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     svg#activityGraph { min-width: 600px; height: 100%; display: block; }
 
     /* Table Fixes */
-    .metadata-col { display: table-cell !important; }
+    .metadata-col { 
+        display: table-cell !important; 
+        opacity: 1;
+    }
     th:first-child, td:first-child { font-size: 12px; padding-left: 8px; }
-    .sticky-col { min-width: 130px; max-width: 130px; }
+    .sticky-col { 
+        min-width: 120px; 
+        max-width: 120px; 
+        font-size: 12px;
+    }
     th, td { padding: 4px; }
 
     .footer { flex-direction: column; gap: 16px; align-items: stretch; }
