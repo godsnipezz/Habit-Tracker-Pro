@@ -41,23 +41,36 @@ body {
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* YEAR INPUT - Native Arrows */
+/* YEAR INPUT - Clean Aesthetic Style */
 .date-picker input[type="number"] {
     background: rgba(255, 255, 255, 0.05); 
     border: 1px solid var(--border);
     color: #ffffff !important; 
     height: 42px; 
-    padding: 0 10px 0 15px; 
+    padding: 0 15px; 
     line-height: 40px;
     border-radius: 12px; 
     width: 90px; 
     font-size: 14px; 
     font-weight: 600;
     outline: none; 
-    cursor: pointer;
-    /* Standard Browser Arrows */
+    cursor: text;
+    
+    /* Hide native ugly buttons so we can use the custom SVG */
+    -moz-appearance: textfield;
+    appearance: textfield;
+    
+    /* Clean SVG Arrows */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; 
+    background-position: right 12px center;
+}
+
+/* Force Hide Ugly Spinners on Webkit (Chrome/Edge/Safari) */
+.date-picker input[type="number"]::-webkit-inner-spin-button, 
+.date-picker input[type="number"]::-webkit-outer-spin-button { 
     -webkit-appearance: none; 
-    appearance: auto; 
+    margin: 0; 
 }
 
 .headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
@@ -160,7 +173,7 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 .toggle-edit-btn:hover { color: #fff; }
 
 /* =========================================================
-   6. MINIMAL EDIT MODE UI
+   6. MINIMAL EDIT MODE UI 
 ========================================================= */
 
 /* BADGES (Pos/Neg, High/Med/Low) */
@@ -184,36 +197,46 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* GOAL INPUT (Inside Table) */
+/* GOAL INPUT */
 .goal-input {
     height: 28px; 
-    width: 70px; /* Wide enough for number + arrows */
-    font-size: 12px; font-weight: 600;
-    padding: 0 0 0 8px; 
+    width: 70px; 
+    font-size: 12px; 
+    font-weight: 600;
+    padding: 0 0 0 4px; 
     margin: 0;
     background: transparent; 
     border: 1px solid rgba(255, 255, 255, 0.1); 
     border-radius: 6px; 
     color: var(--muted) !important; 
     text-align: center;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    transition: all 0.2s ease;
+    
+    /* Fix for CSS Warning: Define standard appearance */
+    -moz-appearance: textfield; 
+    appearance: textfield;
 }
 
 .goal-input:hover, .goal-input:focus {
     color: #fff !important; 
     border-color: rgba(255, 255, 255, 0.3); 
-    /* Critical Fix: Stronger background on hover to show box even if arrows are dark */
-    background: rgba(255, 255, 255, 0.08); 
-    outline: none;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-/* Ensure arrows are VISIBLE & Native */
+/* ARROWS: Hidden by default, Visible (White) on Interaction */
 .goal-input::-webkit-inner-spin-button, 
 .goal-input::-webkit-outer-spin-button {
     -webkit-appearance: inner-spin-button !important;
-    opacity: 1 !important;
-    display: block !important;
+    opacity: 0; /* Hidden initially */
     margin-left: 2px;
     height: 100%;
     cursor: pointer;
+    filter: invert(1); /* Turns arrows WHITE */
+    transition: opacity 0.2s;
+}
+
+/* Reveal arrows when hovering OR when focused (typing) */
+.goal-input:hover::-webkit-inner-spin-button, 
+.goal-input:focus::-webkit-inner-spin-button {
+    opacity: 1; 
 }
