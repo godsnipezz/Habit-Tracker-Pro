@@ -17,35 +17,32 @@ let currentMonth = NOW.getMonth();
 const yearInput = document.getElementById("year");
 yearInput.value = NOW.getFullYear();
 
-// BUG FIX: Prevent mouse wheel from accidentally changing the year
+// Prevent scroll wheel accidents on year input
 yearInput.addEventListener("wheel", (e) => e.preventDefault());
 
 const getDays = (y, m) => new Date(y, m + 1, 0).getDate();
 const storageKey = () => `habits-${yearInput.value}-${currentMonth}`;
 
-// INITIAL LOAD: Fetch habits or start with an empty array
+// LOAD DATA
 let habits = JSON.parse(localStorage.getItem(storageKey())) || [];
-
 const save = () => localStorage.setItem(storageKey(), JSON.stringify(habits));
 
 /**
- * Creates a custom dropdown that intelligently opens UP or DOWN
- * depending on screen position.
+ * Smart Dropdown: Opens UP if near bottom of screen
  */
 function makeDropdown(el, options, selectedIndex, onChange) {
   el.innerHTML = "";
   el.style.position = "relative";
-  
+
   const btn = document.createElement("div");
   btn.className = "dropdown-button";
-  // BUG FIX: Allow keyboard focus (Tab)
-  btn.tabIndex = 0; 
+  btn.tabIndex = 0; // Accessibility
   btn.innerHTML = options[selectedIndex]?.label || "Select";
-  
+
   const menu = document.createElement("div");
   menu.className = "dropdown-menu";
   menu.style.display = "none";
-  
+
   options.forEach((opt) => {
     const item = document.createElement("div");
     item.className = "dropdown-item";
@@ -59,19 +56,17 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     menu.appendChild(item);
   });
 
-  // Toggle Logic
   const toggleMenu = (e) => {
     e.stopPropagation();
     document.querySelectorAll(".dropdown-menu").forEach((m) => {
       if (m !== menu) m.style.display = "none";
     });
 
-    const isHidden = menu.style.display === "none";
-    if (isHidden) {
+    if (menu.style.display === "none") {
       menu.style.display = "block";
-      // Smart Positioning
       const rect = btn.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
+
       if (spaceBelow < 220) {
         menu.style.top = "auto";
         menu.style.bottom = "calc(100% + 8px)";
@@ -87,13 +82,11 @@ function makeDropdown(el, options, selectedIndex, onChange) {
   };
 
   btn.onclick = toggleMenu;
-  
-  // BUG FIX: Allow "Enter" key to open dropdown
   btn.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          toggleMenu(e);
-      }
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleMenu(e);
+    }
   };
 
   el.appendChild(btn);
@@ -106,47 +99,43 @@ function renderHeader() {
   const dayHeader = document.getElementById("dayHeader");
   const days = getDays(yearInput.value, currentMonth);
   const today = NOW.getDate();
-  const isThisMonth = currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
+  const isThisMonth =
+    currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
 
   dayHeader.innerHTML = "";
 
-  // 1. Habit Column with Wrapper for Perfect Alignment
+  // 1. Habit Column (Wrapper for perfect alignment)
   const nameTh = document.createElement("th");
-  
-  // Create a wrapper div to handle Flexbox layout safely inside a TH
   const wrapper = document.createElement("div");
   wrapper.className = "sticky-header-content";
 
-  // Create the Gear Icon Button
   const settingsBtn = document.createElement("button");
   settingsBtn.className = "toggle-edit-btn";
-  settingsBtn.innerHTML = isEditMode 
-    ? `<i data-lucide="check" style="width: 16px; height: 16px;"></i>` 
+  settingsBtn.innerHTML = isEditMode
+    ? `<i data-lucide="check" style="width: 16px; height: 16px;"></i>`
     : `<i data-lucide="settings-2" style="width: 16px; height: 16px;"></i>`;
-    
+
   settingsBtn.onclick = (e) => {
-      e.stopPropagation(); // Prevent bubbling
-      isEditMode = !isEditMode;
-      update(); 
+    e.stopPropagation();
+    isEditMode = !isEditMode;
+    update();
   };
-  
+
   const labelSpan = document.createElement("span");
   labelSpan.textContent = "Habit";
-  
-  // Append to wrapper, then append wrapper to TH
+
   wrapper.appendChild(settingsBtn);
   wrapper.appendChild(labelSpan);
   nameTh.appendChild(wrapper);
-  
   dayHeader.appendChild(nameTh);
 
-  // 2. Conditional Columns
+  // 2. Edit Mode Columns
   if (isEditMode) {
-      ["Type", "Imp", "Goal"].forEach(t => {
-          const th = document.createElement("th");
-          th.textContent = t;
-          dayHeader.appendChild(th);
-      });
+    ["Type", "Imp", "Goal"].forEach((t) => {
+      const th = document.createElement("th");
+      th.textContent = t;
+      dayHeader.appendChild(th);
+    });
   }
 
   // 3. Day Columns
@@ -156,8 +145,8 @@ function renderHeader() {
     if (isThisMonth && d === today) th.classList.add("today-col");
     dayHeader.appendChild(th);
   }
-  
-  // 4. Spacer/Progress Column
+
+  // 4. End Column
   const endTh = document.createElement("th");
   endTh.textContent = isEditMode ? "Del" : "";
   dayHeader.appendChild(endTh);
@@ -170,7 +159,8 @@ function renderHabits() {
   habitBody.innerHTML = "";
   const days = getDays(yearInput.value, currentMonth);
   const today = NOW.getDate();
-  const isThisMonth = currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
+  const isThisMonth =
+    currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
 
   habits.forEach((h, i) => {
     if (!h.days || h.days.length !== days) h.days = Array(days).fill(false);
@@ -178,51 +168,87 @@ function renderHabits() {
 
     // --- 1. Habit Name ---
     const nameTd = document.createElement("td");
-    nameTd.contentEditable = isEditMode; 
+    nameTd.contentEditable = isEditMode;
     nameTd.textContent = h.name;
     nameTd.style.cursor = isEditMode ? "text" : "default";
-    nameTd.className = "habit-name-cell"; // Helper for styling
     nameTd.onblur = () => {
       h.name = nameTd.textContent;
       save();
     };
     tr.appendChild(nameTd);
 
-    // --- 2. Edit Columns ---
+    // --- 2. Edit Columns (Minimal UI) ---
     if (isEditMode) {
-        // Type
-        const typeTd = document.createElement("td");
-        const tDD = document.createElement("div");
-        tDD.className = "dropdown";
-        makeDropdown(tDD, 
-          [{ label: "🟢 Pos", value: "positive" }, { label: "🔴 Neg", value: "negative" }],
-          h.type === "negative" ? 1 : 0,
-          (v) => { h.type = v; save(); update(); }
-        );
-        typeTd.appendChild(tDD);
-        tr.appendChild(typeTd);
+      // TYPE
+      const typeTd = document.createElement("td");
+      const tDD = document.createElement("div");
+      tDD.className = "dropdown";
 
-        // Importance
-        const impTd = document.createElement("td");
-        const iDD = document.createElement("div");
-        iDD.className = "dropdown";
-        makeDropdown(iDD, 
-          [{ label: "L", value: 1 }, { label: "M", value: 2 }, { label: "H", value: 3 }],
-          (h.weight || 2) - 1,
-          (v) => { h.weight = v; save(); update(); }
-        );
-        impTd.appendChild(iDD);
-        tr.appendChild(impTd);
+      makeDropdown(
+        tDD,
+        [
+          { label: "Positive", value: "positive" },
+          { label: "Negative", value: "negative" },
+        ],
+        h.type === "negative" ? 1 : 0,
+        (v) => {
+          h.type = v;
+          save();
+          update();
+        },
+      );
 
-        // Goal
-        const goalTd = document.createElement("td");
-        const gIn = document.createElement("input");
-        gIn.type = "number";
-        gIn.className = "goal-input";
-        gIn.value = h.goal || 28;
-        gIn.oninput = (e) => { h.goal = +e.target.value; save(); updateStats(); };
-        goalTd.appendChild(gIn);
-        tr.appendChild(goalTd);
+      // Apply Badge Style
+      const typeBtn = tDD.querySelector(".dropdown-button");
+      if (h.type === "positive") typeBtn.classList.add("badge-pos");
+      else typeBtn.classList.add("badge-neg");
+
+      typeTd.appendChild(tDD);
+      tr.appendChild(typeTd);
+
+      // IMPORTANCE
+      const impTd = document.createElement("td");
+      const iDD = document.createElement("div");
+      iDD.className = "dropdown";
+
+      makeDropdown(
+        iDD,
+        [
+          { label: "Low", value: 1 },
+          { label: "Medium", value: 2 },
+          { label: "High", value: 3 },
+        ],
+        (h.weight || 2) - 1,
+        (v) => {
+          h.weight = v;
+          save();
+          update();
+        },
+      );
+
+      // Apply Badge Style
+      const impBtn = iDD.querySelector(".dropdown-button");
+      const w = h.weight || 2;
+      if (w === 1) impBtn.classList.add("badge-imp-low");
+      if (w === 2) impBtn.classList.add("badge-imp-med");
+      if (w === 3) impBtn.classList.add("badge-imp-high");
+
+      impTd.appendChild(iDD);
+      tr.appendChild(impTd);
+
+      // GOAL
+      const goalTd = document.createElement("td");
+      const gIn = document.createElement("input");
+      gIn.type = "number";
+      gIn.className = "goal-input";
+      gIn.value = h.goal || 28;
+      gIn.oninput = (e) => {
+        h.goal = +e.target.value;
+        save();
+        updateStats();
+      };
+      goalTd.appendChild(gIn);
+      tr.appendChild(goalTd);
     }
 
     // --- 3. Checkboxes ---
@@ -232,27 +258,29 @@ function renderHabits() {
       const isFuture = isThisMonth && d + 1 > today;
 
       if (isToday) td.classList.add("today-col");
-      
+
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = h.days[d];
 
       if (h.type === "negative") cb.classList.add("neg-habit");
-      if (isFuture) {
-          cb.classList.add("future-day");
-          cb.disabled = true;
-      }
 
+      // Disable future days
       const isFutureYear = +yearInput.value > NOW.getFullYear();
-      const isFutureMonth = +yearInput.value === NOW.getFullYear() && currentMonth > NOW.getMonth();
+      const isFutureMonth =
+        +yearInput.value === NOW.getFullYear() && currentMonth > NOW.getMonth();
       const isFutureDay = isThisMonth && d > NOW.getDate() - 1;
-      cb.disabled = isFutureYear || isFutureMonth || isFutureDay;
+
+      if (isFutureYear || isFutureMonth || isFutureDay) {
+        cb.classList.add("future-day");
+        cb.disabled = true;
+      }
 
       cb.onchange = () => {
         h.days[d] = cb.checked;
         save();
         updateStats();
-        if (!isEditMode) updateProgress(tr, h); 
+        if (!isEditMode) updateProgress(tr, h);
       };
       td.appendChild(cb);
       tr.appendChild(td);
@@ -261,20 +289,20 @@ function renderHabits() {
     // --- 4. End Column ---
     const endTd = document.createElement("td");
     if (isEditMode) {
-        endTd.innerHTML = `<i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>`;
-        endTd.style.cursor = "pointer";
-        endTd.style.opacity = "0.7";
-        endTd.style.color = "#ef4444";
-        endTd.onclick = () => {
-            if (confirm("Delete habit?")) {
-                habits.splice(i, 1);
-                save();
-                update();
-            }
-        };
+      endTd.innerHTML = `<i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>`;
+      endTd.style.cursor = "pointer";
+      endTd.style.opacity = "0.7";
+      endTd.style.color = "#ef4444";
+      endTd.onclick = () => {
+        if (confirm("Delete habit?")) {
+          habits.splice(i, 1);
+          save();
+          update();
+        }
+      };
     } else {
-        endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
-        setTimeout(() => updateProgress(tr, h), 0);
+      endTd.innerHTML = `<div class="progress-bar"><div class="progress-fill"></div></div>`;
+      setTimeout(() => updateProgress(tr, h), 0);
     }
     tr.appendChild(endTd);
 
@@ -285,7 +313,8 @@ function renderHabits() {
 
 function updateProgress(tr, h) {
   const done = h.days.filter(Boolean).length;
-  const pct = h.type === "positive"
+  const pct =
+    h.type === "positive"
       ? (done / h.days.length) * 100
       : ((h.days.length - done) / h.days.length) * 100;
   const fill = tr.querySelector(".progress-fill");
@@ -295,71 +324,82 @@ function updateProgress(tr, h) {
 function setRing(id, pct) {
   const path = document.getElementById(id.replace("ring-", "path-"));
   const text = document.getElementById(id.replace("ring-", "") + "Pct");
-  const circ = 213.6; 
+  const circ = 213.6;
   path.style.strokeDasharray = `${circ} ${circ}`;
   path.style.strokeDashoffset = circ - (pct / 100) * circ;
   text.textContent = Math.round(pct) + "%";
 }
 
 function updateStats() {
-    const isThisMonth = currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
-    const todayIdx = isThisMonth ? NOW.getDate() - 1 : (habits[0]?.days.length - 1 || 0);
+  const isThisMonth =
+    currentMonth === NOW.getMonth() && +yearInput.value === NOW.getFullYear();
+  const todayIdx = isThisMonth
+    ? NOW.getDate() - 1
+    : habits[0]?.days.length - 1 || 0;
 
-    let earned = 0, totalPossible = 0;
-    let todayDone = 0, todayTotal = 0; 
-    let negSlips = 0, negTotal = 0;   
-    let momentumSum = 0;
+  let earned = 0,
+    totalPossible = 0;
+  let todayDone = 0,
+    todayTotal = 0;
+  let negSlips = 0,
+    negTotal = 0;
+  let momentumSum = 0;
 
-    habits.forEach(h => {
-        const w = Number(h.weight) || 2; 
-        const daysInMonth = h.days.length;
-        const checkedDays = h.days.filter(Boolean).length;
-        const successCount = h.type === "positive" ? checkedDays : (daysInMonth - checkedDays);
+  habits.forEach((h) => {
+    const w = Number(h.weight) || 2;
+    const daysInMonth = h.days.length;
+    const checkedDays = h.days.filter(Boolean).length;
+    const successCount =
+      h.type === "positive" ? checkedDays : daysInMonth - checkedDays;
 
-        earned += (successCount / daysInMonth) * w;
-        totalPossible += w;
+    earned += (successCount / daysInMonth) * w;
+    totalPossible += w;
 
-        if (h.type === "positive") {
-            todayTotal++;
-            if (h.days[todayIdx]) todayDone++; 
-        } else {
-            negTotal++;
-            if (h.days[todayIdx]) negSlips++;
-        }
+    if (h.type === "positive") {
+      todayTotal++;
+      if (h.days[todayIdx]) todayDone++;
+    } else {
+      negTotal++;
+      if (h.days[todayIdx]) negSlips++;
+    }
 
-        let hMom = 0, wSum = 0;
-        [0.1, 0.2, 0.3, 0.4].forEach((weight, i) => {
-            const idx = todayIdx - (3 - i);
-            if (idx >= 0) { 
-                const daySuccess = h.type === "positive" ? h.days[idx] : !h.days[idx];
-                hMom += (daySuccess ? 1 : 0) * weight; 
-                wSum += weight; 
-            }
-        });
-        momentumSum += (wSum ? hMom / wSum : 0) * w;
+    let hMom = 0,
+      wSum = 0;
+    [0.1, 0.2, 0.3, 0.4].forEach((weight, i) => {
+      const idx = todayIdx - (3 - i);
+      if (idx >= 0) {
+        const daySuccess = h.type === "positive" ? h.days[idx] : !h.days[idx];
+        hMom += (daySuccess ? 1 : 0) * weight;
+        wSum += weight;
+      }
     });
+    momentumSum += (wSum ? hMom / wSum : 0) * w;
+  });
 
-    const mScore = totalPossible ? (earned / totalPossible) * 100 : 0;
-    const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
-    const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
+  const mScore = totalPossible ? (earned / totalPossible) * 100 : 0;
+  const tScore = habits.length
+    ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100
+    : 0;
+  const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
 
-    const successEl = document.getElementById("successRate");
-    if (successEl) successEl.textContent = Math.round(mScore) + "%";
+  // UPDATE UI
+  const successEl = document.getElementById("successRate");
+  if (successEl) successEl.textContent = Math.round(mScore) + "%";
 
-    document.getElementById("completed").textContent = todayDone;
-    document.getElementById("total").textContent = todayTotal;
+  document.getElementById("completed").textContent = todayDone;
+  document.getElementById("total").textContent = todayTotal;
 
-    document.getElementById("todaySummary").innerHTML = 
-        `${todayDone} of ${todayTotal} habits done <span style="opacity:0.5; margin:0 8px">|</span> ${negSlips} of ${negTotal} slips`;
+  document.getElementById("todaySummary").innerHTML =
+    `${todayDone} of ${todayTotal} habits done <span style="opacity:0.5; margin:0 8px">|</span> ${negSlips} of ${negTotal} slips`;
 
-    setRing("ring-monthly", mScore); 
-    setRing("ring-normalized", tScore); 
-    setRing("ring-momentum", momScore);
+  setRing("ring-monthly", mScore);
+  setRing("ring-normalized", tScore);
+  setRing("ring-momentum", momScore);
 }
 
 yearInput.addEventListener("input", () => {
   const stored = localStorage.getItem(storageKey());
-  habits = stored ? JSON.parse(stored) : []; 
+  habits = stored ? JSON.parse(stored) : [];
   update();
 });
 
@@ -395,7 +435,9 @@ function update() {
 }
 
 document.addEventListener("click", () =>
-  document.querySelectorAll(".dropdown-menu").forEach((m) => (m.style.display = "none"))
+  document
+    .querySelectorAll(".dropdown-menu")
+    .forEach((m) => (m.style.display = "none")),
 );
 
 update();

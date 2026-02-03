@@ -2,196 +2,477 @@
    1. CORE THEME & LAYOUT
 ========================================================= */
 :root {
-    --bg: #0b0b0b;
-    --surface: rgba(255, 255, 255, 0.05);
-    --border: rgba(255, 255, 255, 0.1);
-    --text: #ffffff;
-    --muted: rgba(255, 255, 255, 0.5);
-    --green: #63e6a4;
-    --cyan: #4fd1ff;
-    --yellow: #facc15;
-    --radius: 24px;
+  --bg: #0b0b0b;
+  --surface: rgba(255, 255, 255, 0.05);
+  --border: rgba(255, 255, 255, 0.1);
+  --text: #ffffff;
+  --muted: rgba(255, 255, 255, 0.5);
+  --green: #63e6a4;
+  --cyan: #4fd1ff;
+  --yellow: #facc15;
+  --radius: 24px;
 }
 
-html { font-size: 13px; }
-* { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-
-/* REMOVE UGLY WHITE FOCUS BORDERS */
-*:focus { outline: none !important; }
-
-/* Custom Focus for Keyboard Users (Accessibility) */
-*:focus-visible { 
-    outline: 1px solid var(--muted); 
-    outline-offset: 2px;
+/* GLOBAL SCALING: Fits everything on standard screens */
+html {
+  font-size: 13px;
+}
+* {
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Edit Mode Cell Focus - Subtle Background instead of Border */
+/* FOCUS MANAGEMENT: Removes ugly white outlines */
+*:focus {
+  outline: none !important;
+}
+*:focus-visible {
+  outline: 1px solid var(--muted);
+  outline-offset: 2px;
+}
 td[contenteditable]:focus {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-    outline: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  outline: none;
 }
 
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+/* SCROLLBARS */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
 
 body {
-    margin: 0; font-family: 'Inter', sans-serif;
-    background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, var(--bg) 80%);
-    color: var(--text); min-height: 100vh; overflow-x: hidden;
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, var(--bg) 80%);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-.app { width: 98%; max-width: 1600px; margin: 0 auto; padding: 20px; }
+.app {
+  width: 98%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+}
 
 /* =========================================================
-   2. HEADER & INPUTS
+   2. HEADER & INPUTS (TOP BAR)
 ========================================================= */
-.top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
-.date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+.date-picker {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  position: relative;
+}
 
+/* Year Input - Matches Month Dropdown Height */
 input[type="number"] {
-    -webkit-appearance: none; appearance: none;
-    background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
-    color: #ffffff !important; height: 42px; padding: 0 15px; line-height: 40px;
-    border-radius: 12px; width: 90px; font-size: 14px; font-weight: 600;
-    outline: none; cursor: pointer !important; position: relative;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 8px center;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: #ffffff !important;
+  height: 42px;
+  padding: 0 15px;
+  line-height: 40px;
+  border-radius: 12px;
+  width: 90px;
+  font-size: 14px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer !important;
+  position: relative;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
 }
-input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input::-webkit-inner-spin-button,
+input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
-.headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
-.headline .label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+.headline h1 {
+  font-size: 42px;
+  margin: 0;
+  letter-spacing: -2px;
+  font-variant-numeric: tabular-nums;
+}
+.headline .label {
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+}
 
 /* =========================================================
-   3. DROPDOWNS
+   3. DROPDOWNS (MAIN & TABLE)
 ========================================================= */
-.dropdown { position: relative; display: inline-block; }
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
 
-/* Main Dropdowns (Month) */
-.dropdown-button { 
-    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
-    color: #fff; height: 42px; padding: 0 15px; border-radius: 12px; cursor: pointer;
-    font-size: 14px; font-weight: 600; min-width: 130px; 
-    display: flex; align-items: center; justify-content: space-between;
+/* Main Month Dropdown */
+.dropdown-button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  color: #fff;
+  height: 42px;
+  padding: 0 15px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .dropdown-button::after {
-    content: ''; width: 16px; height: 16px;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: center;
-}
-
-/* TABLE SPECIFIC DROPDOWNS (Compact) */
-td .dropdown-button {
-    height: 30px; /* Smaller to fit in row */
-    min-width: 90px;
-    font-size: 12px;
-    padding: 0 10px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.03);
+  content: "";
+  width: 16px;
+  height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .dropdown-menu {
-    position: absolute; top: calc(100% + 8px); left: 0; 
-    background: #181818; border: 1px solid var(--border);
-    border-radius: 14px; z-index: 1000; min-width: 130px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: #181818;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  z-index: 1000;
+  min-width: 130px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
 }
-.dropdown-item { padding: 12px 16px; cursor: pointer; font-size: 13px; color: var(--muted); transition: 0.2s; }
-.dropdown-item:hover { background: rgba(255,255,255,0.08); color: white; }
-
-.today-focus, .habits {
-    background: var(--surface); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 32px; margin-bottom: 20px;
+.dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  transition: 0.2s;
+}
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
 }
 
 /* =========================================================
    4. ANALYTICS
 ========================================================= */
-.analytics { display: flex; gap: 40px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 10px; }
-.ring-block { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
-.ring { width: 72px; height: 72px; position: relative; display: flex; align-items: center; justify-content: center; }
-.ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
-.ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; }
-.ring-progress { 
-    fill: none; stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.8s ease; 
-    filter: drop-shadow(0 0 3px rgba(255,255,255,0.25)); 
+.analytics {
+  display: flex;
+  gap: 40px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 10px;
 }
-.ring span { position: absolute; font-weight: 700; font-size: 13px; }
+.ring-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.ring {
+  width: 72px;
+  height: 72px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ring svg {
+  transform: rotate(-90deg);
+  width: 100%;
+  height: 100%;
+}
+.ring-bg {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.5);
+  stroke-width: 5;
+}
+.ring-progress {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.25));
+}
+.ring span {
+  position: absolute;
+  font-weight: 700;
+  font-size: 13px;
+}
+.today-focus,
+.habits {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 32px;
+  margin-bottom: 20px;
+}
 
 /* =========================================================
    5. TABLE & LAYOUT
 ========================================================= */
-.table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
-table { border-collapse: collapse; width: 100%; }
-
-/* Table Cells Alignment */
-th, td { 
-    padding: 6px 4px; 
-    text-align: center; 
-    font-size: 13px; 
-    height: 44px; /* Slightly taller for breathing room */
-    vertical-align: middle; /* Fixes vertical misalignment */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  position: relative;
+  margin-top: 10px;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
 }
 
-/* STICKY COLUMN */
-th:first-child, td:first-child {
-    position: sticky; left: 0; z-index: 10; background: #121212; 
-    min-width: 180px; max-width: 180px;
-    text-align: left; 
-    border-right: 1px solid var(--border);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    padding-left: 12px;
+th,
+td {
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 13px;
+  height: 44px;
+  vertical-align: middle;
 }
-th { position: sticky; top: 0; background: #121212; z-index: 11; }
 
-/* Sticky Header Flex Container (Used in JS) */
+/* STICKY COLUMN (HABIT NAME) */
+th:first-child,
+td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #121212;
+  min-width: 180px;
+  max-width: 180px;
+  text-align: left;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 12px;
+}
+th {
+  position: sticky;
+  top: 0;
+  background: #121212;
+  z-index: 11;
+}
 .sticky-header-content {
-    display: flex; align-items: center; gap: 10px; height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
 }
 
-.today-col { background: rgba(99, 230, 164, 0.05) !important; }
-tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
-tbody tr:hover td:first-child { background-color: #121212; }
-
-/* Inputs inside Table */
-.goal-input { 
-    width: 40px; height: 30px; 
-    background: transparent; border: 1px solid transparent; 
-    color: #fff !important; text-align: center; font-weight: 500; padding: 0; 
-    border-radius: 6px;
+/* HIGHLIGHTS & STATES */
+.today-col {
+  background: rgba(99, 230, 164, 0.05) !important;
 }
-.goal-input:hover { border-color: var(--border); }
-.goal-input:focus { border-color: var(--green); background: rgba(255,255,255,0.05); }
+tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+tbody tr:hover td:first-child {
+  background-color: #121212;
+}
 
-/* =========================================================
-   6. FOOTER & UI ELEMENTS
-========================================================= */
-.footer { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+.future-day {
+  opacity: 0.15;
+  pointer-events: none;
+}
+.today-col input {
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(99, 230, 164, 0.2);
+}
 
+/* FOOTER ELEMENTS */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
 button#addHabit {
-    background: var(--green); color: #000; border: none; padding: 12px 24px;
-    border-radius: 16px; font-weight: 700; cursor: pointer; transition: transform 0.2s;
+  background: var(--green);
+  color: #000;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s;
 }
-button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
+button#addHabit:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+.counter {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+}
+#completed {
+  color: var(--green);
+}
+#total {
+  color: var(--text);
+}
 
-.counter { font-size: 14px; font-weight: 600; color: var(--muted); }
-#completed { color: var(--green); } 
-#total { color: var(--text); }
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+input[type="checkbox"].neg-habit {
+  accent-color: #ef4444;
+}
 
-input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
-.progress-bar { width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 0 auto; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); transition: width 0.4s ease; }
+.progress-bar {
+  width: 60px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--cyan));
+  transition: width 0.4s ease;
+}
 
 .toggle-edit-btn {
-    background: none; border: none; cursor: pointer; color: var(--muted);
-    padding: 4px; display: flex; align-items: center; justify-content: center;
-    transition: color 0.2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
 }
-.toggle-edit-btn:hover { color: #fff; }
+.toggle-edit-btn:hover {
+  color: #fff;
+}
+.hidden-col {
+  display: none;
+}
 
-input[type="checkbox"].neg-habit { accent-color: #ef4444; }
-.future-day { opacity: 0.15; pointer-events: none; }
-.today-col input { transform: scale(1.15); box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); }
+/* =========================================================
+   6. MINIMAL EDIT MODE UI (BADGES & PILLS)
+========================================================= */
+
+/* RESET TABLE DROPDOWNS */
+td .dropdown-button {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  height: 28px;
+  min-width: auto;
+  width: auto;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+td .dropdown-button::after {
+  display: none;
+}
+td .dropdown-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+}
+
+/* COLOR BADGES */
+.badge-pos {
+  color: #63e6a4;
+  background: rgba(99, 230, 164, 0.1) !important;
+  border: 1px solid rgba(99, 230, 164, 0.2) !important;
+}
+.badge-neg {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+.badge-imp-low {
+  color: #4fd1ff;
+  background: rgba(79, 209, 255, 0.1) !important;
+}
+.badge-imp-med {
+  color: #facc15;
+  background: rgba(250, 204, 21, 0.1) !important;
+}
+.badge-imp-high {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1) !important;
+}
+
+/* MINIMAL GOAL INPUT */
+.goal-input {
+  height: 28px;
+  width: 48px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 28px;
+  padding: 0 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--muted) !important;
+  text-align: center;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+.goal-input:hover,
+.goal-input:focus {
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* HIDE/SHOW ARROWS */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.goal-input:hover::-webkit-inner-spin-button,
+.goal-input:focus::-webkit-inner-spin-button {
+  -webkit-appearance: inner-spin-button !important;
+  opacity: 0.6;
+  cursor: pointer;
+  height: 20px;
+}
