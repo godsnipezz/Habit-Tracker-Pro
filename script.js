@@ -365,43 +365,75 @@ function setRing(id, pct) {
     text.textContent = Math.round(pct) + "%";
 }
 
+// =========================================================
+//  UPDATED STATS LOGIC (Efficiency + Footer Slips)
+// =========================================================
 function updateStats() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : (habits[0]?.days.length - 1 || 0);
 
-    let earned = 0, totalPossible = 0;
+    // 1. Monthly Score (Header)
+    let earnedMonth = 0, totalPossibleMonth = 0;
+    
+    // 2. Efficiency Score (Ring 1 - Past Days Only)
+    let earnedSoFar = 0, totalPossibleSoFar = 0;
+
+    // 3. Today's Counts (Footer)
     let todayDone = 0, todayTotal = 0; 
-    let negSlips = 0, negTotal = 0;   
+    let todaySlips = 0, negTotal = 0;   
     let momentumSum = 0;
 
     habits.forEach(h => {
         const w = Number(h.weight) || 2; 
         const checkedDays = h.days.filter(Boolean).length;
         
-        let ratio = 0;
+        // --- A. MONTHLY PROGRESS (Header) ---
+        let ratioMonth = 0;
         if (h.type === "positive") {
             const target = h.goal || h.days.length;
-            ratio = checkedDays / target;
-            if (ratio > 1) ratio = 1; 
+            ratioMonth = checkedDays / target;
+            if (ratioMonth > 1) ratioMonth = 1; 
         } else {
-            ratio = (h.days.length - checkedDays) / h.days.length;
+            ratioMonth = (h.days.length - checkedDays) / h.days.length;
         }
-        
-        earned += ratio * w;
-        totalPossible += w;
+        earnedMonth += ratioMonth * w;
+        totalPossibleMonth += w;
 
+        // --- B. EFFICIENCY (Ring 1) ---
+        // Calculate performance strictly up to today
+        let daysPassed = todayIdx + 1;
+        let ratioSoFar = 0;
+        
+        if(h.type === 'positive') {
+             // For positive: Checks / DaysPassed
+             // (We assume you should do it every day for "Efficiency", 
+             //  or you can map it to goal/30 * daysPassed if you prefer)
+             // Simple version: Did you do it when you could have?
+             const checksSoFar = h.days.slice(0, daysPassed).filter(Boolean).length;
+             ratioSoFar = checksSoFar / daysPassed;
+        } else {
+             // For negative: (DaysPassed - Slips) / DaysPassed
+             const slipsSoFar = h.days.slice(0, daysPassed).filter(Boolean).length;
+             ratioSoFar = (daysPassed - slipsSoFar) / daysPassed;
+        }
+        if(ratioSoFar < 0) ratioSoFar = 0;
+        
+        earnedSoFar += ratioSoFar * w;
+        totalPossibleSoFar += w;
+
+        // --- C. TODAY COUNTS (Footer) ---
         if (h.type === "positive") {
             todayTotal++;
             if (h.days[todayIdx]) todayDone++; 
         } else {
             negTotal++;
-            if (h.days[todayIdx]) negSlips++;
+            if (h.days[todayIdx]) todaySlips++;
         }
 
+        // --- D. MOMENTUM ---
         let hMom = 0, wSum = 0;
         const weights = [0.1, 0.2, 0.3, 0.4]; 
-        
         weights.forEach((weight, i) => {
             const lookback = 3 - i; 
             const idx = todayIdx - lookback;
@@ -411,27 +443,48 @@ function updateStats() {
                 wSum += weight; 
             }
         });
-        
         const normalizedMom = wSum > 0 ? (hMom / wSum) : 0;
         momentumSum += normalizedMom * w;
     });
 
-    const mScore = totalPossible ? (earned / totalPossible) * 100 : 0;
-    const tScore = habits.length ? ((todayDone + (negTotal - negSlips)) / habits.length) * 100 : 0;
-    const momScore = totalPossible ? (momentumSum / totalPossible) * 100 : 0;
+    // FINAL PERCENTAGES
+    const monthPct = totalPossibleMonth ? (earnedMonth / totalPossibleMonth) * 100 : 0;
+    const efficiencyPct = totalPossibleSoFar ? (earnedSoFar / totalPossibleSoFar) * 100 : 0;
+    
+    // Today Ring (Positive Done + Negative Avoided / Total)
+    const todayPerformance = (todayDone + (negTotal - todaySlips)) / (todayTotal + negTotal || 1) * 100;
+    
+    const momPct = totalPossibleMonth ? (momentumSum / totalPossibleMonth) * 100 : 0;
 
+    // UPDATE UI ELEMENTS
+    
+    // 1. Header Text
     const successEl = document.getElementById("successRate");
-    if (successEl) successEl.textContent = Math.round(mScore) + "%";
+    if (successEl) successEl.textContent = Math.round(monthPct) + "%";
 
-    document.getElementById("completed").textContent = todayDone;
-    document.getElementById("total").textContent = todayTotal;
+    // 2. Footer Text (Split Counts)
+    const footerCounter = document.querySelector('.counter');
+    if (footerCounter) {
+        // Safe check if negTotal is 0 to avoid showing "0/0 slips" if none exist
+        const slipText = negTotal > 0 
+            ? `<span style="opacity:0.3; margin:0 6px">|</span> <span style="color:#ef4444">${todaySlips}/${negTotal}</span> slips`
+            : ``;
+            
+        footerCounter.innerHTML = `
+            Today: <span style="color:var(--green)">${todayDone}/${todayTotal}</span> done ${slipText}
+        `;
+    }
 
+    // 3. Rings
+    setRing("ring-efficiency", efficiencyPct); 
+    setRing("ring-normalized", todayPerformance); 
+    setRing("ring-momentum", momPct);
+    
+    // 4. Graph Summary Text
     document.getElementById("todaySummary").innerHTML = todayScoreText();
-
-    setRing("ring-monthly", mScore); 
-    setRing("ring-normalized", tScore); 
-    setRing("ring-momentum", momScore);
 }
+
+// ... [Keep renderGraph, update, listeners, etc.] ...
 
 function todayScoreText() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
