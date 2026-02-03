@@ -13,11 +13,11 @@
     --radius: 24px;
 }
 
-/* GLOBAL SCALING: Fits everything on standard screens */
+/* GLOBAL SCALING */
 html { font-size: 13px; }
 * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
 
-/* FOCUS MANAGEMENT: Removes ugly white outlines */
+/* FOCUS MANAGEMENT */
 *:focus { outline: none !important; }
 *:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; }
 td[contenteditable]:focus { background: rgba(255, 255, 255, 0.1); border-radius: 4px; outline: none; }
@@ -42,7 +42,7 @@ body {
 .top { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; }
 .date-picker { display: flex; gap: 12px; align-items: center; position: relative; }
 
-/* Year Input - Matches Month Dropdown Height */
+/* Year Input */
 input[type="number"] {
     -webkit-appearance: none; appearance: none;
     background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border);
@@ -52,7 +52,11 @@ input[type="number"] {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='20' viewBox='0 0 10 20'%3E%3Cpath d='M2 7l3-3 3 3M2 13l3 3 3-3' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 8px center;
 }
-input::-webkit-inner-spin-button, input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+/* Only hide arrows for the YEAR input specifically */
+.date-picker input[type="number"]::-webkit-inner-spin-button, 
+.date-picker input[type="number"]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; margin: 0; 
+}
 
 .headline h1 { font-size: 42px; margin: 0; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
 .headline .label { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
@@ -113,7 +117,7 @@ th, td {
     height: 44px; vertical-align: middle; 
 }
 
-/* STICKY COLUMN (HABIT NAME) */
+/* STICKY COLUMN */
 th:first-child, td:first-child {
     position: sticky; left: 0; z-index: 10; background: #121212; 
     min-width: 180px; max-width: 180px;
@@ -162,11 +166,12 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
    6. MINIMAL EDIT MODE UI (Refined Badges & Inputs)
 ========================================================= */
 
-/* RESET TABLE DROPDOWNS (Badges) */
+/* BADGES (Pos/Neg, High/Med/Low) */
 td .dropdown-button {
     background: transparent; border: 1px solid transparent; 
-    padding: 0 8px; /* Horizontal padding only */
-    height: 28px; line-height: 26px; /* Vertical Centering */
+    padding: 0 8px; 
+    height: 28px; /* EXACT HEIGHT */
+    line-height: 26px; /* Center text */
     min-width: auto; width: auto;
     font-size: 12px; font-weight: 600; border-radius: 6px;
     justify-content: center; gap: 6px; transition: all 0.2s ease;
@@ -182,18 +187,35 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
-/* MINIMAL GOAL INPUT (Fixed Size & Hidden Arrows) */
+/* GOAL INPUT - ARROWS RESTORED */
 .goal-input {
-    height: 28px; width: 48px; font-size: 12px; font-weight: 600;
-    padding: 0; margin: 0;
-    background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); 
-    border-radius: 6px; color: var(--muted) !important; text-align: center;
-    transition: all 0.2s; -moz-appearance: textfield; 
-}
-.goal-input:hover, .goal-input:focus {
-    color: #fff !important; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.05); outline: none;
+    /* EXACT SIZE MATCH with Badges */
+    height: 28px; 
+    width: 60px; /* Slightly wider to fit the arrows comfortably */
+    font-size: 12px; 
+    font-weight: 600;
+    
+    /* Style */
+    padding: 0 4px; 
+    margin: 0;
+    background: transparent; 
+    border: 1px solid rgba(255, 255, 255, 0.1); 
+    border-radius: 6px; 
+    color: var(--muted) !important; 
+    text-align: center;
+    transition: all 0.2s; 
+    
+    /* VITAL: Make browser controls white on dark theme */
+    color-scheme: dark; 
+    
+    /* Restore standard input appearance for arrows */
+    -moz-appearance: textfield; 
+    appearance: auto;
 }
 
-/* KILL ARROWS PERMANENTLY */
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.goal-input:hover, .goal-input:focus {
+    color: #fff !important; 
+    border-color: rgba(255, 255, 255, 0.3); 
+    background: rgba(255, 255, 255, 0.05); 
+    outline: none;
+}
