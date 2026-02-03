@@ -121,6 +121,12 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
 ========================================================= */
 function renderHeader() {
     const dayHeader = document.getElementById("dayHeader");
+    const wrapper = document.querySelector(".table-wrapper");
+    
+    // Toggle the CSS class based on mode
+    if (isEditMode) wrapper.classList.add("editing-active");
+    else wrapper.classList.remove("editing-active");
+
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const days = getDays(y, currentMonth);
     const today = NOW.getDate();
@@ -128,8 +134,7 @@ function renderHeader() {
 
     dayHeader.innerHTML = "";
 
-    // 1. EDIT MODE: Append Metadata Headers FIRST
-    // These appear to the left of the sticky name
+    // 1. EDIT SETTINGS (First in DOM)
     if (isEditMode) {
         ["Type", "Imp", "Goal"].forEach(t => {
             const th = document.createElement("th");
@@ -139,39 +144,43 @@ function renderHeader() {
         });
     }
 
-    // 2. HABIT NAME (Sticky Column)
+    // 2. HABIT NAME
     const nameTh = document.createElement("th");
     nameTh.className = "sticky-col"; 
     
-    const wrapper = document.createElement("div");
-    wrapper.className = "sticky-header-content";
+    const headerContent = document.createElement("div");
+    headerContent.className = "sticky-header-content";
 
     const settingsBtn = document.createElement("button");
     settingsBtn.className = "toggle-edit-btn";
     settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
     
-    // ACTION: Toggle Mode & TRIGGER SCROLL
+    // --- TOGGLE ACTION ---
     settingsBtn.onclick = (e) => { 
         e.stopPropagation(); 
         isEditMode = !isEditMode; 
-        update(); 
-        
-        // --- THE MAGIC SCROLL ---
-        // Instantly scroll past the metadata so the Name is the first thing seen
-        if (isEditMode) {
-            setTimeout(() => {
-                const wrapper = document.querySelector(".table-wrapper");
-                if(wrapper) {
-                    wrapper.scrollLeft = 270; // 3 cols * 90px
+        update(); // Re-render
+
+        // SCROLL LOGIC
+        setTimeout(() => {
+            const wrap = document.querySelector(".table-wrapper");
+            if (isEditMode) {
+                // EDIT MODE: Scroll right 270px (Hide settings, Show Name)
+                wrap.scrollLeft = 270; 
+            } else {
+                // VIEW MODE: Scroll to Today
+                const todayCol = document.querySelector(".today-col");
+                if (todayCol) {
+                    todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
                 }
-            }, 50);
-        }
+            }
+        }, 50); 
     };
 
     const labelSpan = document.createElement("span"); labelSpan.textContent = "Habit";
-    wrapper.appendChild(settingsBtn); wrapper.appendChild(labelSpan);
-    nameTh.appendChild(wrapper); 
+    headerContent.appendChild(settingsBtn); headerContent.appendChild(labelSpan);
+    nameTh.appendChild(headerContent); 
     dayHeader.appendChild(nameTh);
 
     // 3. DAYS
@@ -181,7 +190,7 @@ function renderHeader() {
         dayHeader.appendChild(th);
     }
     
-    // 4. ACTIONS (Right Edge)
+    // 4. ACTIONS
     const endTh = document.createElement("th");
     endTh.textContent = isEditMode ? "Actions" : "";
     endTh.style.minWidth = isEditMode ? "90px" : "auto";
@@ -204,7 +213,7 @@ function renderHabits() {
 
         const tr = document.createElement("tr");
 
-        // 1. EDIT SETTINGS (First, hidden to left)
+        // 1. EDIT SETTINGS
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
@@ -235,7 +244,7 @@ function renderHabits() {
             goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
-        // 2. HABIT NAME (Sticky Left)
+        // 2. HABIT NAME
         const nameTd = document.createElement("td");
         nameTd.className = "sticky-col"; 
         nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
@@ -283,8 +292,7 @@ function renderHabits() {
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
 
-    // AUTO-SCROLL TO TODAY (Only in View Mode)
-    // If we are editing, the "Magic Scroll" above handles the positioning
+    // AUTO-SCROLL TO TODAY ON LOAD (ONLY IF NOT EDITING)
     if (!isEditMode) {
         setTimeout(() => {
             const todayCol = document.querySelector(".today-col");
