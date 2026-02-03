@@ -10,6 +10,7 @@
     --green: #63e6a4;
     --cyan: #4fd1ff;
     --yellow: #facc15;
+    --orange: #fb923c;
     --radius: 24px;
 }
 
@@ -63,7 +64,7 @@ body {
     padding: 0 20px; 
     
     /* THE PILL SHAPE */
-    border-radius: 100px; 
+    border-radius: 10px; 
     
     font-size: 13px; 
     font-weight: 600;
@@ -184,8 +185,21 @@ body {
 /* =========================================================
    4. ANALYTICS & GRAPH
 ========================================================= */
-.analytics { display: flex; gap: 40px; margin-bottom: 24px; overflow-x: auto; padding-bottom: 10px; }
-.ring-block { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.analytics { 
+    display: flex; 
+    gap: 0; /* We will use specific margins/padding instead */
+    margin-bottom: 24px; 
+    overflow-x: auto; 
+    padding-bottom: 10px; 
+    align-items: center; /* Center vertically */
+}
+.ring-block { 
+    display: flex; 
+    align-items: center; 
+    gap: 14px; 
+    flex-shrink: 0; 
+    margin-right: 40px; /* Spacing between rings */
+}
 .ring { width: 72px; height: 72px; position: relative; display: flex; align-items: center; justify-content: center; }
 .ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 .ring-bg { fill: none; stroke: rgba(0, 0, 0, 0.5); stroke-width: 5; }
@@ -195,6 +209,76 @@ body {
 }
 .ring span { position: absolute; font-weight: 700; font-size: 13px; }
 .ring-label { font-size: 12px; font-weight: 600; color: #fff; }
+
+/* --- NEW STREAK WIDGET --- */
+.streak-widget {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding-left: 40px;
+    border-left: 1px solid var(--border); /* The Divider Line */
+    height: 60px; /* Match ring optical height */
+}
+
+/* Left side: The Big Number & Icon */
+.streak-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.streak-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.streak-icon {
+    color: var(--orange);
+    fill: rgba(251, 146, 60, 0.2); /* Subtle fill */
+    width: 20px;
+    height: 20px;
+}
+
+.streak-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+/* Right side: The Mini Heatmap */
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* 7 Days per row */
+    grid-template-rows: repeat(2, 1fr);    /* 2 Rows = 14 Days total */
+    gap: 4px;
+}
+
+.heat-box {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.1); /* Empty State */
+    transition: all 0.2s ease;
+}
+
+.heat-box.active-low { background: rgba(99, 230, 164, 0.3); }
+.heat-box.active-med { background: rgba(99, 230, 164, 0.6); }
+.heat-box.active-high { background: var(--green); box-shadow: 0 0 4px rgba(99, 230, 164, 0.4); }
+
+/* Mobile Responsive: Hide heatmap on very small screens if needed */
+@media (max-width: 600px) {
+    .streak-widget { border-left: none; padding-left: 0; margin-top: 20px; }
+    .analytics { flex-wrap: wrap; }
+}
 
 /* GRAPH CARD */
 .today-focus {

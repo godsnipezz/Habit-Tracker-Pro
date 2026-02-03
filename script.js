@@ -422,19 +422,22 @@ function setRing(id, pct) {
 function updateStats() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
+    // If it's a future month, todayIdx is -1 (start). If past, it's the last day.
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : (habits[0]?.days.length - 1 || 0);
 
-    let earnedMonth = 0, totalPossibleMonth = 0;
-    let earnedSoFar = 0, totalPossibleSoFar = 0;
-    let todayDone = 0, todayTotal = 0; 
-    let todaySlips = 0, negTotal = 0;   
-    let momentumSum = 0;
+    // 1. INIT COUNTERS
+    let earnedMonth = 0, totalPossibleMonth = 0; // Header: Monthly
+    let earnedSoFar = 0, totalPossibleSoFar = 0; // Ring 1: Efficiency
+    let todayDone = 0, todayTotal = 0;           // Footer: Positive Done
+    let todaySlips = 0, negTotal = 0;            // Footer: Negative Slips
+    let momentumSum = 0;                         // Ring 3: Momentum
 
+    // 2. LOOP HABITS
     habits.forEach(h => {
         const w = Number(h.weight) || 2; 
         const checkedDays = h.days.filter(Boolean).length;
         
-        // A. Monthly Score
+        // --- A. MONTHLY PROGRESS (Header) ---
         let ratioMonth = 0;
         if (h.type === "positive") {
             const target = h.goal || h.days.length;
@@ -446,7 +449,8 @@ function updateStats() {
         earnedMonth += ratioMonth * w;
         totalPossibleMonth += w;
 
-        // B. Efficiency (History up to today)
+        // --- B. EFFICIENCY (History up to today) ---
+        // Prevents future unchecked days from dragging down the score
         let daysPassed = todayIdx + 1;
         let ratioSoFar = 0;
         if(h.type === 'positive') {
@@ -460,7 +464,7 @@ function updateStats() {
         earnedSoFar += ratioSoFar * w;
         totalPossibleSoFar += w;
 
-        // C. Today Counts
+        // --- C. TODAY COUNTS (Footer) ---
         if (h.type === "positive") {
             todayTotal++;
             if (h.days[todayIdx]) todayDone++; 
@@ -469,7 +473,7 @@ function updateStats() {
             if (h.days[todayIdx]) todaySlips++;
         }
 
-        // D. Momentum
+        // --- D. MOMENTUM (Weighted Recent) ---
         let hMom = 0, wSum = 0;
         const weights = [0.1, 0.2, 0.3, 0.4]; 
         weights.forEach((weight, i) => {
@@ -485,16 +489,20 @@ function updateStats() {
         momentumSum += normalizedMom * w;
     });
 
-    // Percentages
+    // 3. COMPUTE PERCENTAGES
     const monthPct = totalPossibleMonth ? (earnedMonth / totalPossibleMonth) * 100 : 0;
     const efficiencyPct = totalPossibleSoFar ? (earnedSoFar / totalPossibleSoFar) * 100 : 0;
+    // Today Ring: (Positive Done + Negative Avoided) / Total
     const todayPerformance = (todayDone + (negTotal - todaySlips)) / (todayTotal + negTotal || 1) * 100;
     const momPct = totalPossibleMonth ? (momentumSum / totalPossibleMonth) * 100 : 0;
 
-    // UI Updates
+    // 4. UPDATE UI ELEMENTS
+    
+    // Header Text
     const successEl = document.getElementById("successRate");
     if (successEl) successEl.textContent = Math.round(monthPct) + "%";
 
+    // Footer Text
     const footerCounter = document.querySelector('.counter');
     if (footerCounter) {
         const slipText = negTotal > 0 
@@ -503,21 +511,67 @@ function updateStats() {
         footerCounter.innerHTML = `Today: <span style="color:var(--green)">${todayDone}/${todayTotal}</span> done ${slipText}`;
     }
 
+    // Rings
     setRing("ring-efficiency", efficiencyPct); 
     setRing("ring-normalized", todayPerformance); 
     setRing("ring-momentum", momPct);
     
+    // Graph Summary Text
     document.getElementById("todaySummary").innerHTML = todayScoreText();
-}
 
-function todayScoreText() {
-    const y = parseInt(yearInput.value) || NOW.getFullYear();
-    const today = NOW.getDate() - 1;
-    let score = 0;
-    habits.forEach(h => {
-        if(h.days[today]) score += (h.type === 'positive' ? 1 : -1);
-    });
-    return `${score > 0 ? '+' : ''}${score} Net Score`;
+    // 5. STREAK CALCULATION
+    let currentStreak = 0;
+    // Loop backwards from today to find consecutive positive days
+    for (let d = todayIdx; d >= 0; d--) {
+        let dayScore = 0;
+        habits.forEach(h => {
+             if (h.days[d]) dayScore += (h.type === 'positive' ? 1 : -1);
+        });
+        
+        if (dayScore > 0) {
+            currentStreak++;
+        } else {
+            // If today is 0 (haven't started yet), don't break streak unless yesterday was also 0
+            if (d === todayIdx && dayScore === 0) continue; 
+            break;
+        }
+    }
+    const streakEl = document.getElementById("streakValue");
+    if(streakEl) streakEl.innerText = currentStreak;
+
+    // 6. MINI HEATMAP RENDER (Last 14 Days)
+    const heatGrid = document.getElementById("streakHeatmap");
+    if (heatGrid) {
+        heatGrid.innerHTML = "";
+        const daysToShow = 14; 
+        
+        for (let i = 0; i < daysToShow; i++) {
+            // Calculate which day index to show (ending at todayIdx)
+            const dayIndex = todayIdx - (daysToShow - 1) + i;
+            const div = document.createElement("div");
+            div.className = "heat-box";
+            
+            if (dayIndex >= 0 && dayIndex < habits[0]?.days.length) {
+                let dScore = 0;
+                let maxPossible = 0;
+                habits.forEach(h => {
+                    maxPossible++;
+                    if (h.days[dayIndex]) dScore += (h.type === 'positive' ? 1 : -1);
+                });
+
+                if (dScore > 0) {
+                    // Calculate intensity (0.0 to 1.0)
+                    const intensity = dScore / (maxPossible || 1);
+                    if (intensity < 0.4) div.classList.add("active-low");
+                    else if (intensity < 0.8) div.classList.add("active-med");
+                    else div.classList.add("active-high");
+                    
+                    div.title = `Day ${dayIndex + 1}: ${dScore} pts`;
+                }
+            }
+            heatGrid.appendChild(div);
+        }
+    }
 }
 
 /* =========================================================
