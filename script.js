@@ -133,7 +133,8 @@ function renderHeader() {
 
     const settingsBtn = document.createElement("button");
     settingsBtn.className = "toggle-edit-btn";
-    settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
+    settingsBtn.style.width = "auto"; 
+    settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
     settingsBtn.onclick = (e) => { e.stopPropagation(); isEditMode = !isEditMode; update(); };
 
@@ -142,11 +143,11 @@ function renderHeader() {
     nameTh.appendChild(wrapper); dayHeader.appendChild(nameTh);
 
     if (isEditMode) {
-        // ADDED CLASS: metadata-col
+        // UPDATED: Added 'metadata-col' class so CSS can hide these on mobile
         ["Type", "Imp", "Goal"].forEach(t => {
-            const th = document.createElement("th"); 
-            th.textContent = t; 
-            th.className = "metadata-col"; // Tag for CSS
+            const th = document.createElement("th");
+            th.textContent = t;
+            th.className = "metadata-col"; 
             dayHeader.appendChild(th);
         });
     }
@@ -183,20 +184,23 @@ function renderHabits() {
         nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
         tr.appendChild(nameTd);
 
-        // Dropdown Logic
+        // LAST 2 ROWS OPEN UP
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
         if (isEditMode) {
-            // ADDED CLASS: metadata-col to all these TDs
-            const typeTd = document.createElement("td"); 
-            typeTd.className = "metadata-col";
+            // UPDATED: Added 'metadata-col' class to all 3 edit columns
+            
+            // 1. Type
+            const typeTd = document.createElement("td");
+            typeTd.className = "metadata-col"; 
             const tDD = document.createElement("div"); tDD.className = "dropdown";
             makeDropdown(tDD, [{label:"Positive",value:"positive"},{label:"Negative",value:"negative"}], h.type==="negative"?1:0, (v)=>{h.type=v;save();update();}, dropDir);
             const typeBtn = tDD.querySelector('.dropdown-button');
             if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
             typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
+            // 2. Importance
             const impTd = document.createElement("td"); 
             impTd.className = "metadata-col";
             const iDD = document.createElement("div"); iDD.className = "dropdown";
@@ -206,6 +210,7 @@ function renderHabits() {
             if(w===1) impBtn.classList.add('badge-imp-low'); if(w===2) impBtn.classList.add('badge-imp-med'); if(w===3) impBtn.classList.add('badge-imp-high');
             impTd.appendChild(iDD); tr.appendChild(impTd);
 
+            // 3. Goal
             const goalTd = document.createElement("td"); 
             goalTd.className = "metadata-col";
             const gIn = document.createElement("input");
@@ -252,11 +257,17 @@ function renderHabits() {
         }
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
-    
-    // AUTO-SCROLL TO TODAY
+
+    // AUTO-SCROLL TO TODAY (Mobile UX Fix)
     setTimeout(() => {
         const todayCol = document.querySelector(".today-col");
-        if (todayCol) todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+        if (todayCol) {
+            todayCol.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "center"
+            });
+        }
     }, 100);
 }
 function updateProgress(tr, h) {
@@ -388,9 +399,10 @@ function renderGraph() {
     }
     const container = svg.parentElement;
     
-    // CHANGE: Use scrollWidth to support the wider mobile graph
+    // UPDATED: Use scrollWidth to support horizontal scrolling on mobile
     const width = container.scrollWidth || container.offsetWidth; 
-    const height = 150;
+    const height = 150; 
+    
     const dayHeaders = document.querySelectorAll('table thead th');
     let xPositions = [];
     let startIndex = -1;

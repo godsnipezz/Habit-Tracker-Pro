@@ -282,119 +282,60 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* =========================================================
-   9. MOBILE RESPONSIVENESS (Final Polish)
+   9. MOBILE RESPONSIVENESS (The "Focus Mode" Fix)
 ========================================================= */
 @media (max-width: 768px) {
     
-    .app { padding: 12px; width: 100%; overflow-x: hidden; }
+    /* FIX 1: Lock the Page Width */
+    /* This prevents the table from stretching the whole page */
+    body, html { max-width: 100vw; overflow-x: hidden; }
+    .app { padding: 12px; width: 100%; max-width: 100vw; overflow-x: hidden; }
 
-    /* 1. HEADER: Adjusted Ratios */
-    .top {
-        flex-direction: column-reverse;
-        gap: 16px;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-
+    /* 2. HEADER: Stacked & Sized */
+    .top { flex-direction: column-reverse; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
     .date-picker { width: 100%; gap: 10px; }
-    
-    /* FIX: Year is small, Month is wide */
-    .date-picker input[type="number"] {
-        flex: 0 0 80px; /* Fixed small width for Year */
-        padding: 0 10px;
-    }
-    .dropdown-button {
-        flex: 1; /* Month takes remaining space */
-        justify-content: center;
-        min-width: 0; /* Prevents flex blowout */
-    }
-
+    .date-picker input[type="number"] { flex: 0 0 80px; padding: 0; text-align: center; } /* Small Year */
+    .dropdown-button { flex: 1; justify-content: center; min-width: 0; } /* Wide Month */
     .headline { align-items: flex-start; text-align: left; width: 100%; }
-    .headline-label { justify-content: flex-start; }
     .gradient-text { font-size: 48px; }
 
-    /* 2. ANALYTICS: Grid System */
-    .analytics {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-bottom: 20px;
-        overflow: visible; 
-        padding: 0;
-    }
-
-    .ring-block {
-        margin: 0;
-        flex: none;
-        width: auto;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-    }
+    /* 3. ANALYTICS: Grid */
+    .analytics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; padding: 0; }
+    .ring-block { margin: 0; flex: none; width: auto; flex-direction: column; align-items: center; gap: 6px; }
     .ring { width: 60px; height: 60px; } 
 
     /* Streak Widget */
-    .streak-widget {
-        grid-column: 1 / -1;
-        width: 100%;
-        border-left: none;
-        border-top: 1px solid var(--border);
-        padding-top: 16px;
-        padding-left: 0;
-        margin-top: 4px;
-        height: auto;
-        flex-direction: column;
-        gap: 12px;
-    }
+    .streak-widget { grid-column: 1 / -1; width: 100%; border-left: none; border-top: 1px solid var(--border); padding-top: 16px; padding-left: 0; margin-top: 4px; height: auto; flex-direction: column; gap: 12px; }
     .streak-info { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; }
     .quote-text { width: 100%; padding: 10px 0; border-top: 1px dashed rgba(255,255,255,0.1); border-bottom: 1px dashed rgba(255,255,255,0.1); }
     
-    /* 3. GRAPH: Horizontal Scroll Fix */
-    .today-focus {
-        height: auto;
-        min-height: 240px;
-        overflow: hidden; 
-    }
-    
-    .graph-container {
-        display: block; 
-        overflow-x: auto; /* ENABLE SCROLL */
+    /* 4. GRAPH: Scrollable & Contained */
+    .today-focus { height: auto; min-height: 240px; overflow: hidden; width: 100%; }
+    .graph-container { display: block; overflow-x: auto; width: 100%; padding-bottom: 10px; }
+    svg#activityGraph { min-width: 600px; height: 100%; display: block; }
+
+    /* 5. TABLE: The "Cage" & Hidden Metadata */
+    /* Allow table to scroll internally, BUT constrain its container width */
+    .table-wrapper {
         width: 100%;
-        padding-bottom: 10px; 
+        max-width: 100%; /* FORCE container to fit screen */
+        overflow-x: auto; /* Scroll inside this box */
     }
 
-    svg#activityGraph {
-        min-width: 600px; /* Force width so it doesn't squash */
-        height: 100%;
-        display: block;
-    }
-
-    /* 4. TABLE: HIDE METADATA ON MOBILE */
-    /* This is the magic fix. Hide Type/Imp/Goal on mobile */
-    .metadata-col {
-        display: none !important;
-    }
-
-    /* Restore padding so checkboxes breathe */
-    th, td { padding: 4px; } 
+    /* HIDE METADATA ON MOBILE (Type, Imp, Goal) */
+    .metadata-col { display: none !important; }
 
     /* Slim Sticky Column */
-    th:first-child, td:first-child {
-        min-width: 100px; /* Much smaller now that we hid metadata */
-        max-width: 100px;
-        padding-left: 8px;
-        font-size: 12px;
-    }
+    th:first-child, td:first-child { min-width: 100px; max-width: 100px; padding-left: 8px; font-size: 12px; }
+    
+    /* Restore padding */
+    th, td { padding: 4px; }
 
-    /* 5. FOOTER: Stacked */
+    /* 6. FOOTER */
     .footer { flex-direction: column; gap: 16px; align-items: stretch; }
     button#addHabit { width: 100%; }
     .counter { text-align: center; }
 
-    /* 6. TOUCH TARGETS */
-    input[type="checkbox"] { 
-        margin: 0 auto; 
-        display: block; 
-        width: 18px; height: 18px; /* Slightly bigger */
-    }
+    /* 7. CHECKBOXES: Touch Friendly */
+    input[type="checkbox"] { margin: 0 auto; display: block; width: 18px; height: 18px; }
 }
