@@ -127,10 +127,19 @@ body {
 
 /* STREAK & HEATMAP WIDGET */
 .streak-widget {
-    display: flex; align-items: center; gap: 24px;
-    padding-left: 40px; border-left: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding-left: 40px;
+    border-left: 1px solid var(--border);
     height: 60px;
+    
+    /* NEW: FILL THE SPACE */
+    flex: 1; /* Grows to fill all empty space to the right */
+    justify-content: space-between; /* Pushes Heatmap to the far right */
+    padding-right: 10px; /* Add a little padding on the right edge */
 }
+
 .streak-info { display: flex; flex-direction: column; justify-content: center; }
 .streak-count {
     display: flex; align-items: center; gap: 8px;
@@ -142,11 +151,18 @@ body {
     text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;
 }
 .heatmap-grid {
-    display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(2, 1fr); gap: 4px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 6px; /* Increased gap slightly */
 }
+
 .heat-box {
-    width: 10px; height: 10px; border-radius: 2px;
-    background: rgba(255,255,255,0.1); transition: all 0.2s ease;
+    width: 12px; /* Slightly larger dots */
+    height: 12px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.06); /* Slightly subtler empty state */
+    transition: all 0.2s ease;
 }
 .heat-box.active-low { background: rgba(99, 230, 164, 0.3); }
 .heat-box.active-med { background: rgba(99, 230, 164, 0.6); }
