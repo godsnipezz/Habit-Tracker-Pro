@@ -128,8 +128,8 @@ function renderHeader() {
 
     dayHeader.innerHTML = "";
 
-    // 1. EDIT MODE: Append Metadata Headers FIRST (Left of Name)
-    // These will be hidden off-screen initially
+    // 1. EDIT MODE: Append Metadata Headers FIRST
+    // These appear to the left of the sticky name
     if (isEditMode) {
         ["Type", "Imp", "Goal"].forEach(t => {
             const th = document.createElement("th");
@@ -139,7 +139,7 @@ function renderHeader() {
         });
     }
 
-    // 2. HABIT NAME (Sticky Anchor)
+    // 2. HABIT NAME (Sticky Column)
     const nameTh = document.createElement("th");
     nameTh.className = "sticky-col"; 
     
@@ -151,20 +151,19 @@ function renderHeader() {
     settingsBtn.style.width = "auto"; settingsBtn.style.padding = "0 8px";
     settingsBtn.innerHTML = isEditMode ? `<i data-lucide="check" style="width:16px;"></i>` : `<i data-lucide="settings-2" style="width:16px;"></i>`;
     
-    // ACTION: Toggle Mode & Handle Auto-Scroll
+    // ACTION: Toggle Mode & TRIGGER SCROLL
     settingsBtn.onclick = (e) => { 
         e.stopPropagation(); 
         isEditMode = !isEditMode; 
         update(); 
         
-        // AUTO-SCROLL LOGIC FOR EDIT MODE
+        // --- THE MAGIC SCROLL ---
+        // Instantly scroll past the metadata so the Name is the first thing seen
         if (isEditMode) {
-            // Wait for render, then scroll right to hide the metadata columns
             setTimeout(() => {
                 const wrapper = document.querySelector(".table-wrapper");
                 if(wrapper) {
-                    // Scroll past the ~270px of metadata so "Habit Name" is first visible
-                    wrapper.scrollLeft = 270; 
+                    wrapper.scrollLeft = 270; // 3 cols * 90px
                 }
             }, 50);
         }
@@ -205,7 +204,7 @@ function renderHabits() {
 
         const tr = document.createElement("tr");
 
-        // 1. EDIT MODE: Append Metadata Cells FIRST
+        // 1. EDIT SETTINGS (First, hidden to left)
         const isBottomRow = i >= habits.length - 2;
         const dropDir = isBottomRow ? 'up' : 'down';
 
@@ -218,7 +217,7 @@ function renderHabits() {
             if (h.type === 'positive') typeBtn.classList.add('badge-pos'); else typeBtn.classList.add('badge-neg');
             typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-            // Importance
+            // Imp
             const impTd = document.createElement("td"); impTd.className = "metadata-col";
             const iDD = document.createElement("div"); iDD.className = "dropdown";
             makeDropdown(iDD, [{label:"Low",value:1},{label:"Medium",value:2},{label:"High",value:3}], (h.weight||2)-1, (v)=>{h.weight=v;save();update();}, dropDir);
@@ -236,9 +235,9 @@ function renderHabits() {
             goalTd.appendChild(gIn); tr.appendChild(goalTd);
         }
 
-        // 2. HABIT NAME (Sticky)
+        // 2. HABIT NAME (Sticky Left)
         const nameTd = document.createElement("td");
-        nameTd.className = "sticky-col"; // Apply sticky class
+        nameTd.className = "sticky-col"; 
         nameTd.contentEditable = isEditMode; nameTd.textContent = h.name;
         nameTd.style.cursor = isEditMode ? "text" : "default";
         nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
@@ -284,17 +283,13 @@ function renderHabits() {
         tr.appendChild(endTd); habitBody.appendChild(tr);
     });
 
-    // AUTO-SCROLL TO TODAY (Mobile UX Fix)
-    // Only if NOT in Edit Mode, otherwise we let the Edit Scroll logic handle it
+    // AUTO-SCROLL TO TODAY (Only in View Mode)
+    // If we are editing, the "Magic Scroll" above handles the positioning
     if (!isEditMode) {
         setTimeout(() => {
             const todayCol = document.querySelector(".today-col");
             if (todayCol) {
-                todayCol.scrollIntoView({
-                    behavior: "smooth",
-                    block: "nearest",
-                    inline: "center"
-                });
+                todayCol.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
             }
         }, 100);
     }
