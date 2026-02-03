@@ -136,8 +136,10 @@ body {
 /* GRAPH CONTAINER */
 .graph-container {
     flex: 1;
-    width: 100%; /* Fit exactly within container */
-    margin: 0;
+    width: 100%; 
+    /* Remove negative margins so it stays inside the box boundaries */
+    margin: 0; 
+    padding: 0 10px; /* Slight side padding to match table header inset */
     position: relative;
     display: flex; align-items: flex-end;
 }
@@ -155,8 +157,7 @@ svg#activityGraph {
     stroke-linecap: round;
     stroke-linejoin: round;
     filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
-    /* Smooth animation when path changes */
-    transition: d 0.3s ease; 
+    transition: d 0.4s cubic-bezier(0.25, 1, 0.5, 1); /* Smoother animation */
 }
 .graph-area { fill: url(#gradient-area); opacity: 0.2; stroke: none; }
 .graph-label {

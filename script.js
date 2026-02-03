@@ -446,23 +446,21 @@ function todayScoreText() {
 // =========================================================
 //  UPDATED GRAPH LOGIC (The Fix)
 // =========================================================
+// --- GRAPH RENDERING LOGIC ---
 function renderGraph() {
     const svg = document.getElementById("activityGraph");
     if (!svg) return;
 
     // 1. Data Setup
     const y = parseInt(yearInput.value) || NOW.getFullYear();
-    // Use FULL month for X-Axis scaling (1 to 28/30/31)
     const totalDaysInMonth = getDays(y, currentMonth); 
     
-    // We only PLOT data up to Today to prevent "future drop-off"
-    const isCurrentMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
-    const daysWithData = isCurrentMonth ? NOW.getDate() : totalDaysInMonth;
-
+    // FILL DATA FOR THE FULL MONTH (Fixed Timeline)
     let scores = [];
-    for (let d = 0; d < daysWithData; d++) {
+    for (let d = 0; d < totalDaysInMonth; d++) {
         let dailyScore = 0;
         habits.forEach(h => {
+            // Calculate score for every day, past or future (future will naturally be 0)
             if (h.days[d]) dailyScore += (h.type === 'positive' ? 1 : -1);
         });
         scores.push(dailyScore);
@@ -471,80 +469,81 @@ function renderGraph() {
     // 2. Setup Dimensions
     const width = 800;  
     const height = 150; 
-    const padding = 20;
+    const padding = 20; // Space for labels
+    const bottomBuffer = 30; // Extra space at bottom so graph doesn't hit edge
 
-    // 3. Y-AXIS SCALING (Accommodate new tasks)
-    // We scale based on TOTAL HABITS available, not just the achieved score.
-    // This means if you add 10 habits, the graph space "shrinks" to fit potentially higher peaks.
-    // We take Math.max(scores) just in case a previous month had more habits than currently exist.
-    let maxVal = Math.max(habits.length, ...scores, 5); 
+    // 3. Y-AXIS SCALING (Visibility Fix)
+    // We force a minimum range of 8 so small graphs don't look flat.
+    // If you have 3 habits done, maxVal is 3. We treat it as 8 to scale it gently.
+    let maxData = Math.max(...scores);
+    let maxVal = Math.max(maxData + 2, 8); // Minimum peak of 8 for aesthetics
     let minVal = Math.min(...scores, 0); 
     
-    // Buffer for aesthetics
-    const range = maxVal - minVal + (maxVal * 0.1); 
+    const range = maxVal - minVal;
     
-    const mapY = (val) => height - padding - ((val - minVal) / range) * (height - padding * 2);
+    // Map Value to Y (Inverted because SVG Y=0 is top)
+    const mapY = (val) => height - bottomBuffer - ((val - minVal) / range) * (height - padding - bottomBuffer);
     
-    // 4. X-AXIS SCALING (Dates act as X axis)
-    // Map X based on TOTAL DAYS in month, not just daysWithData.
-    // This keeps Day 15 always in the middle, regardless of today's date.
-    const mapX = (dayIdx) => (dayIdx / (totalDaysInMonth - 1)) * width;
+    // 4. X-AXIS SCALING (Alignment Fix)
+    // We map 1..TotalDays to the width.
+    // (i + 0.5) puts the point in the CENTER of the day's "column"
+    const mapX = (dayIdx) => ((dayIdx + 0.5) / totalDaysInMonth) * width;
 
     // 5. Generate Points
     const points = scores.map((val, i) => ({ x: mapX(i), y: mapY(val), val }));
 
     if (points.length < 2) {
-        svg.innerHTML = ``; // Not enough data
+        svg.innerHTML = ``;
         return;
     }
 
-    // 6. Build Curve
+    // 6. Build Curve (Spline)
     let dPath = `M ${points[0].x} ${points[0].y}`;
+    
+    // We use a simpler smoothing for the timeline to handle the zeroes gracefully
     for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[Math.max(i - 1, 0)];
         const p1 = points[i];
         const p2 = points[i + 1];
         const p3 = points[Math.min(i + 2, points.length - 1)];
 
-        const cp1x = p1.x + (p2.x - p0.x) * 0.2;
-        const cp1y = p1.y + (p2.y - p0.y) * 0.2;
-        const cp2x = p2.x - (p3.x - p1.x) * 0.2;
-        const cp2y = p2.y - (p3.y - p1.y) * 0.2;
+        const cp1x = p1.x + (p2.x - p0.x) * 0.15; // Tighter tension (0.15) for cleaner zeroes
+        const cp1y = p1.y + (p2.y - p0.y) * 0.15;
+
+        const cp2x = p2.x - (p3.x - p1.x) * 0.15;
+        const cp2y = p2.y - (p3.y - p1.y) * 0.15;
 
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
 
-    // 7. Gradient Area (Close loop to bottom)
-    const dArea = `${dPath} L ${points[points.length-1].x} ${height} L 0 ${height} Z`;
+    // 7. Gradient Area (Close the loop to the bottom baseline)
+    const baseline = height - bottomBuffer + 5; // Slightly below line
+    const dArea = `${dPath} L ${points[points.length-1].x} ${baseline} L ${points[0].x} ${baseline} Z`;
 
+    // 8. Render SVG Content
     let svgContent = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.4"/>
+                <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.3"/>
                 <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
             </linearGradient>
         </defs>
+        
+        <line x1="0" y1="${mapY(0)}" x2="${width}" y2="${mapY(0)}" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+
         <path class="graph-area" d="${dArea}" />
         <path class="graph-path" d="${dPath}" />
     `;
 
-    // 8. Labels
+    // 9. Render Labels (Only non-zeros to keep it clean)
     points.forEach((p, i) => {
-        // Simple de-clutter: Show first, last, and peaks
-        const isPeak = (i > 0 && i < points.length - 1) && 
-                       (p.val > points[i-1].val && p.val > points[i+1].val);
-        
-        if (p.val !== 0 || i === points.length - 1 || isPeak) {
-             svgContent += `<text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>`;
+        if (p.val !== 0) {
+            svgContent += `
+                <text x="${p.x}" y="${p.y - 10}" class="graph-label visible">${p.val}</text>
+                <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>
+            `;
         }
     });
-
-    // 9. (Optional) Date Axis Indicator at bottom
-    // Just to show "1" and "30" to reinforce the axis concept
-    svgContent += `
-        <text x="0" y="${height}" fill="#666" font-size="10" font-weight="600">Day 1</text>
-        <text x="${width-30}" y="${height}" fill="#666" font-size="10" font-weight="600">Day ${totalDaysInMonth}</text>
-    `;
 
     svg.innerHTML = svgContent;
 }
