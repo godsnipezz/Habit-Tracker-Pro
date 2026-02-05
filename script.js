@@ -799,7 +799,7 @@ function renderGraph() {
   }
 
   // 4. Y-AXIS MAPPING
-  const topPad = 30; // Increased top padding to give breathing room
+  const topPad = 30;
   const bottomPad = 20;
   const graphHeight = height - bottomPad;
   
@@ -909,21 +909,26 @@ function renderGraph() {
         }
         statsEl.innerHTML = html;
 
-        // --- NEW: CLAMPING LOGIC (Prevent tooltip from going out) ---
+        // --- CLAMPING LOGIC (The Fix) ---
         tooltip.style.opacity = "1";
         
-        const tipWidth = tooltip.offsetWidth || 100; // Estimate or get actual
-        const tipHeight = tooltip.offsetHeight || 50;
+        // Measure real width now that content is set
+        const tipWidth = tooltip.offsetWidth;
+        const tipHeight = tooltip.offsetHeight;
         
-        // Calculate ideal Left Position (Center)
+        // 1. Center it on the point
         let leftPos = closest.x - (tipWidth / 2);
         
-        // Clamp to edges (padding of 5px)
-        if (leftPos < 5) leftPos = 5;
-        if (leftPos + tipWidth > width - 5) leftPos = width - tipWidth - 5;
+        // 2. Left Edge Check (Don't let it go below 0)
+        if (leftPos < 0) leftPos = 0;
+        
+        // 3. Right Edge Check (Don't let it go past width)
+        if (leftPos + tipWidth > width) {
+            leftPos = width - tipWidth;
+        }
         
         tooltip.style.left = `${leftPos}px`;
-        tooltip.style.top = `${closest.y - tipHeight - 10}px`; 
+        tooltip.style.top = `${closest.y - tipHeight - 12}px`; // Just above dot
     }
   };
 
@@ -939,10 +944,10 @@ function renderGraph() {
         clientY = e.touches[0].clientY;
     }
     
-    // --- NEW: DEAD ZONE CHECK ---
-    // If mouse is too high up in the container, ignore it.
+    // --- DEAD ZONE CHECK (The Fix) ---
+    // If mouse is in the top 40px (the empty space), ignore it.
     const relY = clientY - rect.top;
-    if (relY < 15) { // Dead zone of 15px at the top
+    if (relY < 40) { 
         handleLeave();
         return;
     }
@@ -954,17 +959,16 @@ function renderGraph() {
     e.preventDefault();
     const rect = svg.getBoundingClientRect();
     let clientX = e.clientX;
-    
-    // Check Y on click too
     let clientY = e.clientY;
+
     if (e.type === 'touchend') {
-        // For touchend, stick with last position logic or force pin
         isPinned = true;
         return;
     }
     
+    // Check dead zone on click too
     const relY = clientY - rect.top;
-    if (relY < 15) return; // Ignore clicks in dead zone
+    if (relY < 40) return;
 
     updateView(clientX - rect.left);
     isPinned = true; 

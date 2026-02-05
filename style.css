@@ -495,7 +495,7 @@ svg#activityGraph {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   border-radius: 8px;
   
@@ -503,7 +503,10 @@ svg#activityGraph {
   pointer-events: none;
   
   opacity: 0;
-  transform: translate(-50%, -15px);
+  
+  /* FIX: Removed '-50%' from X. JS will handle centering now. */
+  transform: translateY(-15px); 
+  
   transition: opacity 0.1s ease, transform 0.1s;
   z-index: 100;
   
