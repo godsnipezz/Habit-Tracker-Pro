@@ -761,8 +761,11 @@ function renderGraph() {
   }
 
   const container = svg.parentElement;
-
-  const width = container.offsetWidth;
+  
+  // FIX: On mobile, force width to at least 600px to match CSS min-width
+  // This ensures the math works for the scrollable view
+  const width = Math.max(container.offsetWidth, 600); 
+  
   const height = 150;
 
   const dayHeaders = document.querySelectorAll("table thead th");
