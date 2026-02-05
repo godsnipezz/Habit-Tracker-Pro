@@ -850,92 +850,99 @@ td .dropdown-button:hover {
 }
 
 /* =========================================================
-   MOBILE RESPONSIVENESS (UPDATED)
+   MOBILE LAYOUT RE-ORDERING
 ========================================================= */
 
 @media (max-width: 768px) {
-  .app {
+  /* 1. Header Adjustment for Streak */
+  .top {
+    flex-wrap: wrap;
+    gap: 15px;
+    position: relative;
+    padding-top: 30px; /* Make space for the streak at the top */
+  }
+
+  /* Style the Streak when it is moved to the Header */
+  .streak-info.mobile-view {
+    position: absolute;
+    top: -5px;
+    left: 0;
     width: 100%;
-    overflow-x: hidden; /* Prevents whole page horizontal scroll */
-    padding: 15px;
-  }
-
-  /* --- 1. GRAPH: SCROLLABLE --- */
-  .today-focus {
-    padding: 20px 15px;
-    height: auto;
-  }
-
-  .graph-container {
-    width: 100%;
-    overflow-x: auto; /* Adds scrollbar ONLY to graph */
-    padding-bottom: 10px;
-  }
-
-  svg#activityGraph {
-    min-width: 600px; /* Forces width so it scrolls */
-    display: block;
-  }
-
-  /* --- 2. STREAK WIDGET: COMPACT VIEW --- */
-  .streak-widget {
-    height: auto;
-    padding: 15px 0 0 0;
-    margin-top: 15px;
-    border-left: none;
-    border-top: 1px solid var(--border);
     
-    /* Layout: Wrap items so they fit on screen */
-    display: flex;
-    flex-wrap: wrap; 
-    justify-content: space-between;
+    flex-direction: row;
+    justify-content: flex-start;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
   }
 
-  /* Row 1, Left: Streak Count */
-  .streak-info {
-    order: 1;
-    flex: 0 0 auto;
+  .streak-info.mobile-view .streak-count {
+    font-size: 18px; /* Smaller font for header */
+    color: var(--yellow); /* Match your sketch color */
   }
 
-  /* Row 1, Right: Heatmap */
-  .heatmap-grid {
-    order: 2;
-    margin-left: auto; /* Pushes heatmap to far right */
-    /* Ensure it doesn't overflow */
-    flex-shrink: 0; 
-  }
-
-  /* Row 2: Quote (Full Width) */
-  #dailyQuote {
-    order: 3;
-    width: 100%;
-    text-align: center;
-    margin-top: 5px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+  .streak-info.mobile-view .streak-label {
     font-size: 12px;
+    margin-top: 0;
+    color: var(--muted);
+  }
+  
+  /* Hide the flame icon on mobile header to keep it clean (optional) */
+  .streak-info.mobile-view .streak-icon {
+    width: 16px;
+    height: 16px;
   }
 
-  /* --- 3. FOOTER & EDIT MODE --- */
-  .footer {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  button#addHabit {
-    width: 100%;
-    padding: 14px;
-  }
-
-  .counter {
+  /* 2. Quote Adjustment (Below Graph) */
+  #dailyQuote.mobile-view {
+    margin: 10px 0 20px 0;
     text-align: center;
+    width: 100%;
+    font-style: italic;
+    color: var(--green); /* Highlight slightly */
+    opacity: 0.9;
+    padding: 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
   }
 
-  /* Fixes Edit Mode graph overflow */
-  .table-wrapper {
-    max-width: 100%;
-    overflow-x: auto;
+  /* 3. Heatmap & Rings Adjustment */
+  .analytics {
+    display: flex;
+    flex-direction: column; /* Stack rings and heatmap vertically */
+    gap: 20px;
+    overflow: visible; /* No scroll needed now */
+  }
+
+  /* The container for rings */
+  .rings-container-mobile {
+    display: flex;
+    justify-content: space-around; /* Spread rings evenly */
+    width: 100%;
+  }
+
+  /* The Heatmap */
+  .heatmap-grid.mobile-view {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    background: var(--surface);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+
+  /* Hide the old widget container if empty */
+  .streak-widget {
+    display: none;
+  }
+  
+  /* Ensure the heatmap boxes are sized well for mobile */
+  .heat-box {
+    width: 16px; /* Bigger dots for mobile */
+    height: 16px;
   }
 }

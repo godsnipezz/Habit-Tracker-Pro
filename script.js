@@ -986,3 +986,102 @@ function setDailyQuote() {
 // Run on load
 
 setDailyQuote();
+
+/* =========================================================
+   MOBILE LAYOUT MANAGER (Teleport Elements)
+========================================================= */
+
+function handleMobileLayout() {
+  const isMobile = window.innerWidth <= 768;
+
+  // Select the elements we need to move
+  const streakInfo = document.querySelector(".streak-info");
+  const quote = document.getElementById("dailyQuote");
+  const heatmap = document.getElementById("streakHeatmap");
+  
+  // Select Destinations
+  const header = document.querySelector(".top");
+  const graphSection = document.querySelector(".today-focus");
+  const analyticsSection = document.querySelector(".analytics");
+  const streakWidget = document.querySelector(".streak-widget");
+
+  // Create a wrapper for rings if it doesn't exist (to separate them from heatmap)
+  let ringsWrapper = document.getElementById("mobileRingsWrapper");
+  if (!ringsWrapper) {
+    ringsWrapper = document.createElement("div");
+    ringsWrapper.id = "mobileRingsWrapper";
+    ringsWrapper.className = "rings-container-mobile";
+  }
+
+  if (isMobile) {
+    // --- 1. MOVE STREAK TO HEADER ---
+    if (streakInfo && streakInfo.parentElement !== header) {
+      header.appendChild(streakInfo);
+      streakInfo.classList.add("mobile-view");
+    }
+
+    // --- 2. MOVE QUOTE TO BELOW GRAPH ---
+    // We insert it right after the graph section
+    if (quote && quote.previousElementSibling !== graphSection) {
+      graphSection.parentNode.insertBefore(quote, graphSection.nextSibling);
+      quote.classList.add("mobile-view");
+    }
+
+    // --- 3. MOVE HEATMAP TO ANALYTICS (ABOVE TASKS) ---
+    // First, gather existing rings into the wrapper so they sit together
+    const rings = document.querySelectorAll(".ring-block");
+    rings.forEach(ring => ringsWrapper.appendChild(ring));
+    
+    // Put wrapper in analytics
+    if (ringsWrapper.parentElement !== analyticsSection) {
+      analyticsSection.insertBefore(ringsWrapper, analyticsSection.firstChild);
+    }
+
+    // Put Heatmap AFTER rings in analytics
+    if (heatmap && heatmap.parentElement !== analyticsSection) {
+      analyticsSection.appendChild(heatmap);
+      heatmap.classList.add("mobile-view");
+    }
+
+  } else {
+    // --- DESKTOP: RESET EVERYTHING ---
+    // Move elements back to their original home: .streak-widget
+    if (streakWidget) {
+      // Move Streak back
+      if (streakInfo && streakInfo.parentElement !== streakWidget) {
+        streakInfo.classList.remove("mobile-view");
+        streakWidget.insertBefore(streakInfo, streakWidget.firstChild);
+      }
+      
+      // Move Quote back
+      if (quote && quote.parentElement !== streakWidget) {
+        quote.classList.remove("mobile-view");
+        // Insert quote before heatmap (approximate original position)
+        streakWidget.insertBefore(quote, streakWidget.children[1]); 
+      }
+
+      // Move Heatmap back
+      if (heatmap && heatmap.parentElement !== streakWidget) {
+        heatmap.classList.remove("mobile-view");
+        streakWidget.appendChild(heatmap);
+      }
+
+      // Unwrap Rings (Put them back into analytics container directly)
+      const rings = document.querySelectorAll(".ring-block");
+      rings.forEach(ring => {
+        analyticsSection.insertBefore(ring, streakWidget);
+      });
+      // Remove temporary wrapper
+      if (ringsWrapper.parentElement) ringsWrapper.remove();
+    }
+  }
+}
+
+// Run on load
+handleMobileLayout();
+
+// Run on resize (debounced)
+window.addEventListener("resize", debounce(() => {
+  renderGraph(); // Your existing graph redraw
+  handleMobileLayout(); // The new layout manager
+}, 100));
