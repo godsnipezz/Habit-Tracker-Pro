@@ -747,87 +747,78 @@ function renderGraph() {
   const y = parseInt(yearInput.value) || NOW.getFullYear();
   const totalDaysInMonth = getDays(y, currentMonth);
 
-  // 1. Calculate Scores
-  let scores = [];
+  // 1. DATA CALCULATION (Count Specifics)
+  let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0;
+    let posCount = 0;
+    let negCount = 0;
+
     habits.forEach((h) => {
-      if (h.days[d]) dailyScore += h.type === "positive" ? 1 : -1;
+      if (h.days[d]) {
+        if (h.type === "positive") {
+            dailyScore += 1;
+            posCount++;
+        } else {
+            dailyScore -= 1;
+            negCount++; // Count how many "bad" habits happened
+        }
+      }
     });
-    scores.push(dailyScore);
+    
+    dataPoints.push({
+        score: dailyScore,
+        pos: posCount,
+        neg: negCount
+    });
   }
 
-  // 2. Setup Dimensions
+  // 2. SETUP DIMENSIONS
   const container = svg.parentElement;
-  const table = document.querySelector("table");
-  const isMobile = window.innerWidth <= 768;
+  
+  // Create Tooltip if missing
+  let tooltip = container.querySelector(".graph-tooltip");
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.className = "graph-tooltip";
+    // Initial Structure
+    tooltip.innerHTML = `
+        <span class="tooltip-date"></span>
+        <div class="tooltip-stats"></div>
+    `;
+    container.appendChild(tooltip);
+  }
+
+  const width = container.offsetWidth;
   const height = 150;
 
-  let width = container.offsetWidth;
+  // 3. X-AXIS SPACING
   let xPositions = [];
-
-  // 3. ALIGNMENT LOGIC
-  const dayHeaders = document.querySelectorAll("table thead th");
-  let startIndex = -1;
-
-  for (let i = 0; i < dayHeaders.length; i++) {
-    if (dayHeaders[i].innerText.trim() === "1") {
-      startIndex = i;
-      break;
-    }
-  }
-
-  // Mobile: Force SVG to match Table Width (Triggers Scroll)
-  if (isMobile && table) {
-     // Get the full scrollable width of the table
-     const tableWidth = table.scrollWidth;
-     
-     // Force SVG to match it exactly
-     width = tableWidth;
-     svg.style.width = tableWidth + "px"; 
-     svg.style.minWidth = tableWidth + "px";
-  } else {
-     // Desktop: Reset
-     svg.style.width = "100%";
-     svg.style.minWidth = "auto";
-     width = container.offsetWidth;
-  }
-
-  // 4. Map X Positions (Align to Table Headers)
-  if (startIndex > -1 && isMobile) {
-    for (let d = 0; d < totalDaysInMonth; d++) {
-      const th = dayHeaders[startIndex + d];
-      if (th) {
-        // Use offsetLeft to align exactly with the column center
-        const centerX = th.offsetLeft + (th.offsetWidth / 2);
-        xPositions.push(centerX);
-      }
-    }
-  } 
+  const padding = 10;
+  const drawWidth = width - (padding * 2);
   
-  // Fallback / Desktop Spacing
-  if (xPositions.length === 0) {
-    const leftPad = 20;
-    const rightPad = 20;
-    const drawWidth = width - (leftPad + rightPad);
-    for (let d = 0; d < totalDaysInMonth; d++) {
-      xPositions.push(leftPad + (d / (totalDaysInMonth - 1)) * drawWidth);
-    }
+  for (let d = 0; d < totalDaysInMonth; d++) {
+    const x = padding + (d / (totalDaysInMonth - 1)) * drawWidth;
+    xPositions.push(x);
   }
 
-  // 5. Map Y Positions
-  const padding = 20;
-  const floorY = height - 30;
-  let maxScore = Math.max(...scores, 5);
-  if (maxScore === 0) maxScore = 5;
+  // 4. Y-AXIS MAPPING
+  const topPad = 20;
+  const bottomPad = 20;
+  const graphHeight = height - bottomPad;
+  
+  // Calculate max score for scaling
+  const maxVal = Math.max(...dataPoints.map(d => d.score), 5);
+  const pxPerUnit = (graphHeight - topPad) / (maxVal || 1);
+  const mapY = (val) => graphHeight - val * pxPerUnit;
 
-  const pxPerUnit = (floorY - padding) / maxScore;
-  const mapY = (val) => floorY - val * pxPerUnit;
-
-  const points = scores.map((val, i) => ({
+  const points = dataPoints.map((d, i) => ({
     x: xPositions[i],
-    y: mapY(val),
-    val,
+    y: mapY(d.score),
+    val: d.score,
+    pos: d.pos,
+    neg: d.neg,
+    day: i + 1
   }));
 
   if (points.length < 2) {
@@ -835,9 +826,8 @@ function renderGraph() {
     return;
   }
 
-  // 6. Draw Path
+  // 5. DRAW CURVE
   let dPath = `M ${points[0].x} ${points[0].y}`;
-
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[Math.max(i - 1, 0)];
     const p1 = points[i];
@@ -851,30 +841,111 @@ function renderGraph() {
 
     dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
   }
+  const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
-  const dArea = `${dPath} L ${points[points.length - 1].x} ${floorY} L ${points[0].x} ${floorY} Z`;
-
+  // 6. RENDER SVG
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.style.width = "100%";
 
   let svgContent = `
-        <defs>
-            <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
-            </linearGradient>
-        </defs>
-        <line x1="0" y1="${floorY}" x2="${width}" y2="${floorY}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-        <path class="graph-area" d="${dArea}" />
-        <path class="graph-path" d="${dPath}" />
-    `;
+    <defs>
+        <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
+        </linearGradient>
+    </defs>
+    
+    <line x1="0" y1="${graphHeight}" x2="${width}" y2="${graphHeight}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+    
+    <path class="graph-area" d="${dArea}" pointer-events="none" />
+    <path class="graph-path" d="${dPath}" pointer-events="none" />
+    
+    <circle id="activeDot" cx="0" cy="0" r="0" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2" style="transition: cx 0.1s, cy 0.1s" />
 
-  points.forEach((p) => {
-    if (p.val !== 0) {
-      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>`;
-    }
-  });
+    <rect class="graph-overlay" width="${width}" height="${height}" fill="transparent" style="touch-action: none; cursor: crosshair;" />
+  `;
 
   svg.innerHTML = svgContent;
+
+  // 7. INTERACTION LOGIC
+  const overlay = svg.querySelector(".graph-overlay");
+  const activeDot = svg.getElementById("activeDot");
+  const dateEl = tooltip.querySelector(".tooltip-date");
+  const statsEl = tooltip.querySelector(".tooltip-stats");
+
+  const handleInteract = (e) => {
+    const rect = svg.getBoundingClientRect();
+    let clientX = e.clientX;
+    
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        e.preventDefault(); 
+    }
+    
+    const relX = clientX - rect.left;
+
+    // FIND CLOSEST POINT
+    // This logic automatically handles the "halfway" requirement.
+    // As soon as relX crosses the midpoint between Point A and Point B,
+    // the distance to Point B becomes smaller, and it snaps instantly.
+    let closest = points[0];
+    let minDiff = Infinity;
+    
+    for (let p of points) {
+        const diff = Math.abs(relX - p.x);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closest = p;
+        }
+    }
+
+    if (closest) {
+        // Update Dot Position
+        activeDot.setAttribute("cx", closest.x);
+        activeDot.setAttribute("cy", closest.y);
+        activeDot.setAttribute("r", "5");
+
+        // Position Tooltip
+        tooltip.style.opacity = "1";
+        tooltip.style.left = `${closest.x}px`;
+        tooltip.style.top = `${closest.y - 10}px`; 
+
+        // Update Text
+        const monthName = monthNames[currentMonth].substring(0, 3);
+        dateEl.textContent = `${monthName} ${closest.day}`;
+        
+        // Minimal Stats: "5 Done" "2 Slips"
+        // If 0, we can hide them or show 0. Let's show if > 0 to keep it minimal.
+        let html = ``;
+        
+        if (closest.pos > 0 || closest.neg === 0) {
+             html += `<span class="stat-item" style="color:var(--green)">${closest.pos} done</span>`;
+        }
+        
+        if (closest.neg > 0) {
+             html += `<span class="stat-item" style="color:#ef4444">${closest.neg} slip</span>`;
+        }
+        
+        // Fallback if nothing happened
+        if (closest.pos === 0 && closest.neg === 0) {
+            html = `<span class="stat-item" style="color:var(--muted)">No activity</span>`;
+        }
+
+        statsEl.innerHTML = html;
+    }
+  };
+
+  const hideTooltip = () => {
+    tooltip.style.opacity = "0";
+    activeDot.setAttribute("r", "0");
+  };
+
+  overlay.addEventListener("mousemove", handleInteract);
+  overlay.addEventListener("touchmove", handleInteract, { passive: false });
+  overlay.addEventListener("touchstart", handleInteract, { passive: false });
+  
+  overlay.addEventListener("mouseleave", hideTooltip);
+  overlay.addEventListener("touchend", hideTooltip);
 }
 
 window.addEventListener(

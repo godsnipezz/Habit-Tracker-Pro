@@ -74,7 +74,7 @@ body {
 }
 
 /* =========================================================
-   2. HEADER & INPUTS (GLASS PILLS & GRADIENT)
+   2. HEADER & INPUTS
 ========================================================= */
 
 .top {
@@ -90,7 +90,6 @@ body {
   align-items: center;
 }
 
-/* Glass Pill Style */
 .date-picker input[type="number"],
 .dropdown-button {
   background: rgba(255, 255, 255, 0.03);
@@ -144,7 +143,6 @@ body {
   margin-left: 10px;
 }
 
-/* Gradient Headline */
 .headline {
   display: flex;
   flex-direction: column;
@@ -301,7 +299,6 @@ body {
   padding-right: 10px;
 }
 
-/* NEW: DYNAMIC QUOTE STYLE */
 .quote-text {
   color: var(--muted);
   font-size: 13px;
@@ -314,14 +311,8 @@ body {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 0.8;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 0.8; transform: translateY(0); }
 }
 
 .streak-info {
@@ -372,20 +363,14 @@ body {
   transition: all 0.2s ease;
 }
 
-.heat-box.active-low {
-  background: rgba(99, 230, 164, 0.3);
-}
+.heat-box.active-low { background: rgba(99, 230, 164, 0.3); }
+.heat-box.active-med { background: rgba(99, 230, 164, 0.6); }
+.heat-box.active-high { background: var(--green); box-shadow: 0 0 4px rgba(99, 230, 164, 0.4); }
 
-.heat-box.active-med {
-  background: rgba(99, 230, 164, 0.6);
-}
+/* =========================================================
+   5. GRAPH & TOOLTIP
+========================================================= */
 
-.heat-box.active-high {
-  background: var(--green);
-  box-shadow: 0 0 4px rgba(99, 230, 164, 0.4);
-}
-
-/* GRAPH CARD */
 .today-focus {
   background: var(--surface);
   backdrop-filter: blur(20px);
@@ -415,10 +400,7 @@ body {
   align-items: center;
 }
 
-.today-header-title h2 {
-  margin: 0;
-  font-size: 18px;
-}
+.today-header-title h2 { margin: 0; font-size: 18px; }
 
 .graph-summary {
   font-size: 13px;
@@ -437,6 +419,8 @@ body {
   position: relative;
   display: flex;
   align-items: flex-end;
+  /* Required for Tooltip absolute positioning */
+  overflow: visible; 
 }
 
 svg#activityGraph {
@@ -462,21 +446,59 @@ svg#activityGraph {
   stroke: none;
 }
 
-.graph-label {
-  fill: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  text-anchor: middle;
+/* TOOLTIP STYLES */
+.graph-tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  
+  background: rgba(15, 15, 15, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
+  
+  padding: 8px 10px;
+  pointer-events: none;
+  
   opacity: 0;
-  transition: opacity 0.2s;
+  transform: translate(-50%, -15px);
+  transition: opacity 0.1s ease, transform 0.1s;
+  z-index: 100;
+  
+  text-align: center;
+  white-space: nowrap;
 }
 
-.graph-label.visible {
-  opacity: 1;
+.tooltip-date {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.tooltip-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.stat-item {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 /* =========================================================
-   5. TABLE & LAYOUT
+   6. TABLE & LAYOUT
 ========================================================= */
 
 .habits {
@@ -509,8 +531,7 @@ table {
   min-width: 800px;
 }
 
-th,
-td {
+th, td {
   padding: 6px 4px;
   text-align: center;
   font-size: 13px;
@@ -518,13 +539,12 @@ td {
   vertical-align: middle;
 }
 
-/* FIX: SOLID STICKY COLUMNS (Prevents "Ghosting") */
-/* Make the first column (Habit Names) solid black so nothing shows behind it */
+/* SOLID STICKY COLUMNS */
 th:first-child,
 td:first-child {
   position: sticky;
   left: 0;
-  background-color: #0b0b0b !important; /* Matches your main page BG */
+  background-color: #0b0b0b !important; /* Prevents see-through scroll */
   z-index: 20; 
   box-shadow: 2px 0 10px rgba(0,0,0,0.5); 
   min-width: 180px;
@@ -559,23 +579,10 @@ thead th:first-child {
   height: 100%;
 }
 
-.today-col {
-  background: rgba(99, 230, 164, 0.05) !important;
-}
-
-tbody tr:hover td {
-  background-color: rgba(255, 255, 255, 0.03);
-}
-
-.future-day {
-  opacity: 0.15;
-  pointer-events: none;
-}
-
-.today-col input {
-  transform: scale(1.15);
-  box-shadow: 0 0 10px rgba(99, 230, 164, 0.2);
-}
+.today-col { background: rgba(99, 230, 164, 0.05) !important; }
+tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
+.future-day { opacity: 0.15; pointer-events: none; }
+.today-col input { transform: scale(1.15); box-shadow: 0 0 10px rgba(99, 230, 164, 0.2); }
 
 .footer {
   display: flex;
@@ -597,10 +604,7 @@ button#addHabit {
   transition: transform 0.2s;
 }
 
-button#addHabit:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.1);
-}
+button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
 .counter {
   font-size: 14px;
@@ -609,24 +613,11 @@ button#addHabit:hover {
   font-variant-numeric: tabular-nums;
 }
 
-#completed {
-  color: var(--green);
-}
+#completed { color: var(--green); }
+#total { color: var(--text); }
 
-#total {
-  color: var(--text);
-}
-
-input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--green);
-  cursor: pointer;
-}
-
-input[type="checkbox"].neg-habit {
-  accent-color: #ef4444;
-}
+input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
+input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 
 .progress-bar {
   width: 60px;
@@ -658,16 +649,8 @@ input[type="checkbox"].neg-habit {
   height: 24px;
 }
 
-.toggle-edit-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-}
-
-.toggle-edit-btn:disabled {
-  opacity: 0.2;
-  cursor: default;
-  background: transparent;
-}
+.toggle-edit-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+.toggle-edit-btn:disabled { opacity: 0.2; cursor: default; background: transparent; }
 
 td .dropdown-button {
   background: transparent;
@@ -687,41 +670,14 @@ td .dropdown-button {
   box-shadow: none;
 }
 
-td .dropdown-button::after {
-  display: none;
-}
+td .dropdown-button::after { display: none; }
+td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
 
-td .dropdown-button:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateY(-1px);
-}
-
-.badge-pos {
-  color: #63e6a4;
-  background: rgba(99, 230, 164, 0.1) !important;
-  border: 1px solid rgba(99, 230, 164, 0.2) !important;
-}
-
-.badge-neg {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1) !important;
-  border: 1px solid rgba(239, 68, 68, 0.2) !important;
-}
-
-.badge-imp-low {
-  color: #4fd1ff;
-  background: rgba(79, 209, 255, 0.1) !important;
-}
-
-.badge-imp-med {
-  color: #facc15;
-  background: rgba(250, 204, 21, 0.1) !important;
-}
-
-.badge-imp-high {
-  color: #f87171;
-  background: rgba(248, 113, 113, 0.1) !important;
-}
+.badge-pos { color: #63e6a4; background: rgba(99, 230, 164, 0.1) !important; border: 1px solid rgba(99, 230, 164, 0.2) !important; }
+.badge-neg { color: #ef4444; background: rgba(239, 68, 68, 0.1) !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; }
+.badge-imp-low { color: #4fd1ff; background: rgba(79, 209, 255, 0.1) !important; }
+.badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
+.badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
 .goal-input {
   height: 28px;
@@ -740,101 +696,91 @@ td .dropdown-button:hover {
   appearance: textfield;
 }
 
-.goal-input:hover,
-.goal-input:focus {
-  color: #fff !important;
-  border-color: rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.goal-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+.goal-input:hover, .goal-input:focus { color: #fff !important; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); }
+.goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* =========================================================
-   6. MOBILE RESPONSIVENESS & RE-ORDERING
+   7. MOBILE RESPONSIVENESS & CUSTOM LAYOUT
 ========================================================= */
 
 @media (max-width: 768px) {
-  /* 1. Header Adjustment for Streak */
+  /* A. Header Adjustment for Streak */
   .top {
     flex-wrap: wrap;
     gap: 15px;
     position: relative;
-    padding-top: 30px; /* Make space for the streak at the top */
+    padding-top: 30px; 
   }
 
-  /* Style the Streak when it is moved to the Header */
   .streak-info.mobile-view {
     position: absolute;
     top: -5px;
     left: 0;
     width: 100%;
-    
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
     gap: 8px;
-    
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border);
   }
 
-  .streak-info.mobile-view .streak-count {
-    font-size: 18px; 
-    color: var(--yellow); 
-  }
+  .streak-info.mobile-view .streak-count { font-size: 18px; color: var(--yellow); }
+  .streak-info.mobile-view .streak-label { font-size: 12px; margin-top: 0; color: var(--muted); }
+  .streak-info.mobile-view .streak-icon { width: 16px; height: 16px; }
 
-  .streak-info.mobile-view .streak-label {
-    font-size: 12px;
-    margin-top: 0;
-    color: var(--muted);
+  /* B. Graph Interaction & Compact View */
+  .today-focus {
+    padding: 20px 15px;
+    height: auto;
   }
   
-  .streak-info.mobile-view .streak-icon {
-    width: 16px;
-    height: 16px;
-  }
-
-  /* 2. Graph Scrollability */
   .graph-container {
     width: 100%;
-    overflow-x: auto !important; /* Forces horizontal scrollbar */
-    overflow-y: hidden;
-    padding-bottom: 10px;
-    display: block;
+    overflow: hidden; /* Compact Mode: No Scroll */
+    padding-bottom: 0;
+    position: relative;
   }
 
   svg#activityGraph {
     display: block;
-    max-width: none; /* Allows SVG to expand for scroll */
+    width: 100% !important; /* Force fit */
+    min-width: 0 !important;
+    max-width: 100%;
+    overflow: visible;
   }
 
-  /* 3. Quote Adjustment (Below Graph) */
+  /* Full overlay for touch */
+  .graph-overlay {
+    fill: transparent;
+    cursor: crosshair;
+    touch-action: none; 
+  }
+
+  /* C. Quote Adjustment */
   #dailyQuote.mobile-view {
     margin: 10px 0 20px 0;
     text-align: center;
     width: 100%;
     font-style: italic;
-    color: var(--green); 
+    color: var(--green);
     opacity: 0.9;
     padding: 10px;
     background: rgba(255,255,255,0.03);
     border-radius: 12px;
   }
 
-  /* 4. Heatmap & Rings Adjustment */
+  /* D. Heatmap & Rings */
   .analytics {
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     gap: 20px;
-    overflow: visible; 
+    overflow: visible;
   }
 
   .rings-container-mobile {
     display: flex;
-    justify-content: space-around; 
+    justify-content: space-around;
     width: 100%;
   }
 
@@ -849,31 +795,22 @@ td .dropdown-button:hover {
     margin-bottom: 10px;
   }
 
-  .streak-widget {
-    display: none; /* Hidden because we moved children elsewhere */
-  }
-  
-  .heat-box {
-    width: 16px; 
-    height: 16px;
-  }
+  .streak-widget { display: none; }
+  .heat-box { width: 16px; height: 16px; }
 
-  /* 5. Footer Clean Up (Side-by-Side) */
+  /* E. Cleaner Footer (Side-by-Side) */
   .footer {
-    flex-direction: row; 
+    flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
   }
 
-  button#addHabit {
-    width: auto; 
-    padding: 10px 20px;
-    font-size: 13px;
-  }
-
-  .counter {
-    font-size: 12px;
-    text-align: right;
+  button#addHabit { width: auto; padding: 10px 20px; font-size: 13px; }
+  .counter { font-size: 12px; text-align: right; }
+  
+  /* Fix sticky border on mobile */
+  th:first-child, td:first-child {
+    border-right: 1px solid var(--border); 
   }
 }
