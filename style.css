@@ -232,8 +232,10 @@ body {
 .analytics {
   display: flex;
   margin-bottom: 24px;
-  overflow-x: auto;
-  padding-bottom: 10px;
+  /* Changed from overflow-x: auto to visible so shadows show */
+  overflow: visible; 
+  /* Increased padding bottom/right to accommodate shadows */
+  padding: 10px 10px 20px 10px; 
   align-items: center;
 }
 
@@ -384,6 +386,8 @@ body {
   height: 240px;
   position: relative;
   overflow: visible;
+  /* ADDED: Ensure this container sits higher so tooltip shadow isn't cut by sections below */
+  z-index: 10;
 }
 
 .today-header {

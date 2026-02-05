@@ -747,6 +747,13 @@ function renderGraph() {
   const y = parseInt(yearInput.value) || NOW.getFullYear();
   const totalDaysInMonth = getDays(y, currentMonth);
 
+  // --- NEW: Determine how many days to show dots for ---
+  const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
+  const today = NOW.getDate();
+  // Points array is 0-indexed, so today is index (today - 1).
+  // We want to show dots up to index (today - 1).
+  const maxDotIndex = isThisMonth ? today - 1 : totalDaysInMonth - 1;
+
   // 1. DATA CALCULATION
   let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
@@ -776,7 +783,6 @@ function renderGraph() {
   // 2. SETUP DIMENSIONS
   const container = svg.parentElement;
   
-  // Tooltip Setup
   let tooltip = container.querySelector(".graph-tooltip");
   if (!tooltip) {
     tooltip = document.createElement("div");
@@ -813,7 +819,8 @@ function renderGraph() {
     val: d.score,
     pos: d.pos,
     neg: d.neg,
-    day: i + 1
+    day: i + 1,
+    index: i // Keep track of original index
   }));
 
   if (points.length < 2) {
@@ -840,7 +847,12 @@ function renderGraph() {
 
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
-    dotsSVG += `<circle cx="${p.x}" cy="${p.y}" class="graph-dot" />`;
+    
+    // --- NEW: ONLY DRAW DOT IF NOT FUTURE ---
+    // If it's past months, draw all. If current month, draw up to today.
+    if (!isThisMonth || (isThisMonth && i <= maxDotIndex)) {
+         dotsSVG += `<circle cx="${p.x}" cy="${p.y}" class="graph-dot" />`;
+    }
   }
   
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
@@ -891,7 +903,13 @@ function renderGraph() {
         // Show Active Dot
         activeDot.setAttribute("cx", closest.x);
         activeDot.setAttribute("cy", closest.y);
-        activeDot.classList.add("is-active");
+        
+        // Only show the big active ring if it's not a future date
+        if (!isThisMonth || (isThisMonth && closest.index <= maxDotIndex)) {
+             activeDot.classList.add("is-active");
+        } else {
+             activeDot.classList.remove("is-active");
+        }
 
         // Update Content
         const monthName = monthNames[currentMonth].substring(0, 3);
@@ -909,49 +927,34 @@ function renderGraph() {
         }
         statsEl.innerHTML = html;
 
-        // --- CLAMPING LOGIC (The Fix) ---
+        // CLAMPING LOGIC
         tooltip.style.opacity = "1";
-        
-        // Measure real width now that content is set
         const tipWidth = tooltip.offsetWidth;
         const tipHeight = tooltip.offsetHeight;
-        
-        // 1. Center it on the point
         let leftPos = closest.x - (tipWidth / 2);
-        
-        // 2. Left Edge Check (Don't let it go below 0)
         if (leftPos < 0) leftPos = 0;
-        
-        // 3. Right Edge Check (Don't let it go past width)
         if (leftPos + tipWidth > width) {
             leftPos = width - tipWidth;
         }
-        
         tooltip.style.left = `${leftPos}px`;
-        tooltip.style.top = `${closest.y - tipHeight - 12}px`; // Just above dot
+        tooltip.style.top = `${closest.y - tipHeight - 12}px`;
     }
   };
 
   const handleMove = (e) => {
     isPinned = false;
-    
     const rect = svg.getBoundingClientRect();
     let clientX = e.clientX;
     let clientY = e.clientY;
-    
     if (e.touches && e.touches.length > 0) {
         clientX = e.touches[0].clientX;
         clientY = e.touches[0].clientY;
     }
-    
-    // --- DEAD ZONE CHECK (The Fix) ---
-    // If mouse is in the top 40px (the empty space), ignore it.
     const relY = clientY - rect.top;
     if (relY < 40) { 
         handleLeave();
         return;
     }
-    
     updateView(clientX - rect.left);
   };
 
@@ -960,16 +963,12 @@ function renderGraph() {
     const rect = svg.getBoundingClientRect();
     let clientX = e.clientX;
     let clientY = e.clientY;
-
     if (e.type === 'touchend') {
         isPinned = true;
         return;
     }
-    
-    // Check dead zone on click too
     const relY = clientY - rect.top;
     if (relY < 40) return;
-
     updateView(clientX - rect.left);
     isPinned = true; 
   };
