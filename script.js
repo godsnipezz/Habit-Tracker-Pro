@@ -359,7 +359,6 @@ function todayScoreText() {
     return `${score > 0 ? '+' : ''}${score} Net Score`;
 }
 
-// === NEW HYBRID GRAPH FUNCTION (Handles Desktop & Mobile) ===
 function renderGraph() {
     const svg = document.getElementById("activityGraph");
     if (!svg) return;
@@ -414,6 +413,9 @@ function renderGraph() {
     }
 
     // --- 3. GATHER DATA ---
+    // Now we have our X positions (either aligned to table or fitted to container)
+    // We map the Y values same as before.
+    
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const daysInMonth = getDays(y, currentMonth);
     let points = [];
@@ -422,6 +424,7 @@ function renderGraph() {
         if (i >= daysInMonth) return;
 
         let dailyScore = 0;
+        // Safety check if habit data exists
         if (habits && habits.length) {
             habits.forEach(h => {
                 if (h.days[i]) dailyScore += (h.type === 'positive' ? 1 : -1);
@@ -501,7 +504,7 @@ document.addEventListener("click", () => document.querySelectorAll(".dropdown-me
 function update() {
     renderHeader(); renderHabits(); updateStats(); renderGraph();
     // RE-INIT ICONS AT END OF UPDATE
-    if(typeof lucide !== 'undefined') lucide.createIcons();
+    lucide.createIcons();
 }
 
 loadHabits(); update();
@@ -537,38 +540,3 @@ function setDailyQuote() {
 
 // Run on load
 setDailyQuote();
-
-/* =========================================================
-   MOBILE SCROLL SYNC
-========================================================= */
-const graphContainer = document.querySelector('.graph-container');
-const tableContainer = document.querySelector('.table-wrapper');
-let isSyncingLeft = false;
-let isSyncingRight = false;
-
-if (graphContainer && tableContainer) {
-    const handleScroll = (source, target, isSourceSyncing, setSourceSyncing) => {
-        // Only sync if we are in mobile mode (width <= 900px)
-        if (window.innerWidth > 900) return; 
-        
-        if (!isSourceSyncing) {
-            // Set the flag on the TARGET to prevent an infinite loop
-            if (source === graphContainer) isSyncingRight = true;
-            else isSyncingLeft = true;
-            
-            target.scrollLeft = source.scrollLeft;
-        }
-        
-        // Reset the flag for the SOURCE
-        if (source === graphContainer) isSyncingLeft = false;
-        else isSyncingRight = false;
-    };
-
-    graphContainer.addEventListener('scroll', () => {
-        handleScroll(graphContainer, tableContainer, isSyncingLeft, val => isSyncingLeft = val);
-    });
-
-    tableContainer.addEventListener('scroll', () => {
-        handleScroll(tableContainer, graphContainer, isSyncingRight, val => isSyncingRight = val);
-    });
-}
