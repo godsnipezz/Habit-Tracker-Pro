@@ -745,35 +745,32 @@ function renderGraph() {
   if (!svg) return;
 
   const y = parseInt(yearInput.value) || NOW.getFullYear();
-
   const totalDaysInMonth = getDays(y, currentMonth);
 
+  // 1. Calculate Scores
   let scores = [];
-
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0;
-
     habits.forEach((h) => {
       if (h.days[d]) dailyScore += h.type === "positive" ? 1 : -1;
     });
-
     scores.push(dailyScore);
   }
 
+  // 2. Setup Dimensions
   const container = svg.parentElement;
-  
-  // FIX: On mobile, force width to at least 600px to match CSS min-width
-  // This ensures the math works for the scrollable view
-  const width = Math.max(container.offsetWidth, 600); 
-  
+  const table = document.querySelector("table");
+  const isMobile = window.innerWidth <= 768;
+
+  let width = container.offsetWidth;
   const height = 150;
-
+  
+  // 3. Coordinate Mapping (The "Exact Alignment" Logic)
   const dayHeaders = document.querySelectorAll("table thead th");
-
   let xPositions = [];
-
+  
+  // Find where the dates start (skip "Habit", "Type", etc.)
   let startIndex = -1;
-
   for (let i = 0; i < dayHeaders.length; i++) {
     if (dayHeaders[i].innerText.trim() === "1") {
       startIndex = i;
@@ -781,37 +778,52 @@ function renderGraph() {
     }
   }
 
-  if (startIndex > -1 && dayHeaders.length >= startIndex + totalDaysInMonth) {
+  if (startIndex > -1 && table) {
+    // --- MODE A: ALIGN TO TABLE (Mobile/Exact) ---
+    // We make the SVG exactly as wide as the table so coordinates match 1:1
+    
+    // If mobile, use the table's full scrolling width
+    if (isMobile) {
+        width = table.scrollWidth; 
+        svg.style.width = width + "px"; // Force SVG to expand
+    } else {
+        svg.style.width = "100%"; // Reset on desktop
+        width = container.offsetWidth; // Use container width
+    }
+
+    // Now loop through headers and grab their EXACT center position
     for (let d = 0; d < totalDaysInMonth; d++) {
       const th = dayHeaders[startIndex + d];
-
       if (th) {
-        const centerX = th.offsetLeft + th.offsetWidth / 2;
+        // offsetLeft gives the position relative to the table left edge
+        // This accounts for the sticky "Habit" column width automatically!
+        const centerX = th.offsetLeft + (th.offsetWidth / 2);
         xPositions.push(centerX);
       }
     }
-  }
-
+  } 
+  
+  // Fallback (if table headers aren't ready or weird glitch)
   if (xPositions.length === 0) {
-    const leftOffset = width * 0.22;
-    const graphWidth = width - leftOffset;
-
+    const leftPad = 20;
+    const rightPad = 20;
+    const drawWidth = width - (leftPad + rightPad);
     for (let d = 0; d < totalDaysInMonth; d++) {
-      xPositions.push(leftOffset + ((d + 0.5) / totalDaysInMonth) * graphWidth);
+      xPositions.push(leftPad + (d / (totalDaysInMonth - 1)) * drawWidth);
     }
   }
 
+  // 4. Y-Axis Mapping
   const padding = 20;
   const floorY = height - 30;
-
   let maxScore = Math.max(...scores, 5);
+  if (maxScore === 0) maxScore = 5;
 
-  const pxPerUnit = (floorY - padding) / Math.max(maxScore, 1);
-
+  const pxPerUnit = (floorY - padding) / maxScore;
   const mapY = (val) => floorY - val * pxPerUnit;
 
   const points = scores.map((val, i) => ({
-    x: xPositions[i] || 0,
+    x: xPositions[i],
     y: mapY(val),
     val,
   }));
@@ -821,20 +833,17 @@ function renderGraph() {
     return;
   }
 
+  // 5. Draw the Curve
   let dPath = `M ${points[0].x} ${points[0].y}`;
 
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[Math.max(i - 1, 0)];
-
     const p1 = points[i];
-
     const p2 = points[i + 1];
-
     const p3 = points[Math.min(i + 2, points.length - 1)];
 
     const cp1x = p1.x + (p2.x - p0.x) * 0.15;
     const cp1y = p1.y + (p2.y - p0.y) * 0.15;
-
     const cp2x = p2.x - (p3.x - p1.x) * 0.15;
     const cp2y = p2.y - (p3.y - p1.y) * 0.15;
 
@@ -846,32 +855,20 @@ function renderGraph() {
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
   let svgContent = `
-
         <defs>
-
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
-
                 <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.3"/>
-
                 <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
-
             </linearGradient>
-
         </defs>
-
         <line x1="0" y1="${floorY}" x2="${width}" y2="${floorY}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-
         <path class="graph-area" d="${dArea}" />
-
         <path class="graph-path" d="${dPath}" />
-
     `;
 
-  points.forEach((p, i) => {
+  points.forEach((p) => {
     if (p.val !== 0) {
-      svgContent += `<text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>
-
-            <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>`;
+      svgContent += `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>`;
     }
   });
 
