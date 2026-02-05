@@ -850,81 +850,92 @@ td .dropdown-button:hover {
 }
 
 /* =========================================================
-   MOBILE RESPONSIVENESS
+   MOBILE RESPONSIVENESS (UPDATED)
 ========================================================= */
 
 @media (max-width: 768px) {
-  /* Prevent the wide table from expanding the whole page */
   .app {
     width: 100%;
-    overflow-x: hidden; 
+    overflow-x: hidden; /* Prevents whole page horizontal scroll */
     padding: 15px;
   }
 
-  /* 1. GRAPH SCROLLING & CONTAINMENT */
+  /* --- 1. GRAPH: SCROLLABLE --- */
   .today-focus {
     padding: 20px 15px;
-    height: auto; /* Allow height to adjust */
+    height: auto;
   }
 
   .graph-container {
     width: 100%;
-    overflow-x: auto; /* Adds the horizontal scrollbar */
-    padding-bottom: 10px; /* Space for the scrollbar */
-    /* Use the custom scrollbar styles defined globally */
+    overflow-x: auto; /* Adds scrollbar ONLY to graph */
+    padding-bottom: 10px;
   }
 
-  /* Force the SVG to stay wide (desktop size) so it scrolls instead of squishing */
   svg#activityGraph {
-    min-width: 600px; 
+    min-width: 600px; /* Forces width so it scrolls */
     display: block;
   }
 
-  /* 2. STREAK WIDGET & QUOTES (STACKING) */
+  /* --- 2. STREAK WIDGET: COMPACT VIEW --- */
   .streak-widget {
-    flex-direction: column; /* Stack items vertically */
     height: auto;
-    padding: 20px 0 0 0;
-    margin-top: 20px;
-    border-left: none; /* Remove side border */
-    border-top: 1px solid var(--border); /* Add top border separator */
-    gap: 16px;
+    padding: 15px 0 0 0;
+    margin-top: 15px;
+    border-left: none;
+    border-top: 1px solid var(--border);
+    
+    /* Layout: Wrap items so they fit on screen */
+    display: flex;
+    flex-wrap: wrap; 
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
   }
 
+  /* Row 1, Left: Streak Count */
   .streak-info {
-    align-items: center; /* Center the flame/count */
+    order: 1;
+    flex: 0 0 auto;
   }
 
-  .quote-text {
+  /* Row 1, Right: Heatmap */
+  .heatmap-grid {
+    order: 2;
+    margin-left: auto; /* Pushes heatmap to far right */
+    /* Ensure it doesn't overflow */
+    flex-shrink: 0; 
+  }
+
+  /* Row 2: Quote (Full Width) */
+  #dailyQuote {
+    order: 3;
+    width: 100%;
     text-align: center;
-    padding: 0 10px;
+    margin-top: 5px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     font-size: 12px;
   }
 
-  /* Ensure Heatmap grids are centered */
-  .heatmap-grid {
-    justify-content: center;
-  }
-
-  /* 3. FOOTER & ADD BUTTON (DECLUTTER) */
+  /* --- 3. FOOTER & EDIT MODE --- */
   .footer {
-    flex-direction: column; /* Stack button and text */
+    flex-direction: column;
     gap: 16px;
   }
 
   button#addHabit {
-    width: 100%; /* Full width button for easier tapping */
+    width: 100%;
     padding: 14px;
   }
 
   .counter {
     text-align: center;
-    justify-content: center;
   }
 
-  /* 4. EDIT MODE FIXES */
+  /* Fixes Edit Mode graph overflow */
   .table-wrapper {
-    /* Ensure table scrolls internally, doesn't push graph off screen */
-    max-width: 100vw; 
+    max-width: 100%;
+    overflow-x: auto;
   }
 }
