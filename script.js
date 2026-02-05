@@ -747,7 +747,7 @@ function renderGraph() {
   const y = parseInt(yearInput.value) || NOW.getFullYear();
   const totalDaysInMonth = getDays(y, currentMonth);
 
-  // 1. DATA CALCULATION (Count Specifics)
+  // 1. DATA CALCULATION
   let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0;
@@ -761,7 +761,7 @@ function renderGraph() {
             posCount++;
         } else {
             dailyScore -= 1;
-            negCount++; // Count how many "bad" habits happened
+            negCount++;
         }
       }
     });
@@ -776,16 +776,12 @@ function renderGraph() {
   // 2. SETUP DIMENSIONS
   const container = svg.parentElement;
   
-  // Create Tooltip if missing
+  // Tooltip Setup
   let tooltip = container.querySelector(".graph-tooltip");
   if (!tooltip) {
     tooltip = document.createElement("div");
     tooltip.className = "graph-tooltip";
-    // Initial Structure
-    tooltip.innerHTML = `
-        <span class="tooltip-date"></span>
-        <div class="tooltip-stats"></div>
-    `;
+    tooltip.innerHTML = `<span class="tooltip-date"></span><div class="tooltip-stats"></div>`;
     container.appendChild(tooltip);
   }
 
@@ -794,7 +790,7 @@ function renderGraph() {
 
   // 3. X-AXIS SPACING
   let xPositions = [];
-  const padding = 10;
+  const padding = 15;
   const drawWidth = width - (padding * 2);
   
   for (let d = 0; d < totalDaysInMonth; d++) {
@@ -807,7 +803,6 @@ function renderGraph() {
   const bottomPad = 20;
   const graphHeight = height - bottomPad;
   
-  // Calculate max score for scaling
   const maxVal = Math.max(...dataPoints.map(d => d.score), 5);
   const pxPerUnit = (graphHeight - topPad) / (maxVal || 1);
   const mapY = (val) => graphHeight - val * pxPerUnit;
@@ -826,21 +821,35 @@ function renderGraph() {
     return;
   }
 
-  // 5. DRAW CURVE
+  // 5. DRAW CURVE & DOTS
   let dPath = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[Math.max(i - 1, 0)];
-    const p1 = points[i];
-    const p2 = points[i + 1];
-    const p3 = points[Math.min(i + 2, points.length - 1)];
+  // Visible dots string
+  let dotsSVG = ""; 
 
-    const cp1x = p1.x + (p2.x - p0.x) * 0.15;
-    const cp1y = p1.y + (p2.y - p0.y) * 0.15;
-    const cp2x = p2.x - (p3.x - p1.x) * 0.15;
-    const cp2y = p2.y - (p3.y - p1.y) * 0.15;
+  for (let i = 0; i < points.length; i++) {
+    const p = points[i];
+    
+    // Build path
+    if (i < points.length - 1) {
+        const p0 = points[Math.max(i - 1, 0)];
+        const p1 = points[i];
+        const p2 = points[i + 1];
+        const p3 = points[Math.min(i + 2, points.length - 1)];
 
-    dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+        const cp1x = p1.x + (p2.x - p0.x) * 0.15;
+        const cp1y = p1.y + (p2.y - p0.y) * 0.15;
+        const cp2x = p2.x - (p3.x - p1.x) * 0.15;
+        const cp2y = p2.y - (p3.y - p1.y) * 0.15;
+
+        dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
+    }
+
+    // Add visible dot for each day
+    // Only draw dot if there is activity (score != 0) OR always?
+    // User asked for "dots on each day". Let's do all.
+    dotsSVG += `<circle cx="${p.x}" cy="${p.y}" class="graph-dot" />`;
   }
+  
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
   // 6. RENDER SVG
@@ -860,9 +869,11 @@ function renderGraph() {
     <path class="graph-area" d="${dArea}" pointer-events="none" />
     <path class="graph-path" d="${dPath}" pointer-events="none" />
     
-    <circle id="activeDot" cx="0" cy="0" r="0" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2" style="transition: cx 0.1s, cy 0.1s" />
+    ${dotsSVG}
 
-    <rect class="graph-overlay" width="${width}" height="${height}" fill="transparent" style="touch-action: none; cursor: crosshair;" />
+    <circle id="activeDot" cx="0" cy="0" />
+
+    <rect class="graph-overlay" width="${width}" height="${height}" />
   `;
 
   svg.innerHTML = svgContent;
@@ -872,22 +883,11 @@ function renderGraph() {
   const activeDot = svg.getElementById("activeDot");
   const dateEl = tooltip.querySelector(".tooltip-date");
   const statsEl = tooltip.querySelector(".tooltip-stats");
+  
+  let isPinned = false;
 
-  const handleInteract = (e) => {
-    const rect = svg.getBoundingClientRect();
-    let clientX = e.clientX;
-    
-    if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        e.preventDefault(); 
-    }
-    
-    const relX = clientX - rect.left;
-
-    // FIND CLOSEST POINT
-    // This logic automatically handles the "halfway" requirement.
-    // As soon as relX crosses the midpoint between Point A and Point B,
-    // the distance to Point B becomes smaller, and it snaps instantly.
+  const updateView = (relX) => {
+    // Find closest point
     let closest = points[0];
     let minDiff = Infinity;
     
@@ -900,52 +900,79 @@ function renderGraph() {
     }
 
     if (closest) {
-        // Update Dot Position
+        // Show Active Dot
         activeDot.setAttribute("cx", closest.x);
         activeDot.setAttribute("cy", closest.y);
-        activeDot.setAttribute("r", "5");
+        activeDot.classList.add("is-active");
 
-        // Position Tooltip
+        // Show Tooltip
         tooltip.style.opacity = "1";
         tooltip.style.left = `${closest.x}px`;
-        tooltip.style.top = `${closest.y - 10}px`; 
+        tooltip.style.top = `${closest.y - 15}px`; 
 
         // Update Text
         const monthName = monthNames[currentMonth].substring(0, 3);
         dateEl.textContent = `${monthName} ${closest.day}`;
         
-        // Minimal Stats: "5 Done" "2 Slips"
-        // If 0, we can hide them or show 0. Let's show if > 0 to keep it minimal.
         let html = ``;
-        
         if (closest.pos > 0 || closest.neg === 0) {
              html += `<span class="stat-item" style="color:var(--green)">${closest.pos} done</span>`;
         }
-        
         if (closest.neg > 0) {
              html += `<span class="stat-item" style="color:#ef4444">${closest.neg} slip</span>`;
         }
-        
-        // Fallback if nothing happened
         if (closest.pos === 0 && closest.neg === 0) {
             html = `<span class="stat-item" style="color:var(--muted)">No activity</span>`;
         }
-
         statsEl.innerHTML = html;
     }
   };
 
-  const hideTooltip = () => {
-    tooltip.style.opacity = "0";
-    activeDot.setAttribute("r", "0");
+  const handleMove = (e) => {
+    // If pinned (clicked), hovering shouldn't interfere unless we click again?
+    // Actually, usually hovering "unlocks" the pin or temporarily overrides it.
+    // Let's make it so moving the mouse *always* updates (scrubs), 
+    // effectively unpinning until you click again.
+    isPinned = false;
+    
+    const rect = svg.getBoundingClientRect();
+    let clientX = e.clientX;
+    if (e.touches && e.touches.length > 0) clientX = e.touches[0].clientX;
+    
+    updateView(clientX - rect.left);
   };
 
-  overlay.addEventListener("mousemove", handleInteract);
-  overlay.addEventListener("touchmove", handleInteract, { passive: false });
-  overlay.addEventListener("touchstart", handleInteract, { passive: false });
+  const handleClick = (e) => {
+    e.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    let clientX = e.clientX;
+    if (e.type === 'touchend') {
+        // For touchend, use changedTouches if available, or just rely on last move
+        // But simpler: just toggle pin state so mouseleave/touchend doesn't hide it
+        isPinned = true;
+        return;
+    }
+    
+    updateView(clientX - rect.left);
+    isPinned = true; // Lock it
+  };
+
+  const handleLeave = () => {
+    if (!isPinned) {
+        tooltip.style.opacity = "0";
+        activeDot.classList.remove("is-active");
+    }
+  };
+
+  // Listeners
+  overlay.addEventListener("mousemove", handleMove);
+  overlay.addEventListener("touchmove", handleMove, { passive: false });
   
-  overlay.addEventListener("mouseleave", hideTooltip);
-  overlay.addEventListener("touchend", hideTooltip);
+  overlay.addEventListener("click", handleClick);
+  // On mobile, touchend essentially acts as the "Click/Press" to lock it
+  overlay.addEventListener("touchend", handleClick);
+  
+  overlay.addEventListener("mouseleave", handleLeave);
 }
 
 window.addEventListener(

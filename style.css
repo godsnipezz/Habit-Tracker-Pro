@@ -368,7 +368,7 @@ body {
 .heat-box.active-high { background: var(--green); box-shadow: 0 0 4px rgba(99, 230, 164, 0.4); }
 
 /* =========================================================
-   5. GRAPH & TOOLTIP
+   5. GRAPH & INTERACTION
 ========================================================= */
 
 .today-focus {
@@ -419,7 +419,6 @@ body {
   position: relative;
   display: flex;
   align-items: flex-end;
-  /* Required for Tooltip absolute positioning */
   overflow: visible; 
 }
 
@@ -446,7 +445,47 @@ svg#activityGraph {
   stroke: none;
 }
 
-/* TOOLTIP STYLES */
+/* --- DOTS & CURSOR --- */
+
+/* Visible dots on the line */
+.graph-dot {
+  fill: #0b0b0b; /* Hollow effect */
+  stroke: var(--green);
+  stroke-width: 2px;
+  r: 3px;
+  transition: all 0.2s ease;
+}
+
+/* Hover effect on dots */
+.graph-dot:hover {
+  r: 5px;
+  stroke-width: 3px;
+  fill: var(--green);
+}
+
+/* The Active Dot (highlighted by JS) */
+#activeDot {
+  fill: var(--green);
+  stroke: #fff;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 5px var(--green));
+  pointer-events: none;
+  transition: cx 0.1s, cy 0.1s, r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#activeDot.is-active {
+  r: 6px;
+}
+
+/* Invisible overlay for capturing input */
+.graph-overlay {
+  fill: transparent;
+  cursor: default; /* Clean cursor */
+  touch-action: none;
+}
+
+/* --- TOOLTIP STYLES --- */
+
 .graph-tooltip {
   position: absolute;
   top: 0;
@@ -456,7 +495,7 @@ svg#activityGraph {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   border-radius: 8px;
   
@@ -544,7 +583,7 @@ th:first-child,
 td:first-child {
   position: sticky;
   left: 0;
-  background-color: #0b0b0b !important; /* Prevents see-through scroll */
+  background-color: #0b0b0b !important; /* Prevents see-through */
   z-index: 20; 
   box-shadow: 2px 0 10px rgba(0,0,0,0.5); 
   min-width: 180px;
@@ -753,7 +792,7 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
   /* Full overlay for touch */
   .graph-overlay {
     fill: transparent;
-    cursor: crosshair;
+    cursor: default; /* Clean cursor */
     touch-action: none; 
   }
 
