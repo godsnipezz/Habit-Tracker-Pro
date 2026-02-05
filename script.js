@@ -799,7 +799,7 @@ function renderGraph() {
   }
 
   // 4. Y-AXIS MAPPING
-  const topPad = 20;
+  const topPad = 30; // Increased top padding to give breathing room
   const bottomPad = 20;
   const graphHeight = height - bottomPad;
   
@@ -823,13 +823,10 @@ function renderGraph() {
 
   // 5. DRAW CURVE & DOTS
   let dPath = `M ${points[0].x} ${points[0].y}`;
-  // Visible dots string
   let dotsSVG = ""; 
 
   for (let i = 0; i < points.length; i++) {
     const p = points[i];
-    
-    // Build path
     if (i < points.length - 1) {
         const p0 = points[Math.max(i - 1, 0)];
         const p1 = points[i];
@@ -843,10 +840,6 @@ function renderGraph() {
 
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
-
-    // Add visible dot for each day
-    // Only draw dot if there is activity (score != 0) OR always?
-    // User asked for "dots on each day". Let's do all.
     dotsSVG += `<circle cx="${p.x}" cy="${p.y}" class="graph-dot" />`;
   }
   
@@ -865,14 +858,10 @@ function renderGraph() {
     </defs>
     
     <line x1="0" y1="${graphHeight}" x2="${width}" y2="${graphHeight}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-    
     <path class="graph-area" d="${dArea}" pointer-events="none" />
     <path class="graph-path" d="${dPath}" pointer-events="none" />
-    
     ${dotsSVG}
-
     <circle id="activeDot" cx="0" cy="0" />
-
     <rect class="graph-overlay" width="${width}" height="${height}" />
   `;
 
@@ -887,7 +876,6 @@ function renderGraph() {
   let isPinned = false;
 
   const updateView = (relX) => {
-    // Find closest point
     let closest = points[0];
     let minDiff = Infinity;
     
@@ -905,12 +893,7 @@ function renderGraph() {
         activeDot.setAttribute("cy", closest.y);
         activeDot.classList.add("is-active");
 
-        // Show Tooltip
-        tooltip.style.opacity = "1";
-        tooltip.style.left = `${closest.x}px`;
-        tooltip.style.top = `${closest.y - 15}px`; 
-
-        // Update Text
+        // Update Content
         const monthName = monthNames[currentMonth].substring(0, 3);
         dateEl.textContent = `${monthName} ${closest.day}`;
         
@@ -925,19 +908,44 @@ function renderGraph() {
             html = `<span class="stat-item" style="color:var(--muted)">No activity</span>`;
         }
         statsEl.innerHTML = html;
+
+        // --- NEW: CLAMPING LOGIC (Prevent tooltip from going out) ---
+        tooltip.style.opacity = "1";
+        
+        const tipWidth = tooltip.offsetWidth || 100; // Estimate or get actual
+        const tipHeight = tooltip.offsetHeight || 50;
+        
+        // Calculate ideal Left Position (Center)
+        let leftPos = closest.x - (tipWidth / 2);
+        
+        // Clamp to edges (padding of 5px)
+        if (leftPos < 5) leftPos = 5;
+        if (leftPos + tipWidth > width - 5) leftPos = width - tipWidth - 5;
+        
+        tooltip.style.left = `${leftPos}px`;
+        tooltip.style.top = `${closest.y - tipHeight - 10}px`; 
     }
   };
 
   const handleMove = (e) => {
-    // If pinned (clicked), hovering shouldn't interfere unless we click again?
-    // Actually, usually hovering "unlocks" the pin or temporarily overrides it.
-    // Let's make it so moving the mouse *always* updates (scrubs), 
-    // effectively unpinning until you click again.
     isPinned = false;
     
     const rect = svg.getBoundingClientRect();
     let clientX = e.clientX;
-    if (e.touches && e.touches.length > 0) clientX = e.touches[0].clientX;
+    let clientY = e.clientY;
+    
+    if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    }
+    
+    // --- NEW: DEAD ZONE CHECK ---
+    // If mouse is too high up in the container, ignore it.
+    const relY = clientY - rect.top;
+    if (relY < 15) { // Dead zone of 15px at the top
+        handleLeave();
+        return;
+    }
     
     updateView(clientX - rect.left);
   };
@@ -946,15 +954,20 @@ function renderGraph() {
     e.preventDefault();
     const rect = svg.getBoundingClientRect();
     let clientX = e.clientX;
+    
+    // Check Y on click too
+    let clientY = e.clientY;
     if (e.type === 'touchend') {
-        // For touchend, use changedTouches if available, or just rely on last move
-        // But simpler: just toggle pin state so mouseleave/touchend doesn't hide it
+        // For touchend, stick with last position logic or force pin
         isPinned = true;
         return;
     }
     
+    const relY = clientY - rect.top;
+    if (relY < 15) return; // Ignore clicks in dead zone
+
     updateView(clientX - rect.left);
-    isPinned = true; // Lock it
+    isPinned = true; 
   };
 
   const handleLeave = () => {
@@ -964,14 +977,10 @@ function renderGraph() {
     }
   };
 
-  // Listeners
   overlay.addEventListener("mousemove", handleMove);
   overlay.addEventListener("touchmove", handleMove, { passive: false });
-  
   overlay.addEventListener("click", handleClick);
-  // On mobile, touchend essentially acts as the "Click/Press" to lock it
   overlay.addEventListener("touchend", handleClick);
-  
   overlay.addEventListener("mouseleave", handleLeave);
 }
 
