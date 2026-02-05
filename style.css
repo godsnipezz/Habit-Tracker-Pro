@@ -945,4 +945,16 @@ td .dropdown-button:hover {
     width: 16px; /* Bigger dots for mobile */
     height: 16px;
   }
+  .graph-container {
+    width: 100%;
+    overflow-x: auto !important; /* Forces scrollbar */
+    overflow-y: hidden;
+    padding-bottom: 10px; 
+    display: block;
+  }
+
+  svg#activityGraph {
+    display: block;
+    max-width: none; /* Allows it to exceed screen width so you can scroll */
+  }
 }

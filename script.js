@@ -761,16 +761,15 @@ function renderGraph() {
   const container = svg.parentElement;
   const table = document.querySelector("table");
   const isMobile = window.innerWidth <= 768;
+  const height = 150;
 
   let width = container.offsetWidth;
-  const height = 150;
-  
-  // 3. Coordinate Mapping (The "Exact Alignment" Logic)
-  const dayHeaders = document.querySelectorAll("table thead th");
   let xPositions = [];
-  
-  // Find where the dates start (skip "Habit", "Type", etc.)
+
+  // 3. ALIGNMENT LOGIC
+  const dayHeaders = document.querySelectorAll("table thead th");
   let startIndex = -1;
+
   for (let i = 0; i < dayHeaders.length; i++) {
     if (dayHeaders[i].innerText.trim() === "1") {
       startIndex = i;
@@ -778,32 +777,35 @@ function renderGraph() {
     }
   }
 
-  if (startIndex > -1 && table) {
-    // --- MODE A: ALIGN TO TABLE (Mobile/Exact) ---
-    // We make the SVG exactly as wide as the table so coordinates match 1:1
-    
-    // If mobile, use the table's full scrolling width
-    if (isMobile) {
-        width = table.scrollWidth; 
-        svg.style.width = width + "px"; // Force SVG to expand
-    } else {
-        svg.style.width = "100%"; // Reset on desktop
-        width = container.offsetWidth; // Use container width
-    }
+  // Mobile: Force SVG to match Table Width (Triggers Scroll)
+  if (isMobile && table) {
+     // Get the full scrollable width of the table
+     const tableWidth = table.scrollWidth;
+     
+     // Force SVG to match it exactly
+     width = tableWidth;
+     svg.style.width = tableWidth + "px"; 
+     svg.style.minWidth = tableWidth + "px";
+  } else {
+     // Desktop: Reset
+     svg.style.width = "100%";
+     svg.style.minWidth = "auto";
+     width = container.offsetWidth;
+  }
 
-    // Now loop through headers and grab their EXACT center position
+  // 4. Map X Positions (Align to Table Headers)
+  if (startIndex > -1 && isMobile) {
     for (let d = 0; d < totalDaysInMonth; d++) {
       const th = dayHeaders[startIndex + d];
       if (th) {
-        // offsetLeft gives the position relative to the table left edge
-        // This accounts for the sticky "Habit" column width automatically!
+        // Use offsetLeft to align exactly with the column center
         const centerX = th.offsetLeft + (th.offsetWidth / 2);
         xPositions.push(centerX);
       }
     }
   } 
   
-  // Fallback (if table headers aren't ready or weird glitch)
+  // Fallback / Desktop Spacing
   if (xPositions.length === 0) {
     const leftPad = 20;
     const rightPad = 20;
@@ -813,7 +815,7 @@ function renderGraph() {
     }
   }
 
-  // 4. Y-Axis Mapping
+  // 5. Map Y Positions
   const padding = 20;
   const floorY = height - 30;
   let maxScore = Math.max(...scores, 5);
@@ -833,7 +835,7 @@ function renderGraph() {
     return;
   }
 
-  // 5. Draw the Curve
+  // 6. Draw Path
   let dPath = `M ${points[0].x} ${points[0].y}`;
 
   for (let i = 0; i < points.length - 1; i++) {
