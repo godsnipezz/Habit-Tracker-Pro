@@ -359,56 +359,110 @@ function todayScoreText() {
     return `${score > 0 ? '+' : ''}${score} Net Score`;
 }
 
+// === NEW HYBRID GRAPH FUNCTION (Handles Desktop & Mobile) ===
 function renderGraph() {
-    const svg = document.getElementById("activityGraph"); if (!svg) return;
-    const y = parseInt(yearInput.value) || NOW.getFullYear();
-    const totalDaysInMonth = getDays(y, currentMonth); 
-    
-    let scores = [];
-    for (let d = 0; d < totalDaysInMonth; d++) {
-        let dailyScore = 0;
-        habits.forEach(h => { if (h.days[d]) dailyScore += (h.type === 'positive' ? 1 : -1); });
-        scores.push(dailyScore);
-    }
-    const container = svg.parentElement;
-    const width = container.offsetWidth; const height = 150; 
-    const dayHeaders = document.querySelectorAll('table thead th');
-    let xPositions = [];
-    let startIndex = -1;
-    for(let i=0; i<dayHeaders.length; i++) { if(dayHeaders[i].innerText.trim() === "1") { startIndex = i; break; } }
+    const svg = document.getElementById("activityGraph");
+    if (!svg) return;
 
-    if (startIndex > -1 && dayHeaders.length >= startIndex + totalDaysInMonth) {
-        for (let d = 0; d < totalDaysInMonth; d++) {
-            const th = dayHeaders[startIndex + d];
-            if (th) { const centerX = th.offsetLeft + (th.offsetWidth / 2); xPositions.push(centerX); }
+    // --- 1. DETERMINE MODE ---
+    const isMobile = window.innerWidth <= 900;
+    const container = svg.parentElement;
+    
+    // --- 2. SETUP DIMENSIONS ---
+    let width, height = 150;
+    let xPositions = [];
+
+    // Reset styles to ensure clean state
+    svg.style.width = ""; 
+    svg.removeAttribute("width");
+
+    if (isMobile) {
+        // === MOBILE LOGIC: SYNC WITH TABLE ===
+        const table = document.querySelector("table");
+        // We use the full scrollable width of the table
+        width = table.offsetWidth; 
+        
+        // Force SVG to match Table width exactly
+        svg.style.width = `${width}px`;
+        svg.setAttribute("width", width);
+
+        // Get exact column centers from the table headers
+        const dateHeaders = Array.from(document.querySelectorAll("table thead th"))
+            .filter(th => !isNaN(parseInt(th.innerText))); // Filter for numeric date headers
+
+        dateHeaders.forEach(th => {
+            // offsetLeft is relative to the table, which matches our SVG coordinate space now
+            xPositions.push(th.offsetLeft + (th.offsetWidth / 2));
+        });
+
+    } else {
+        // === DESKTOP LOGIC: FIT CONTAINER (Original) ===
+        width = container.offsetWidth;
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        
+        // In desktop, the graph is abstract. We space points evenly.
+        const y = parseInt(yearInput.value) || NOW.getFullYear();
+        const daysInMonth = getDays(y, currentMonth);
+        
+        // Use a slight padding so the line doesn't hit the absolute edges
+        const sidePadding = width * 0.05;
+        const usableWidth = width - (sidePadding * 2);
+        
+        for (let d = 0; d < daysInMonth; d++) {
+            xPositions.push(sidePadding + ((d / (daysInMonth - 1)) * usableWidth));
         }
     }
-    if (xPositions.length === 0) {
-        const leftOffset = width * 0.22; const graphWidth = width - leftOffset;
-        for (let d = 0; d < totalDaysInMonth; d++) { xPositions.push(leftOffset + ((d + 0.5) / totalDaysInMonth) * graphWidth); }
-    }
 
-    const padding = 20; const floorY = height - 30; 
-    let maxScore = Math.max(...scores, 5); 
-    const pxPerUnit = (floorY - padding) / Math.max(maxScore, 1);
-    const mapY = (val) => floorY - (val * pxPerUnit);
+    // --- 3. GATHER DATA ---
+    const y = parseInt(yearInput.value) || NOW.getFullYear();
+    const daysInMonth = getDays(y, currentMonth);
+    let points = [];
 
-    const points = scores.map((val, i) => ({ x: xPositions[i] || 0, y: mapY(val), val }));
+    xPositions.forEach((x, i) => {
+        if (i >= daysInMonth) return;
+
+        let dailyScore = 0;
+        if (habits && habits.length) {
+            habits.forEach(h => {
+                if (h.days[i]) dailyScore += (h.type === 'positive' ? 1 : -1);
+            });
+        }
+        points.push({ x: x, val: dailyScore });
+    });
+
     if (points.length < 2) { svg.innerHTML = ``; return; }
 
+    // --- 4. SCALING Y ---
+    const padding = 20;
+    const floorY = height - 30;
+    const scores = points.map(p => p.val);
+    let maxScore = Math.max(...scores, 5); 
+    let minScore = Math.min(...scores, 0); 
+    const pxPerUnit = (floorY - padding) / (maxScore - minScore || 1);
+    const mapY = (val) => floorY - ((val - minScore) * pxPerUnit);
+
+    points = points.map(p => ({ ...p, y: mapY(p.val) }));
+
+    // --- 5. DRAW PATHS (Curved) ---
     let dPath = `M ${points[0].x} ${points[0].y}`;
     for (let i = 0; i < points.length - 1; i++) {
         const p0 = points[Math.max(i - 1, 0)];
         const p1 = points[i];
         const p2 = points[i + 1];
         const p3 = points[Math.min(i + 2, points.length - 1)];
-        const cp1x = p1.x + (p2.x - p0.x) * 0.15; const cp1y = p1.y + (p2.y - p0.y) * 0.15;
-        const cp2x = p2.x - (p3.x - p1.x) * 0.15; const cp2y = p2.y - (p3.y - p1.y) * 0.15;
+
+        const cp1x = p1.x + (p2.x - p0.x) * 0.15;
+        const cp1y = p1.y + (p2.y - p0.y) * 0.15;
+        const cp2x = p2.x - (p3.x - p1.x) * 0.15;
+        const cp2y = p2.y - (p3.y - p1.y) * 0.15;
+
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
-    const dArea = `${dPath} L ${points[points.length-1].x} ${floorY} L ${points[0].x} ${floorY} Z`;
+    const dArea = `${dPath} L ${points[points.length - 1].x} ${floorY} L ${points[0].x} ${floorY} Z`;
 
+    // --- 6. RENDER SVG ---
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    
     let svgContent = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -416,16 +470,21 @@ function renderGraph() {
                 <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
             </linearGradient>
         </defs>
-        <line x1="0" y1="${floorY}" x2="${width}" y2="${floorY}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+        <line x1="0" y1="${mapY(0)}" x2="${width}" y2="${mapY(0)}" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 4" />
         <path class="graph-area" d="${dArea}" />
         <path class="graph-path" d="${dPath}" />
     `;
-    points.forEach((p, i) => {
+
+    points.forEach((p) => {
         if (p.val !== 0) {
-            svgContent += `<text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>
-            <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>`;
+            svgContent += `
+                <g class="graph-point">
+                    <circle cx="${p.x}" cy="${p.y}" r="3" fill="#1a1a1a" stroke="#63e6a4" stroke-width="2"/>
+                    <text x="${p.x}" y="${p.y - 12}" class="graph-label visible">${p.val}</text>
+                </g>`;
         }
     });
+
     svg.innerHTML = svgContent;
 }
 
@@ -442,7 +501,7 @@ document.addEventListener("click", () => document.querySelectorAll(".dropdown-me
 function update() {
     renderHeader(); renderHabits(); updateStats(); renderGraph();
     // RE-INIT ICONS AT END OF UPDATE
-    lucide.createIcons();
+    if(typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 loadHabits(); update();
@@ -478,3 +537,38 @@ function setDailyQuote() {
 
 // Run on load
 setDailyQuote();
+
+/* =========================================================
+   MOBILE SCROLL SYNC
+========================================================= */
+const graphContainer = document.querySelector('.graph-container');
+const tableContainer = document.querySelector('.table-wrapper');
+let isSyncingLeft = false;
+let isSyncingRight = false;
+
+if (graphContainer && tableContainer) {
+    const handleScroll = (source, target, isSourceSyncing, setSourceSyncing) => {
+        // Only sync if we are in mobile mode (width <= 900px)
+        if (window.innerWidth > 900) return; 
+        
+        if (!isSourceSyncing) {
+            // Set the flag on the TARGET to prevent an infinite loop
+            if (source === graphContainer) isSyncingRight = true;
+            else isSyncingLeft = true;
+            
+            target.scrollLeft = source.scrollLeft;
+        }
+        
+        // Reset the flag for the SOURCE
+        if (source === graphContainer) isSyncingLeft = false;
+        else isSyncingRight = false;
+    };
+
+    graphContainer.addEventListener('scroll', () => {
+        handleScroll(graphContainer, tableContainer, isSyncingLeft, val => isSyncingLeft = val);
+    });
+
+    tableContainer.addEventListener('scroll', () => {
+        handleScroll(tableContainer, graphContainer, isSyncingRight, val => isSyncingRight = val);
+    });
+}
