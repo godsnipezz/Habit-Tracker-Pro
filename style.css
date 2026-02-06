@@ -434,6 +434,14 @@ svg#activityGraph {
 }
 
 /* ANIMATIONS FOR GRAPH */
+.graph-path, 
+.graph-area, 
+.graph-dot {
+  /* This ensures the line shape (d) and dot positions (cx, cy) 
+     move with the exact same speed and easing curve. */
+  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .graph-path {
   fill: none;
   stroke: var(--green);
@@ -441,33 +449,19 @@ svg#activityGraph {
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
-  
-  /* Smooth Line Transition */
-  transition: d 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .graph-area {
   fill: url(#gradient-area);
   opacity: 0.2;
   stroke: none;
-  
-  /* Smooth Area Transition */
-  transition: d 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
-
-/* --- DOTS & CURSOR --- */
 
 .graph-dot {
   fill: #0b0b0b;
   stroke: var(--green);
   stroke-width: 2px;
   r: 3px;
-  
-  /* Smooth Dot Transition - Matches line EXACTLY */
-  transition: cx 0.6s cubic-bezier(0.25, 1, 0.5, 1), 
-              cy 0.6s cubic-bezier(0.25, 1, 0.5, 1), 
-              r 0.2s ease, 
-              fill 0.2s;
 }
 
 .graph-dot:hover {
@@ -482,8 +476,7 @@ svg#activityGraph {
   stroke-width: 3px;
   filter: drop-shadow(0 0 5px var(--green));
   pointer-events: none;
-  
-  /* Smooth transition for active dot */
+  /* Snappy movement for the interactive cursor */
   transition: cx 0.1s linear, cy 0.1s linear, r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
