@@ -52,8 +52,7 @@ body {
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
-  /* FIX: Prevents rubber-banding blank space when scrolling past limits */
-  overscroll-behavior-y: none; 
+  overscroll-behavior-y: none; /* Prevents rubber-banding blank space */
 }
 
 .app {
@@ -192,7 +191,7 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  /* FIX: Made lighter (#262626) and ensured solid opacity - no transparency */
+  /* FIX: Made lighter (#262626) and ensured solid opacity */
   background-color: #262626; 
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
@@ -398,7 +397,8 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     padding-top: 30px; 
     position: relative;
     height: auto; 
-    overflow-x: auto; /* Safety in case of extreme small screens */
+    /* FIX: Removed overflow-x: auto to remove scrollbar */
+    overflow: visible; 
   }
   
   .date-picker {
