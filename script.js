@@ -27,7 +27,7 @@ yearInput.addEventListener("wheel", (e) => e.preventDefault());
 
 let habits = [];
 let isEditMode = false;
-let needsScrollToToday = true; 
+let needsScrollToToday = true;
 
 /* =========================================================
    2. DATA PERSISTENCE
@@ -74,7 +74,42 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. RENDER LOGIC
+   3. DROPDOWN UTILS (Must be defined before use)
+========================================================= */
+
+function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
+  el.innerHTML = ""; el.style.position = "relative";
+  const btn = document.createElement("div");
+  btn.className = "dropdown-button"; btn.tabIndex = 0;
+  btn.innerHTML = options[selectedIndex]?.label || "Select";
+  const menu = document.createElement("div");
+  menu.className = "dropdown-menu"; menu.style.display = "none";
+
+  options.forEach((opt) => {
+    const item = document.createElement("div");
+    item.className = "dropdown-item"; item.innerHTML = opt.label;
+    item.onclick = (e) => { e.stopPropagation(); btn.innerHTML = opt.label; menu.style.display = "none"; onChange(opt.value); };
+    menu.appendChild(item);
+  });
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    document.querySelectorAll(".dropdown-menu").forEach((m) => { if (m !== menu) m.style.display = "none"; });
+    const isClosed = menu.style.display === "none";
+    if (isClosed) {
+      menu.style.display = "block";
+      let openUp = fixedSide === "up";
+      if (!fixedSide && window.innerHeight - btn.getBoundingClientRect().bottom < 200) openUp = true;
+      if (openUp) { menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)"; menu.style.transformOrigin = "bottom left"; }
+      else { menu.style.top = "calc(100% + 8px)"; menu.style.bottom = "auto"; menu.style.transformOrigin = "top left"; }
+    } else { menu.style.display = "none"; }
+  };
+  btn.onclick = toggleMenu;
+  el.appendChild(btn); el.appendChild(menu);
+}
+
+/* =========================================================
+   4. RENDER LOGIC
 ========================================================= */
 
 function renderHeader() {
@@ -121,7 +156,7 @@ function renderHeader() {
   for (let d = 1; d <= days; d++) {
     const th = document.createElement("th");
     th.textContent = d;
-    th.id = `header-day-${d}`; 
+    th.id = `header-day-${d}`;
     if (isThisMonth && d === today) th.classList.add("today-col");
     dayHeader.appendChild(th);
   }
@@ -255,7 +290,7 @@ function updateProgress(tr, h) {
 }
 
 /* =========================================================
-   4. SCROLL TO TODAY
+   5. AUTO-SCROLL TO TODAY
 ========================================================= */
 
 function scrollToToday() {
@@ -283,7 +318,7 @@ function scrollToToday() {
 }
 
 /* =========================================================
-   5. GRAPH RENDERING (ANIMATED)
+   6. GRAPH RENDERING & ANIMATION
 ========================================================= */
 
 function renderGraph() {
@@ -363,7 +398,9 @@ function renderGraph() {
   }
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
+  // INITIALIZE OR UPDATE
   const existingPath = svg.querySelector('.graph-path');
+  
   if (!existingPath) {
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.style.width = "100%";
@@ -387,9 +424,12 @@ function renderGraph() {
       svg.querySelector('.graph-area').setAttribute('d', dArea);
   }
 
+  // UPDATE DOTS
   const dotsGroup = svg.getElementById('dotsGroup');
   const existingDots = dotsGroup.querySelectorAll('.graph-dot');
-  if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) dotsGroup.innerHTML = ''; 
+  if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) {
+      dotsGroup.innerHTML = ''; 
+  }
 
   points.forEach((p, i) => {
       let dot = dotsGroup.children[i];
@@ -502,7 +542,7 @@ function initGraphEvents(svg, tooltip) {
 }
 
 /* =========================================================
-   6. UPDATES & INIT
+   7. UPDATES & INIT
 ========================================================= */
 
 function updateStats() {
@@ -636,6 +676,7 @@ function handleMobileLayout() {
   }
 }
 
+// INIT (Ensure makeDropdown is defined above)
 makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { 
     currentMonth = m; 
     needsScrollToToday = true; 
