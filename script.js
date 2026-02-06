@@ -136,6 +136,11 @@ function renderHeader() {
   const nameTh = document.createElement("th");
   const wrapper = document.createElement("div");
   wrapper.className = "sticky-header-content";
+  // FIXED: Ensure explicit side-by-side layout
+  wrapper.style.display = "flex";
+  wrapper.style.alignItems = "center";
+  wrapper.style.gap = "8px";
+  wrapper.style.justifyContent = "flex-start";
 
   const settingsBtn = document.createElement("button");
   settingsBtn.className = "toggle-edit-btn";
