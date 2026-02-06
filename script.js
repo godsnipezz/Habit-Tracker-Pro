@@ -321,6 +321,10 @@ function scrollToToday() {
    6. GRAPH RENDERING & ANIMATION
 ========================================================= */
 
+/* =========================================================
+   GRAPH RENDERING & ANIMATION (SYNC FIX)
+========================================================= */
+
 function renderGraph() {
   const svg = document.getElementById("activityGraph");
   if (!svg) return;
@@ -336,6 +340,7 @@ function renderGraph() {
   if (viewDate.getTime() < currentDate.getTime()) maxDotIndex = totalDaysInMonth - 1;
   else if (viewDate.getTime() === currentDate.getTime()) maxDotIndex = now.getDate() - 1;
 
+  // DATA CALCULATION
   let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0; let posCount = 0; let negCount = 0;
@@ -357,7 +362,7 @@ function renderGraph() {
     container.appendChild(tooltip);
   }
 
-  // FIXED: Zoom Inconsistency (Use standard coordinate system)
+  // ZOOM FIX: Use getBoundingClientRect for precise decimal width
   const width = container.getBoundingClientRect().width || 600;
   const height = 150;
 
@@ -388,6 +393,7 @@ function renderGraph() {
 
   if (points.length < 2) return;
 
+  // GENERATE PATH
   let dPath = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length; i++) {
     if (i < points.length - 1) {
@@ -399,10 +405,11 @@ function renderGraph() {
   }
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
-  // INITIALIZE OR UPDATE
+  // DRAW / UPDATE
   const existingPath = svg.querySelector('.graph-path');
   
   if (!existingPath) {
+      // FIRST RENDER
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.style.width = "100%";
       svg.innerHTML = `
@@ -421,19 +428,19 @@ function renderGraph() {
       `;
       initGraphEvents(svg, tooltip);
   } else {
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`); // Update viewbox on resize
+      // UPDATE ANIMATION
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       existingPath.setAttribute('d', dPath);
       svg.querySelector('.graph-area').setAttribute('d', dArea);
-      // Update overlay width too
       const overlay = svg.querySelector('.graph-overlay');
       if(overlay) overlay.setAttribute('width', width);
   }
 
-  // UPDATE DOTS (For smooth transition, reuse elements)
+  // UPDATE DOTS (Using cx/cy for perfect sync with d-path)
   const dotsGroup = svg.getElementById('dotsGroup');
   const existingDots = dotsGroup.querySelectorAll('.graph-dot');
   
-  // If count mismatches (month changed), clear and rebuild
+  // Rebuild if length changed (month switch)
   if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) {
       dotsGroup.innerHTML = ''; 
   }
@@ -447,10 +454,12 @@ function renderGraph() {
               dot.setAttribute("r", "3");
               dotsGroup.appendChild(dot);
           }
-          // Attributes updated via JS triggers CSS transition
+          // FIX: Set cx/cy attributes. CSS transition handles the smoothing.
           dot.setAttribute("cx", p.x);
           dot.setAttribute("cy", p.y);
           dot.style.display = "block";
+          // Ensure no transform interference
+          dot.style.transform = "none";
       } else {
           if (dot) dot.style.display = "none";
       }
