@@ -234,7 +234,6 @@ body {
   display: flex;
   margin-bottom: 24px;
   overflow: visible !important; 
-  /* Padding ensures the shadow isn't cut by the container edge */
   padding: 10px 20px 20px 20px; 
   align-items: center;
 }
@@ -273,7 +272,6 @@ body {
   stroke-width: 5;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  /* Tighter shadow to avoid clipping */
   filter: drop-shadow(0 0 3px rgba(99, 230, 164, 0.4));
 }
 
@@ -433,22 +431,18 @@ svg#activityGraph {
   height: 100%;
 }
 
-/* ANIMATIONS FOR GRAPH */
-.graph-path, 
-.graph-area, 
-.graph-dot {
-  /* This ensures the line shape (d) and dot positions (cx, cy) 
-     move with the exact same speed and easing curve. */
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.graph-path {
+/* ANIMATIONS FOR GRAPH - UNIFIED TRANSITION */
+.graph-path,
+.graph-area {
   fill: none;
   stroke: var(--green);
   stroke-width: 3px;
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
+  
+  /* Shared smooth timing */
+  transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .graph-area {
@@ -457,11 +451,21 @@ svg#activityGraph {
   stroke: none;
 }
 
+/* --- DOTS & CURSOR --- */
+
 .graph-dot {
   fill: #0b0b0b;
   stroke: var(--green);
   stroke-width: 2px;
   r: 3px;
+  
+  /* FIX: Use 'transform' instead of 'cx/cy' for smooth hardware-accel animation.
+     Matched exact timing with .graph-path */
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+              r 0.2s ease, 
+              fill 0.2s;
+  /* Origin must be 0,0 since we translate from there */
+  transform-box: fill-box;
 }
 
 .graph-dot:hover {
@@ -476,7 +480,6 @@ svg#activityGraph {
   stroke-width: 3px;
   filter: drop-shadow(0 0 5px var(--green));
   pointer-events: none;
-  /* Snappy movement for the interactive cursor */
   transition: cx 0.1s linear, cy 0.1s linear, r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
