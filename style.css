@@ -98,7 +98,7 @@ body {
   height: 40px;
   line-height: 38px;
   padding: 0 20px;
-  border-radius: 100px; /* PILL */
+  border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
   outline: none;
@@ -232,10 +232,8 @@ body {
 .analytics {
   display: flex;
   margin-bottom: 24px;
-  /* Changed from overflow-x: auto to visible so shadows show */
-  overflow: visible; 
-  /* Increased padding bottom/right to accommodate shadows */
-  padding: 10px 10px 20px 10px; 
+  overflow: visible !important; /* Allow shadows to spill */
+  padding: 10px 20px 25px 20px; /* Extra padding for shadows */
   align-items: center;
 }
 
@@ -273,7 +271,7 @@ body {
   stroke-width: 5;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.25));
+  filter: drop-shadow(0 0 5px rgba(99, 230, 164, 0.6)); /* Enhanced glow */
 }
 
 .ring span {
@@ -386,7 +384,6 @@ body {
   height: 240px;
   position: relative;
   overflow: visible;
-  /* ADDED: Ensure this container sits higher so tooltip shadow isn't cut by sections below */
   z-index: 10;
 }
 
@@ -451,23 +448,20 @@ svg#activityGraph {
 
 /* --- DOTS & CURSOR --- */
 
-/* Visible dots on the line */
 .graph-dot {
-  fill: #0b0b0b; /* Hollow effect */
+  fill: #0b0b0b;
   stroke: var(--green);
   stroke-width: 2px;
   r: 3px;
   transition: all 0.2s ease;
 }
 
-/* Hover effect on dots */
 .graph-dot:hover {
   r: 5px;
   stroke-width: 3px;
   fill: var(--green);
 }
 
-/* The Active Dot (highlighted by JS) */
 #activeDot {
   fill: var(--green);
   stroke: #fff;
@@ -481,11 +475,11 @@ svg#activityGraph {
   r: 6px;
 }
 
-/* Invisible overlay for capturing input */
+/* Overlay needs to exist but not block other touches */
 .graph-overlay {
   fill: transparent;
-  cursor: default; /* Clean cursor */
-  touch-action: none;
+  cursor: default;
+  touch-action: none; /* Prevents scroll on the graph area itself */
 }
 
 /* --- TOOLTIP STYLES --- */
@@ -495,24 +489,20 @@ svg#activityGraph {
   top: 0;
   left: 0;
   
-  background: rgba(15, 15, 15, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+  border-radius: 10px;
   
-  padding: 8px 10px;
+  padding: 10px 14px;
   pointer-events: none;
   
   opacity: 0;
-  
-  /* FIX: Removed '-50%' from X. JS will handle centering now. */
-  transform: translateY(-15px); 
-  
-  transition: opacity 0.1s ease, transform 0.1s;
-  z-index: 100;
+  transition: opacity 0.1s ease, top 0.1s, left 0.1s;
+  z-index: 999;
   
   text-align: center;
   white-space: nowrap;
@@ -590,7 +580,7 @@ th:first-child,
 td:first-child {
   position: sticky;
   left: 0;
-  background-color: #0b0b0b !important; /* Prevents see-through */
+  background-color: #0b0b0b !important;
   z-index: 20; 
   box-shadow: 2px 0 10px rgba(0,0,0,0.5); 
   min-width: 180px;
@@ -746,7 +736,7 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* =========================================================
-   7. MOBILE RESPONSIVENESS & CUSTOM LAYOUT
+   7. MOBILE RESPONSIVENESS
 ========================================================= */
 
 @media (max-width: 768px) {
@@ -783,23 +773,22 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
   
   .graph-container {
     width: 100%;
-    overflow: hidden; /* Compact Mode: No Scroll */
+    overflow: hidden;
     padding-bottom: 0;
     position: relative;
   }
 
   svg#activityGraph {
     display: block;
-    width: 100% !important; /* Force fit */
+    width: 100% !important;
     min-width: 0 !important;
     max-width: 100%;
     overflow: visible;
   }
 
-  /* Full overlay for touch */
   .graph-overlay {
     fill: transparent;
-    cursor: default; /* Clean cursor */
+    cursor: default;
     touch-action: none; 
   }
 
@@ -816,18 +805,21 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     border-radius: 12px;
   }
 
-  /* D. Heatmap & Rings */
+  /* D. Heatmap & Rings (Mobile Fixes) */
   .analytics {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    overflow: visible;
+    overflow: visible !important;
+    padding: 10px;
   }
 
   .rings-container-mobile {
     display: flex;
-    justify-content: space-around;
+    justify-content: center; /* Center rings */
+    gap: 20px; 
     width: 100%;
+    padding: 0 10px; /* Padding to prevent clipping */
   }
 
   .heatmap-grid.mobile-view {
@@ -844,7 +836,7 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
   .streak-widget { display: none; }
   .heat-box { width: 16px; height: 16px; }
 
-  /* E. Cleaner Footer (Side-by-Side) */
+  /* E. Cleaner Footer */
   .footer {
     flex-direction: row;
     align-items: center;
@@ -855,7 +847,6 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
   button#addHabit { width: auto; padding: 10px 20px; font-size: 13px; }
   .counter { font-size: 12px; text-align: right; }
   
-  /* Fix sticky border on mobile */
   th:first-child, td:first-child {
     border-right: 1px solid var(--border); 
   }
