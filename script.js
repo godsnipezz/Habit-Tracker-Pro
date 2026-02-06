@@ -79,6 +79,7 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   btn.appendChild(label);
   
   const arrow = document.createElement("span");
+  // Standard Chevron Arrow
   arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="m6 9 6 6 6-6"/></svg>`;
   btn.appendChild(arrow);
   
@@ -136,8 +137,9 @@ function renderHeader() {
   const nameTh = document.createElement("th");
   const wrapper = document.createElement("div");
   wrapper.className = "sticky-header-content";
-  // FIXED: Ensure explicit side-by-side layout
+  // FIX: Force side-by-side alignment for Habit Label and Edit Button
   wrapper.style.display = "flex";
+  wrapper.style.flexDirection = "row";
   wrapper.style.alignItems = "center";
   wrapper.style.gap = "8px";
   wrapper.style.justifyContent = "flex-start";
