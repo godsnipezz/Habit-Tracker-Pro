@@ -42,7 +42,6 @@ const loadHabits = () => {
   if (stored) {
     try { habits = JSON.parse(stored); } catch(e) { habits = []; }
   } else {
-    // Attempt carry-over logic
     habits = [];
     let checkY = y; let checkM = currentMonth;
     for (let i = 0; i < 12; i++) {
@@ -70,7 +69,7 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. DROPDOWN UTILS (With Fixes)
+   3. DROPDOWN UTILS
 ========================================================= */
 function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   el.innerHTML = ""; el.style.position = "relative";
@@ -158,7 +157,7 @@ function renderHeader() {
     ["Type", "Imp", "Goal"].forEach((t) => {
       const th = document.createElement("th");
       th.textContent = t;
-      th.classList.add("column-enter"); // SMOOTH REVEAL
+      th.classList.add("column-enter"); 
       dayHeader.appendChild(th);
     });
   }
@@ -197,7 +196,6 @@ function renderHabits() {
     // Check for ADD animation
     if (i === lastAddedHabitIndex) {
         tr.classList.add("row-enter-anim");
-        // Reset index after animation plays so it doesn't replay on scroll/update
         setTimeout(() => { 
             tr.classList.remove("row-enter-anim"); 
             if(i === lastAddedHabitIndex) lastAddedHabitIndex = -1; 
@@ -216,7 +214,7 @@ function renderHabits() {
 
     if (isEditMode) {
       const typeTd = document.createElement("td");
-      typeTd.classList.add("column-enter"); // SMOOTH REVEAL
+      typeTd.classList.add("column-enter"); 
       const tDD = document.createElement("div"); tDD.className = "dropdown";
       makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir);
       const typeBtn = tDD.querySelector(".dropdown-button");
@@ -224,7 +222,7 @@ function renderHabits() {
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
       const impTd = document.createElement("td");
-      impTd.classList.add("column-enter"); // SMOOTH REVEAL
+      impTd.classList.add("column-enter"); 
       const iDD = document.createElement("div"); iDD.className = "dropdown";
       makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir);
       const impBtn = iDD.querySelector(".dropdown-button");
@@ -235,7 +233,7 @@ function renderHabits() {
       impTd.appendChild(iDD); tr.appendChild(impTd);
 
       const goalTd = document.createElement("td");
-      goalTd.classList.add("column-enter"); // SMOOTH REVEAL
+      goalTd.classList.add("column-enter"); 
       const gIn = document.createElement("input");
       gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
       gIn.oninput = (e) => { h.goal = +e.target.value; debouncedSave(); updateStats(); if (!isEditMode) updateProgress(tr, h); };
@@ -276,17 +274,16 @@ function renderHabits() {
       const btnDown = document.createElement("button"); btnDown.className = "toggle-edit-btn"; btnDown.innerHTML = `<i data-lucide="arrow-down" style="width:14px;"></i>`; btnDown.disabled = i === habits.length - 1;
       btnDown.onclick = (e) => { e.stopPropagation(); [habits[i], habits[i + 1]] = [habits[i + 1], habits[i]]; save(); update(); };
       
-      // DELETE ANIMATION LOGIC
       const btnDel = document.createElement("button"); btnDel.className = "toggle-edit-btn"; btnDel.innerHTML = `<i data-lucide="trash-2" style="width:14px;"></i>`; btnDel.style.color = "#ef4444";
       btnDel.onclick = (e) => { 
           if (confirm("Delete?")) { 
               const row = btnDel.closest("tr");
-              row.classList.add("row-exit-anim"); // TRIGGER EXIT ANIMATION
+              row.classList.add("row-exit-anim"); 
               setTimeout(() => {
                   habits.splice(i, 1); 
                   save(); 
                   update(); 
-              }, 400); // Wait for animation
+              }, 400); 
           } 
       };
 
@@ -605,7 +602,6 @@ function handleMobileLayout() {
 makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { currentMonth = m; needsScrollToToday = true; loadHabits(); update(); }, null);
 
 document.getElementById("addHabit").onclick = () => {
-  // Logic to trigger animation on next render
   lastAddedHabitIndex = habits.length; 
   habits.push({ name: "New Habit", type: "positive", weight: 2, goal: 28, days: Array(getDays(yearInput.value, currentMonth)).fill(false) });
   save(); 
