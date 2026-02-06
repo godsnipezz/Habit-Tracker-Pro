@@ -15,7 +15,7 @@
   --radius: 24px;
 }
 
-html { font-size: 13px; }
+html { font-size: 13px; height: 100%; }
 
 * {
   box-sizing: border-box;
@@ -30,8 +30,9 @@ html { font-size: 13px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
-/* THIS REMOVES THE WHITE DOT IN THE CORNER */
-::-webkit-scrollbar-corner { background: transparent; }
+
+/* FIX: FORCE TRANSPARENT CORNER TO REMOVE WHITE DOT */
+::-webkit-scrollbar-corner { background: transparent !important; }
 
 /* REMOVE SPINNERS (Up/Down Arrows in Number Inputs) */
 input[type="number"]::-webkit-outer-spin-button,
@@ -51,6 +52,8 @@ body {
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
+  /* FIX: Prevents rubber-banding blank space when scrolling past limits */
+  overscroll-behavior-y: none; 
 }
 
 .app {
@@ -85,14 +88,14 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 0.8; transform: translateY(0); } }
 
 /* =========================================================
-   3. HEADER (FIXED ALIGNMENT: SINGLE LINE)
+   3. HEADER
 ========================================================= */
 .top {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Vertically center everything */
+  align-items: center; 
   margin-bottom: 24px;
-  height: 80px; /* Enforce height to prevent stacking issues */
+  height: 80px; 
 }
 
 .date-picker {
@@ -141,7 +144,7 @@ body {
   flex-direction: column;
   align-items: flex-end;
   text-align: right;
-  justify-content: center; /* Ensure vertical center in container */
+  justify-content: center; 
 }
 
 .headline-label {
@@ -181,7 +184,7 @@ body {
 }
 
 /* =========================================================
-   4. DROPDOWNS (FIXED COLORS)
+   4. DROPDOWNS (FIXED: Solid lighter background)
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
 
@@ -189,8 +192,8 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  /* FIXED: Matches original design (Dark Grey, not Black/Transparent) */
-  background-color: #1a1a1a; 
+  /* FIX: Made lighter (#262626) and ensured solid opacity - no transparency */
+  background-color: #262626; 
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   z-index: 10000;
@@ -206,7 +209,7 @@ body {
 
 .dropdown-item {
   padding: 12px 16px; cursor: pointer; font-size: 13px; color: var(--muted); transition: 0.2s;
-  background-color: #1a1a1a; /* Matching solid background */
+  background-color: #262626; /* Match menu background */
 }
 .dropdown-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
 
@@ -331,7 +334,6 @@ svg#activityGraph {
   border-radius: var(--radius);
   padding: 24px 32px;
   margin-bottom: 20px;
-  /* FIXED: Removed transition height to prevent empty black space */
 }
 .section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
@@ -388,15 +390,44 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 @media (max-width: 768px) {
   .top { 
     display: flex; 
-    flex-wrap: wrap; 
+    /* FIX: NOWRAP forces them to stay on the same line */
+    flex-wrap: nowrap; 
     justify-content: space-between; 
     align-items: center; 
-    gap: 15px; 
+    gap: 10px; 
     padding-top: 30px; 
     position: relative;
-    /* Ensure height adapts */
     height: auto; 
+    overflow-x: auto; /* Safety in case of extreme small screens */
   }
+  
+  .date-picker {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Scale down inputs on mobile to fit same line */
+  .date-picker input[type="number"], .dropdown-button {
+    min-width: auto;
+    padding: 0 12px;
+    font-size: 12px;
+    height: 36px;
+  }
+
+  .headline {
+    flex-shrink: 0;
+    align-items: flex-end;
+  }
+
+  /* Scale down the big percentage text on mobile */
+  .gradient-text {
+    font-size: 32px;
+  }
+
+  .headline-label {
+    font-size: 10px;
+  }
+
   .streak-info.mobile-view { position: absolute; top: -5px; left: 0; width: 100%; flex-direction: row; justify-content: flex-start; align-items: center; gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border); animation: fadeIn 0.3s ease; }
   .streak-info.mobile-view .streak-count { font-size: 18px; color: var(--yellow); }
   .streak-info.mobile-view .streak-label { font-size: 12px; margin-top: 0; color: var(--muted); }
