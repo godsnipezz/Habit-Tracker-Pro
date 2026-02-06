@@ -27,8 +27,6 @@ yearInput.addEventListener("wheel", (e) => e.preventDefault());
 let habits = [];
 let isEditMode = false;
 let needsScrollToToday = true;
-
-// Track ID for animations
 let lastAddedHabitIndex = -1;
 
 /* =========================================================
@@ -192,8 +190,6 @@ function renderHabits() {
     }
 
     const tr = document.createElement("tr");
-    
-    // Check for ADD animation
     if (i === lastAddedHabitIndex) {
         tr.classList.add("row-enter-anim");
         setTimeout(() => { 
@@ -314,9 +310,6 @@ function updateProgress(tr, h) {
   if (fill) fill.style.width = pct + "%";
 }
 
-/* =========================================================
-   5. AUTO-SCROLL TO TODAY
-========================================================= */
 function scrollToToday() {
     if (!needsScrollToToday) return;
     const isMobile = window.innerWidth <= 768;
@@ -339,7 +332,7 @@ function scrollToToday() {
 }
 
 /* =========================================================
-   6. GRAPH RENDERING & ANIMATION
+   6. GRAPH RENDERING
 ========================================================= */
 function renderGraph(isFullRebuild = true) {
   const svg = document.getElementById("activityGraph");

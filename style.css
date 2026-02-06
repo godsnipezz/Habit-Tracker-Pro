@@ -48,7 +48,7 @@ body {
 }
 
 /* =========================================================
-   2. ANIMATIONS (INTERNAL ONLY)
+   2. ANIMATIONS
 ========================================================= */
 @keyframes slideReveal {
   from { opacity: 0; transform: translateX(-10px) scale(0.95); }
@@ -72,7 +72,7 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 0.8; transform: translateY(0); } }
 
 /* =========================================================
-   3. HEADER (RESTORED TO ORIGINAL FLEX)
+   3. HEADER & INPUTS
 ========================================================= */
 .top {
   display: flex;
@@ -108,14 +108,19 @@ body {
   min-width: 130px;
 }
 
+/* FIX: Remove the spin buttons (up/down arrows) from number inputs */
+.date-picker input[type="number"]::-webkit-outer-spin-button,
+.date-picker input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 .date-picker input[type="number"] {
   width: 90px;
   text-align: center;
-  display: block;
-  -moz-appearance: textfield;
+  -moz-appearance: textfield; /* Firefox */
   appearance: textfield;
+  display: block;
 }
-.date-picker input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 .date-picker input[type="number"]:hover,
 .dropdown-button:hover {
@@ -125,7 +130,7 @@ body {
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
 
-/* THE MISSING ARROW FIX */
+/* RESTORED: The Dropdown Arrow for Month Selection */
 .dropdown-button::after {
   content: "";
   width: 16px;
@@ -179,7 +184,7 @@ body {
 }
 
 /* =========================================================
-   4. DROPDOWNS (FIXED: OPAQUE)
+   4. DROPDOWNS
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
 
@@ -187,7 +192,7 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  background-color: #09090b; /* Solid black to fix transparency */
+  background-color: #0b0b0b; /* Solid background */
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 14px;
   z-index: 10000;
@@ -203,81 +208,12 @@ body {
 
 .dropdown-item {
   padding: 12px 16px; cursor: pointer; font-size: 13px; color: var(--muted); transition: 0.2s;
-  background-color: #09090b;
+  background-color: #0b0b0b;
 }
 .dropdown-item:hover { background: rgba(255, 255, 255, 0.1); color: white; }
 
 /* =========================================================
-   5. GRAPH SECTION (RESTORED EXACTLY)
-========================================================= */
-.today-focus {
-  background: var(--surface);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px 32px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  height: 240px; /* FIXED HEIGHT RESTORED */
-  position: relative;
-  overflow: visible;
-  z-index: 10;
-}
-
-.today-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  z-index: 2;
-}
-
-.today-header-title { display: flex; gap: 10px; align-items: center; }
-.today-header-title h2 { margin: 0; font-size: 18px; }
-.graph-summary { font-size: 13px; font-weight: 600; color: var(--muted); background: rgba(255, 255, 255, 0.05); padding: 4px 12px; border-radius: 20px; }
-
-.graph-container {
-  flex: 1;
-  width: 100%;
-  margin: 0;
-  padding: 0;
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  overflow: visible; 
-}
-
-svg#activityGraph {
-  overflow: visible;
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* FLUID GRAPH ANIMATIONS (Hidden inside original layout) */
-.graph-path { fill: none; stroke: var(--green); stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2)); transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.graph-area { fill: url(#gradient-area); opacity: 0.2; stroke: none; transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-.graph-dot { fill: #0b0b0b; stroke: var(--green); stroke-width: 2px; r: 3px; transition: cx 0.6s cubic-bezier(0.4, 0, 0.2, 1), cy 0.6s cubic-bezier(0.4, 0, 0.2, 1), r 0.2s ease, fill 0.2s ease; }
-.graph-dot:hover { r: 5px; stroke-width: 3px; fill: var(--green); }
-#activeDot { fill: var(--green); stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 5px var(--green)); pointer-events: none; transition: cx 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), cy 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.1s; opacity: 0; }
-#activeDot.is-active { r: 6px; opacity: 1; }
-.graph-overlay { fill: transparent; cursor: default; touch-action: none; z-index: 50; }
-
-.graph-tooltip {
-  position: absolute; top: 0; left: 0; background: rgba(10, 10, 10, 0.95);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
-  border-radius: 10px; padding: 10px 14px; pointer-events: none; opacity: 0;
-  transition: opacity 0.2s ease, top 0.1s linear, left 0.1s linear; z-index: 999; text-align: center; white-space: nowrap;
-}
-.tooltip-date { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
-.tooltip-stats { display: flex; align-items: center; justify-content: center; gap: 10px; }
-.stat-item { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 3px; }
-
-/* =========================================================
-   6. ANALYTICS (RESTORED TO FLEX ROW)
+   5. ANALYTICS & WIDGETS
 ========================================================= */
 .analytics {
   display: flex;
@@ -319,7 +255,76 @@ svg#activityGraph {
 .heat-box.active-high { background: var(--green); box-shadow: 0 0 12px var(--green), 0 0 2px #fff; }
 
 /* =========================================================
-   7. TABLE (RESTORED)
+   6. GRAPH (Restored Height)
+========================================================= */
+.today-focus {
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 32px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 240px; /* Restored height to prevent squashing */
+  position: relative;
+  overflow: visible;
+  z-index: 10;
+}
+
+.today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  z-index: 2;
+}
+
+.today-header-title { display: flex; gap: 10px; align-items: center; }
+.today-header-title h2 { margin: 0; font-size: 18px; }
+.graph-summary { font-size: 13px; font-weight: 600; color: var(--muted); background: rgba(255, 255, 255, 0.05); padding: 4px 12px; border-radius: 20px; }
+
+.graph-container {
+  flex: 1;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: visible; 
+}
+
+svg#activityGraph {
+  overflow: visible;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* FLUID GRAPH ANIMATIONS */
+.graph-path { fill: none; stroke: var(--green); stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2)); transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.graph-area { fill: url(#gradient-area); opacity: 0.2; stroke: none; transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+.graph-dot { fill: #0b0b0b; stroke: var(--green); stroke-width: 2px; r: 3px; transition: cx 0.6s cubic-bezier(0.4, 0, 0.2, 1), cy 0.6s cubic-bezier(0.4, 0, 0.2, 1), r 0.2s ease, fill 0.2s ease; }
+.graph-dot:hover { r: 5px; stroke-width: 3px; fill: var(--green); }
+#activeDot { fill: var(--green); stroke: #fff; stroke-width: 3px; filter: drop-shadow(0 0 5px var(--green)); pointer-events: none; transition: cx 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), cy 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.1s; opacity: 0; }
+#activeDot.is-active { r: 6px; opacity: 1; }
+.graph-overlay { fill: transparent; cursor: default; touch-action: none; z-index: 50; }
+
+.graph-tooltip {
+  position: absolute; top: 0; left: 0; background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+  border-radius: 10px; padding: 10px 14px; pointer-events: none; opacity: 0;
+  transition: opacity 0.2s ease, top 0.1s linear, left 0.1s linear; z-index: 999; text-align: center; white-space: nowrap;
+}
+.tooltip-date { font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+.tooltip-stats { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.stat-item { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 3px; }
+
+/* =========================================================
+   7. TABLE & LAYOUT
 ========================================================= */
 .habits {
   background: var(--surface);
@@ -329,7 +334,6 @@ svg#activityGraph {
   border-radius: var(--radius);
   padding: 24px 32px;
   margin-bottom: 20px;
-  transition: height 0.3s ease;
 }
 .section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
@@ -357,7 +361,7 @@ button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
 .counter { font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 #completed { color: var(--green); } #total { color: var(--text); }
 
-/* Buttons & Inputs */
+/* CHECKBOXES & BUTTONS */
 td input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; position: relative; }
 td input[type="checkbox"]::after { content: ''; position: absolute; top: -10px; bottom: -10px; left: -10px; right: -10px; }
 input[type="checkbox"].neg-habit { accent-color: #ef4444; }
@@ -379,7 +383,9 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-med { color: #facc15; background: rgba(250, 204, 21, 0.1) !important; }
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
+/* FIX: Hide spin buttons in Goal Input too */
 .goal-input { height: 28px; width: 60px; font-size: 12px; font-weight: 600; padding: 0; margin: 0; background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: var(--muted) !important; text-align: center; transition: all 0.2s ease; -moz-appearance: textfield; appearance: textfield; }
+.goal-input::-webkit-inner-spin-button, .goal-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 .goal-input:hover, .goal-input:focus { color: #fff !important; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); }
 
 /* MOBILE RESPONSIVENESS */
