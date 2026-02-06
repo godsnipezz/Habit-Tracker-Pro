@@ -74,7 +74,7 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. DROPDOWN UTILS (Must be defined before use)
+   3. DROPDOWN UTILS (Defined before usage)
 ========================================================= */
 
 function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
@@ -357,7 +357,8 @@ function renderGraph() {
     container.appendChild(tooltip);
   }
 
-  const width = container.offsetWidth;
+  // FIXED: Zoom Inconsistency (Use standard coordinate system)
+  const width = container.getBoundingClientRect().width || 600;
   const height = 150;
 
   let xPositions = [];
@@ -420,13 +421,19 @@ function renderGraph() {
       `;
       initGraphEvents(svg, tooltip);
   } else {
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`); // Update viewbox on resize
       existingPath.setAttribute('d', dPath);
       svg.querySelector('.graph-area').setAttribute('d', dArea);
+      // Update overlay width too
+      const overlay = svg.querySelector('.graph-overlay');
+      if(overlay) overlay.setAttribute('width', width);
   }
 
-  // UPDATE DOTS
+  // UPDATE DOTS (For smooth transition, reuse elements)
   const dotsGroup = svg.getElementById('dotsGroup');
   const existingDots = dotsGroup.querySelectorAll('.graph-dot');
+  
+  // If count mismatches (month changed), clear and rebuild
   if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) {
       dotsGroup.innerHTML = ''; 
   }
@@ -440,6 +447,7 @@ function renderGraph() {
               dot.setAttribute("r", "3");
               dotsGroup.appendChild(dot);
           }
+          // Attributes updated via JS triggers CSS transition
           dot.setAttribute("cx", p.x);
           dot.setAttribute("cy", p.y);
           dot.style.display = "block";
@@ -462,8 +470,7 @@ function initGraphEvents(svg, tooltip) {
     const updateView = (relX, relY) => {
         const points = svg._dataPoints || [];
         const maxDotIndex = svg._maxDotIndex || -1;
-        const width = svg.parentElement.offsetWidth;
-
+        
         let closest = points[0];
         let minDiff = Infinity;
         for (let p of points) {
@@ -492,6 +499,7 @@ function initGraphEvents(svg, tooltip) {
             tooltip.style.opacity = "1";
             const tipWidth = tooltip.offsetWidth || 100;
             const tipHeight = tooltip.offsetHeight || 60;
+            const width = svg.parentElement.offsetWidth; // Get real width for clamping
             
             let leftPos = closest.x - (tipWidth / 2);
             if (leftPos < 10) leftPos = 10;
@@ -551,19 +559,28 @@ function updateStats() {
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : habits[0]?.days.length - 1 || 0;
     
     let earnedSoFar = 0, totalPossibleSoFar = 0, todayDone = 0, todayTotal = 0, todaySlips = 0, negTotal = 0, momentumSum = 0;
+    let totalHabitsDone = 0; 
+    
     habits.forEach((h) => {
         const w = Number(h.weight) || 2;
         const daysPassed = todayIdx + 1;
-        if(h.type === "positive") {
-            const checks = h.days.slice(0, daysPassed).filter(Boolean).length;
+        
+        // Count total checks for monthly progress
+        const checks = h.days.slice(0, daysPassed).filter(Boolean).length;
+        if (h.type === "positive") {
             earnedSoFar += (checks/daysPassed)*w;
+            totalHabitsDone += checks;
         } else {
             const slips = h.days.slice(0, daysPassed).filter(Boolean).length;
             earnedSoFar += ((daysPassed-slips)/daysPassed)*w;
+            // For negative habits, "done" implies avoiding them, but for strict check count:
+            // logic depends on user preference. Assuming checkboxes measure success.
         }
         totalPossibleSoFar += w;
+        
         if (h.type === "positive") { todayTotal++; if(h.days[todayIdx]) todayDone++; }
         else { negTotal++; if(h.days[todayIdx]) todaySlips++; }
+        
         let recentScore = 0;
         for(let i=0; i<3; i++) {
             const idx = todayIdx - i;
@@ -583,6 +600,14 @@ function updateStats() {
     setRing("ring-normalized", todayPerf);
     setRing("ring-momentum", momPct);
     
+    // FIXED: Monthly Progress Text
+    const totalPotentialChecks = (todayIdx + 1) * habits.length;
+    const monthlyProgress = totalPotentialChecks > 0 ? (totalHabitsDone / totalPotentialChecks) * 100 : 0;
+    
+    // Target the big gradient text
+    const gradText = document.querySelector(".headline .gradient-text");
+    if(gradText) gradText.innerText = Math.round(monthlyProgress) + "%";
+
     let streak = 0;
     for (let d = todayIdx; d >= 0; d--) {
         let score = 0;
@@ -676,7 +701,7 @@ function handleMobileLayout() {
   }
 }
 
-// INIT (Ensure makeDropdown is defined above)
+// INIT
 makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { 
     currentMonth = m; 
     needsScrollToToday = true; 
