@@ -542,7 +542,10 @@ function updateStats() {
     if(streakEl) streakEl.innerText = streak;
     
     const headerStreak = document.querySelector(".streak-info.mobile-view .streak-count");
-    if(headerStreak) headerStreak.innerHTML = `<i data-lucide="flame" class="streak-icon"></i> ${streak}`;
+    if(headerStreak) {
+        headerStreak.innerHTML = `<i data-lucide="flame" class="streak-icon"></i> ${streak}`;
+        lucide.createIcons(); // FIX: Re-init icons when HTML is updated
+    }
 
     const scoreEl = document.getElementById("todaySummary");
     let todayNet = 0;
