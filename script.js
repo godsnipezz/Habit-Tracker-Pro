@@ -73,7 +73,14 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   el.innerHTML = ""; el.style.position = "relative";
   const btn = document.createElement("div");
   btn.className = "dropdown-button"; btn.tabIndex = 0;
-  btn.innerHTML = options[selectedIndex]?.label || "Select";
+  
+  const label = document.createElement("span");
+  label.textContent = options[selectedIndex]?.label || "Select";
+  btn.appendChild(label);
+  
+  const arrow = document.createElement("span");
+  arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="m6 9 6 6 6-6"/></svg>`;
+  btn.appendChild(arrow);
   
   const menu = document.createElement("div");
   menu.className = "dropdown-menu"; 
@@ -84,7 +91,7 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
     item.innerHTML = opt.label;
     item.onclick = (e) => { 
         e.stopPropagation(); 
-        btn.innerHTML = opt.label; 
+        label.textContent = opt.label; 
         closeAllDropdowns();
         onChange(opt.value); 
     };
