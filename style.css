@@ -39,6 +39,7 @@ td[contenteditable]:focus {
   outline: none;
 }
 
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -273,7 +274,7 @@ body {
   stroke-width: 5;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  /* FIX: Reduced shadow to 3px to prevent clipping ("invisible square margin") */
+  /* Tighter shadow to avoid clipping */
   filter: drop-shadow(0 0 3px rgba(99, 230, 164, 0.4));
 }
 
@@ -433,6 +434,7 @@ svg#activityGraph {
   height: 100%;
 }
 
+/* ANIMATIONS FOR GRAPH */
 .graph-path {
   fill: none;
   stroke: var(--green);
@@ -440,13 +442,18 @@ svg#activityGraph {
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
-  transition: d 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  
+  /* Smooth Line Transition */
+  transition: d 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .graph-area {
   fill: url(#gradient-area);
   opacity: 0.2;
   stroke: none;
+  
+  /* Smooth Area Transition */
+  transition: d 0.6s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* --- DOTS & CURSOR --- */
@@ -456,7 +463,12 @@ svg#activityGraph {
   stroke: var(--green);
   stroke-width: 2px;
   r: 3px;
-  transition: all 0.2s ease;
+  
+  /* Smooth Dot Transition */
+  transition: cx 0.6s cubic-bezier(0.25, 1, 0.5, 1), 
+              cy 0.6s cubic-bezier(0.25, 1, 0.5, 1), 
+              r 0.2s ease, 
+              fill 0.2s;
 }
 
 .graph-dot:hover {
@@ -481,7 +493,8 @@ svg#activityGraph {
 .graph-overlay {
   fill: transparent;
   cursor: default;
-  touch-action: none; 
+  touch-action: none;
+  z-index: 50; 
 }
 
 /* --- TOOLTIP STYLES --- */

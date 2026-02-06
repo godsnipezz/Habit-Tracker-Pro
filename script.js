@@ -27,6 +27,8 @@ yearInput.addEventListener("wheel", (e) => e.preventDefault());
 
 let habits = [];
 let isEditMode = false;
+// Flag to trigger scroll only on load/month change
+let needsScrollToToday = true; 
 
 /* =========================================================
    2. DATA PERSISTENCE
@@ -120,6 +122,7 @@ function renderHeader() {
   for (let d = 1; d <= days; d++) {
     const th = document.createElement("th");
     th.textContent = d;
+    th.id = `header-day-${d}`; // ID for scrolling
     if (isThisMonth && d === today) th.classList.add("today-col");
     dayHeader.appendChild(th);
   }
@@ -157,6 +160,7 @@ function renderHabits() {
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
+      // Edit Mode Cells...
       const typeTd = document.createElement("td");
       const tDD = document.createElement("div");
       tDD.className = "dropdown";
@@ -200,7 +204,14 @@ function renderHabits() {
       const isFuture = y > NOW.getFullYear() || (y === NOW.getFullYear() && currentMonth > NOW.getMonth()) || (isThisMonth && d > NOW.getDate() - 1);
       if (isFuture) { cb.classList.add("future-day"); cb.disabled = true; }
 
-      cb.onchange = () => { h.days[d] = cb.checked; save(); updateStats(); if (!isEditMode) updateProgress(tr, h); renderGraph(); };
+      // IMPORTANT: Update Graph on click
+      cb.onchange = () => { 
+          h.days[d] = cb.checked; 
+          save(); 
+          updateStats(); 
+          if (!isEditMode) updateProgress(tr, h); 
+          renderGraph(); // This will now animate instead of snapping
+      };
       td.appendChild(cb);
       tr.appendChild(td);
     }
@@ -228,6 +239,9 @@ function renderHabits() {
     tr.appendChild(endTd);
     habitBody.appendChild(tr);
   });
+  
+  // Call scroll handler after table is built
+  scrollToToday();
 }
 
 function updateProgress(tr, h) {
@@ -245,7 +259,45 @@ function updateProgress(tr, h) {
 }
 
 /* =========================================================
-   4. GRAPH RENDERING & INTERACTION (FIXED)
+   4. MOBILE SCROLL TO TODAY
+========================================================= */
+
+function scrollToToday() {
+    if (!needsScrollToToday) return; // Only run on load or month change
+
+    const isMobile = window.innerWidth <= 768;
+    const y = parseInt(yearInput.value) || NOW.getFullYear();
+    const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
+    
+    // Only scroll if: Mobile + Current Month + Not Edit Mode
+    if (isMobile && isThisMonth && !isEditMode) {
+        const today = NOW.getDate();
+        // If today is day 1 or 2, don't scroll, let them see the names
+        if (today > 2) {
+            const wrapper = document.querySelector(".table-wrapper");
+            const todayHeader = document.getElementById(`header-day-${today}`);
+            const firstHeader = document.querySelector("th:first-child"); // Sticky names col
+            
+            if (wrapper && todayHeader && firstHeader) {
+                // Calculate scroll position:
+                // Move scroll so that Today's column is just to the right of the sticky column
+                const stickyWidth = firstHeader.offsetWidth;
+                const targetPos = todayHeader.offsetLeft - stickyWidth;
+                
+                // Smooth scroll
+                wrapper.scrollTo({
+                    left: targetPos,
+                    behavior: "smooth"
+                });
+            }
+        }
+    }
+    
+    needsScrollToToday = false; // Reset flag so clicking checkboxes doesn't re-scroll
+}
+
+/* =========================================================
+   5. GRAPH RENDERING (WITH ANIMATION)
 ========================================================= */
 
 function renderGraph() {
@@ -255,21 +307,15 @@ function renderGraph() {
   const y = parseInt(yearInput.value) || NOW.getFullYear();
   const totalDaysInMonth = getDays(y, currentMonth);
 
-  // DOT VISIBILITY LOGIC
   const now = new Date();
   const viewDate = new Date(y, currentMonth, 1);
   const currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
 
   let maxDotIndex = -1; 
+  if (viewDate.getTime() < currentDate.getTime()) maxDotIndex = totalDaysInMonth - 1;
+  else if (viewDate.getTime() === currentDate.getTime()) maxDotIndex = now.getDate() - 1;
 
-  if (viewDate.getTime() < currentDate.getTime()) {
-      maxDotIndex = totalDaysInMonth - 1; // Past
-  } else if (viewDate.getTime() === currentDate.getTime()) {
-      maxDotIndex = now.getDate() - 1; // Present
-  }
-  // Future: -1 (Hidden)
-
-  // DATA CALCULATION
+  // DATA
   let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0; let posCount = 0; let negCount = 0;
@@ -282,7 +328,6 @@ function renderGraph() {
     dataPoints.push({ score: dailyScore, pos: posCount, neg: negCount });
   }
 
-  // DIMENSIONS
   const container = svg.parentElement;
   let tooltip = container.querySelector(".graph-tooltip");
   if (!tooltip) {
@@ -320,187 +365,208 @@ function renderGraph() {
     index: i
   }));
 
-  if (points.length < 2) { svg.innerHTML = ``; return; }
+  if (points.length < 2) return;
 
-  // DRAW
+  // --- CALC PATH STRING ---
   let dPath = `M ${points[0].x} ${points[0].y}`;
-  let dotsSVG = ""; 
-
   for (let i = 0; i < points.length; i++) {
-    const p = points[i];
     if (i < points.length - 1) {
         const p0 = points[Math.max(i - 1, 0)]; const p1 = points[i]; const p2 = points[i + 1]; const p3 = points[Math.min(i + 2, points.length - 1)];
         const cp1x = p1.x + (p2.x - p0.x) * 0.15; const cp1y = p1.y + (p2.y - p0.y) * 0.15;
         const cp2x = p2.x - (p3.x - p1.x) * 0.15; const cp2y = p2.y - (p3.y - p1.y) * 0.15;
         dPath += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2.x} ${p2.y}`;
     }
-    if (i <= maxDotIndex) dotsSVG += `<circle cx="${p.x}" cy="${p.y}" class="graph-dot" />`;
   }
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  svg.style.width = "100%";
-
-  svg.innerHTML = `
-    <defs>
-        <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
-        </linearGradient>
-    </defs>
-    <line x1="0" y1="${graphHeight}" x2="${width}" y2="${graphHeight}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
-    <path class="graph-area" d="${dArea}" pointer-events="none" />
-    <path class="graph-path" d="${dPath}" pointer-events="none" />
-    ${dotsSVG}
-    <circle id="activeDot" cx="0" cy="0" />
-    <rect class="graph-overlay" width="${width}" height="${height}" />
-  `;
-
-  // INTERACTION LOGIC
-  const overlay = svg.querySelector(".graph-overlay");
-  const activeDot = svg.getElementById("activeDot");
-  const dateEl = tooltip.querySelector(".tooltip-date");
-  const statsEl = tooltip.querySelector(".tooltip-stats");
+  // --- RENDER OR UPDATE ---
   
-  let isPinned = false;
+  // Check if SVG structure exists (has path)
+  const existingPath = svg.querySelector('.graph-path');
+  
+  if (!existingPath) {
+      // INITIAL BUILD (Only once or on resize)
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.style.width = "100%";
+      
+      let dotsHtml = "";
+      // Pre-create all possible dots, hide future ones via CSS or logic
+      // Actually simpler to re-render dots since count might change on month change
+      // But for smooth transition we need existing elements.
+      
+      // For simplicity in this logic: If month length changes, we rebuild. 
+      // If just data changes, we update.
+      
+      svg.innerHTML = `
+        <defs>
+            <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#63e6a4" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#63e6a4" stop-opacity="0"/>
+            </linearGradient>
+        </defs>
+        <line x1="0" y1="${graphHeight}" x2="${width}" y2="${graphHeight}" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+        <path class="graph-area" d="${dArea}" pointer-events="none" />
+        <path class="graph-path" d="${dPath}" pointer-events="none" />
+        <g id="dotsGroup"></g>
+        <circle id="activeDot" cx="0" cy="0" />
+        <rect class="graph-overlay" width="${width}" height="${height}" />
+      `;
+      
+      // Initialize Events (Only once)
+      initGraphEvents(svg, tooltip);
+  } else {
+      // UPDATE EXISTING (Animations trigger here)
+      existingPath.setAttribute('d', dPath);
+      svg.querySelector('.graph-area').setAttribute('d', dArea);
+  }
 
-  const updateView = (relX, relY) => {
-    let closest = points[0];
-    let minDiff = Infinity;
-    
-    // Find closest point horizontally
-    for (let p of points) {
-        const diff = Math.abs(relX - p.x);
-        if (diff < minDiff) { minDiff = diff; closest = p; }
-    }
+  // --- UPDATE DOTS SEPARATELY ---
+  const dotsGroup = svg.getElementById('dotsGroup');
+  // Rebuild dots only if count mismatch (month change), otherwise update positions
+  // To allow smooth dot transition, we try to reuse elements.
+  
+  const existingDots = dotsGroup.querySelectorAll('.graph-dot');
+  
+  // If month changed length, clear and rebuild
+  if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) {
+      dotsGroup.innerHTML = ''; 
+  }
 
-    if (closest) {
-        // --- NEW LOGIC: Only show if touching BELOW the line ---
-        // relY (finger pos) must be GREATER than closest.y (graph pos)
-        // We add a small buffer (e.g. -10px) so hitting the dot directly still works
-        if (relY < closest.y - 10) {
-            handleLeave(); // Treat as "mouse left"
-            return;
+  points.forEach((p, i) => {
+      let dot = dotsGroup.children[i];
+      
+      // Only show dot if valid date
+      if (i <= maxDotIndex) {
+          if (!dot) {
+              dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+              dot.setAttribute("class", "graph-dot");
+              dot.setAttribute("r", "3");
+              dotsGroup.appendChild(dot);
+          }
+          // Update pos (CSS transition handles smoothing)
+          dot.setAttribute("cx", p.x);
+          dot.setAttribute("cy", p.y);
+          dot.style.display = "block";
+      } else {
+          // Hide future dots
+          if (dot) dot.style.display = "none";
+      }
+  });
+  
+  // Store points data on SVG for the event handler to read
+  svg._dataPoints = points;
+  svg._maxDotIndex = maxDotIndex;
+}
+
+// Separate Event Init to avoid duplicate listeners on re-render
+function initGraphEvents(svg, tooltip) {
+    const overlay = svg.querySelector(".graph-overlay");
+    const activeDot = svg.getElementById("activeDot");
+    const dateEl = tooltip.querySelector(".tooltip-date");
+    const statsEl = tooltip.querySelector(".tooltip-stats");
+    let isPinned = false;
+
+    const updateView = (relX, relY) => {
+        // Read fresh data
+        const points = svg._dataPoints || [];
+        const maxDotIndex = svg._maxDotIndex || -1;
+        const width = svg.parentElement.offsetWidth;
+
+        let closest = points[0];
+        let minDiff = Infinity;
+        for (let p of points) {
+            const diff = Math.abs(relX - p.x);
+            if (diff < minDiff) { minDiff = diff; closest = p; }
         }
 
-        activeDot.setAttribute("cx", closest.x);
-        activeDot.setAttribute("cy", closest.y);
-        
-        if (closest.index <= maxDotIndex) activeDot.classList.add("is-active");
-        else activeDot.classList.remove("is-active");
+        if (closest) {
+            // STRICT TOUCH: Must be below the graph line (plus small buffer)
+            if (relY < closest.y - 10) {
+                handleLeave();
+                return;
+            }
 
-        const monthName = monthNames[currentMonth].substring(0, 3);
-        dateEl.textContent = `${monthName} ${closest.day}`;
-        
-        let html = ``;
-        if (closest.pos > 0 || closest.neg === 0) html += `<span class="stat-item" style="color:var(--green)">${closest.pos} done</span>`;
-        if (closest.neg > 0) html += `<span class="stat-item" style="color:#ef4444">${closest.neg} slip</span>`;
-        if (closest.pos === 0 && closest.neg === 0) html = `<span class="stat-item" style="color:var(--muted)">No activity</span>`;
-        statsEl.innerHTML = html;
+            activeDot.setAttribute("cx", closest.x);
+            activeDot.setAttribute("cy", closest.y);
+            
+            if (closest.index <= maxDotIndex) activeDot.classList.add("is-active");
+            else activeDot.classList.remove("is-active");
 
-        tooltip.style.opacity = "1";
-        const tipWidth = tooltip.offsetWidth || 100;
-        const tipHeight = tooltip.offsetHeight || 60;
-        
-        let leftPos = closest.x - (tipWidth / 2);
-        if (leftPos < 10) leftPos = 10;
-        if (leftPos + tipWidth > width - 10) leftPos = width - tipWidth - 10;
-        
-        // Vertical Flip Logic
-        let topPos = closest.y - tipHeight - 15;
-        if (topPos < 0) topPos = closest.y + 20;
+            const monthName = monthNames[currentMonth].substring(0, 3);
+            dateEl.textContent = `${monthName} ${closest.day}`;
+            
+            let html = ``;
+            if (closest.pos > 0 || closest.neg === 0) html += `<span class="stat-item" style="color:var(--green)">${closest.pos} done</span>`;
+            if (closest.neg > 0) html += `<span class="stat-item" style="color:#ef4444">${closest.neg} slip</span>`;
+            if (closest.pos === 0 && closest.neg === 0) html = `<span class="stat-item" style="color:var(--muted)">No activity</span>`;
+            statsEl.innerHTML = html;
 
-        tooltip.style.left = `${leftPos}px`;
-        tooltip.style.top = `${topPos}px`;
-    }
-  };
+            tooltip.style.opacity = "1";
+            const tipWidth = tooltip.offsetWidth || 100;
+            const tipHeight = tooltip.offsetHeight || 60;
+            
+            let leftPos = closest.x - (tipWidth / 2);
+            if (leftPos < 10) leftPos = 10;
+            if (leftPos + tipWidth > width - 10) leftPos = width - tipWidth - 10;
+            
+            let topPos = closest.y - tipHeight - 15;
+            if (topPos < 0) topPos = closest.y + 20;
 
-  const handleMove = (e) => {
-    isPinned = false;
-    const rect = svg.getBoundingClientRect();
-    let clientX = e.clientX;
-    let clientY = e.clientY;
-    if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-    }
-    const relX = clientX - rect.left;
-    const relY = clientY - rect.top;
+            tooltip.style.left = `${leftPos}px`;
+            tooltip.style.top = `${topPos}px`;
+        }
+    };
 
-    updateView(relX, relY);
-  };
+    const handleMove = (e) => {
+        isPinned = false;
+        const rect = svg.getBoundingClientRect();
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        }
+        updateView(clientX - rect.left, clientY - rect.top);
+    };
 
-  const handleClick = (e) => {
-    e.preventDefault();
-    const rect = svg.getBoundingClientRect();
-    let clientX = e.clientX;
-    let clientY = e.clientY;
-    if (e.type === 'touchend') { isPinned = true; return; }
-    
-    updateView(clientX - rect.left, clientY - rect.top);
-    isPinned = true; 
-  };
+    const handleClick = (e) => {
+        e.preventDefault();
+        const rect = svg.getBoundingClientRect();
+        let clientX = e.clientX;
+        let clientY = e.clientY;
+        if (e.type === 'touchend') { isPinned = true; return; }
+        updateView(clientX - rect.left, clientY - rect.top);
+        isPinned = true; 
+    };
 
-  const handleLeave = () => {
-    if (!isPinned) {
-        tooltip.style.opacity = "0";
-        activeDot.classList.remove("is-active");
-    }
-  };
+    const handleLeave = () => {
+        if (!isPinned) {
+            tooltip.style.opacity = "0";
+            activeDot.classList.remove("is-active");
+        }
+    };
 
-  overlay.addEventListener("mousemove", handleMove);
-  overlay.addEventListener("touchmove", handleMove, { passive: false });
-  overlay.addEventListener("click", handleClick);
-  overlay.addEventListener("touchend", handleClick);
-  overlay.addEventListener("mouseleave", handleLeave);
+    overlay.addEventListener("mousemove", handleMove);
+    overlay.addEventListener("touchmove", handleMove, { passive: false });
+    overlay.addEventListener("click", handleClick);
+    overlay.addEventListener("touchend", handleClick);
+    overlay.addEventListener("mouseleave", handleLeave);
 }
 
 /* =========================================================
-   5. DROPDOWN & UTILS
+   6. UPDATES & INIT
 ========================================================= */
 
-function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
-  el.innerHTML = ""; el.style.position = "relative";
-  const btn = document.createElement("div");
-  btn.className = "dropdown-button"; btn.tabIndex = 0;
-  btn.innerHTML = options[selectedIndex]?.label || "Select";
-  const menu = document.createElement("div");
-  menu.className = "dropdown-menu"; menu.style.display = "none";
-
-  options.forEach((opt) => {
-    const item = document.createElement("div");
-    item.className = "dropdown-item"; item.innerHTML = opt.label;
-    item.onclick = (e) => { e.stopPropagation(); btn.innerHTML = opt.label; menu.style.display = "none"; onChange(opt.value); };
-    menu.appendChild(item);
-  });
-
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    document.querySelectorAll(".dropdown-menu").forEach((m) => { if (m !== menu) m.style.display = "none"; });
-    const isClosed = menu.style.display === "none";
-    if (isClosed) {
-      menu.style.display = "block";
-      let openUp = fixedSide === "up";
-      if (!fixedSide && window.innerHeight - btn.getBoundingClientRect().bottom < 200) openUp = true;
-      if (openUp) { menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)"; menu.style.transformOrigin = "bottom left"; }
-      else { menu.style.top = "calc(100% + 8px)"; menu.style.bottom = "auto"; menu.style.transformOrigin = "top left"; }
-    } else { menu.style.display = "none"; }
-  };
-  btn.onclick = toggleMenu;
-  el.appendChild(btn); el.appendChild(menu);
-}
-
 function updateStats() {
+    // ... [Same Logic as before, just collapsed for brevity] ... 
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : habits[0]?.days.length - 1 || 0;
     
     let earnedSoFar = 0, totalPossibleSoFar = 0, todayDone = 0, todayTotal = 0, todaySlips = 0, negTotal = 0, momentumSum = 0;
-    
     habits.forEach((h) => {
         const w = Number(h.weight) || 2;
         const daysPassed = todayIdx + 1;
-        
         if(h.type === "positive") {
             const checks = h.days.slice(0, daysPassed).filter(Boolean).length;
             earnedSoFar += (checks/daysPassed)*w;
@@ -509,10 +575,8 @@ function updateStats() {
             earnedSoFar += ((daysPassed-slips)/daysPassed)*w;
         }
         totalPossibleSoFar += w;
-        
         if (h.type === "positive") { todayTotal++; if(h.days[todayIdx]) todayDone++; }
         else { negTotal++; if(h.days[todayIdx]) todaySlips++; }
-        
         let recentScore = 0;
         for(let i=0; i<3; i++) {
             const idx = todayIdx - i;
@@ -544,7 +608,7 @@ function updateStats() {
     const headerStreak = document.querySelector(".streak-info.mobile-view .streak-count");
     if(headerStreak) {
         headerStreak.innerHTML = `<i data-lucide="flame" class="streak-icon"></i> ${streak}`;
-        lucide.createIcons(); // FIX: Re-init icons when HTML is updated
+        lucide.createIcons();
     }
 
     const scoreEl = document.getElementById("todaySummary");
@@ -552,6 +616,7 @@ function updateStats() {
     habits.forEach(h => { if(h.days[todayIdx]) todayNet += h.type==="positive"?1:-1; });
     if(scoreEl) scoreEl.innerText = `${todayNet>0?"+":""}${todayNet} Net Score`;
     
+    // ... [Heatmap & Footer Logic Same as Before] ...
     const heatGrid = document.getElementById("streakHeatmap");
     if(heatGrid) {
         heatGrid.innerHTML = "";
@@ -570,7 +635,6 @@ function updateStats() {
             heatGrid.appendChild(div);
         }
     }
-    
     const footerC = document.querySelector(".counter");
     if(footerC) {
         const slipT = negTotal > 0 ? `<span style="opacity:0.3; margin:0 6px">|</span> <span style="color:#ef4444">${todaySlips}/${negTotal}</span> slips` : ``;
@@ -588,10 +652,6 @@ function setRing(id, pct) {
   path.style.strokeDashoffset = circ - (pct / 100) * circ;
   text.textContent = Math.round(pct) + "%";
 }
-
-/* =========================================================
-   6. MOBILE RE-ORDER
-========================================================= */
 
 function handleMobileLayout() {
   const isMobile = window.innerWidth <= 768;
@@ -613,11 +673,9 @@ function handleMobileLayout() {
   if (isMobile) {
     if (streakInfo && streakInfo.parentElement !== header) { header.appendChild(streakInfo); streakInfo.classList.add("mobile-view"); }
     if (quote && quote.previousElementSibling !== graphSection) { graphSection.parentNode.insertBefore(quote, graphSection.nextSibling); quote.classList.add("mobile-view"); }
-    
     const rings = document.querySelectorAll(".ring-block");
     rings.forEach(ring => ringsWrapper.appendChild(ring));
     if (ringsWrapper.parentElement !== analyticsSection) analyticsSection.insertBefore(ringsWrapper, analyticsSection.firstChild);
-    
     if (heatmap && heatmap.parentElement !== analyticsSection) { analyticsSection.appendChild(heatmap); heatmap.classList.add("mobile-view"); }
   } else {
     if (streakWidget) {
@@ -631,8 +689,13 @@ function handleMobileLayout() {
   }
 }
 
-// INIT
-makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { currentMonth = m; loadHabits(); update(); }, null);
+makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { 
+    currentMonth = m; 
+    needsScrollToToday = true; // Flag to scroll when month changes back
+    loadHabits(); 
+    update(); 
+}, null);
+
 document.getElementById("addHabit").onclick = () => {
   habits.push({ name: "New Habit", type: "positive", weight: 2, goal: 28, days: Array(getDays(yearInput.value, currentMonth)).fill(false) });
   save(); update();
