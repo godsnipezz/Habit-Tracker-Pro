@@ -27,7 +27,6 @@ yearInput.addEventListener("wheel", (e) => e.preventDefault());
 
 let habits = [];
 let isEditMode = false;
-// Flag to trigger scroll only on load/month change
 let needsScrollToToday = true; 
 
 /* =========================================================
@@ -122,7 +121,7 @@ function renderHeader() {
   for (let d = 1; d <= days; d++) {
     const th = document.createElement("th");
     th.textContent = d;
-    th.id = `header-day-${d}`; // ID for scrolling
+    th.id = `header-day-${d}`; 
     if (isThisMonth && d === today) th.classList.add("today-col");
     dayHeader.appendChild(th);
   }
@@ -160,7 +159,6 @@ function renderHabits() {
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
-      // Edit Mode Cells...
       const typeTd = document.createElement("td");
       const tDD = document.createElement("div");
       tDD.className = "dropdown";
@@ -204,13 +202,12 @@ function renderHabits() {
       const isFuture = y > NOW.getFullYear() || (y === NOW.getFullYear() && currentMonth > NOW.getMonth()) || (isThisMonth && d > NOW.getDate() - 1);
       if (isFuture) { cb.classList.add("future-day"); cb.disabled = true; }
 
-      // IMPORTANT: Update Graph on click
       cb.onchange = () => { 
           h.days[d] = cb.checked; 
           save(); 
           updateStats(); 
           if (!isEditMode) updateProgress(tr, h); 
-          renderGraph(); // This will now animate instead of snapping
+          renderGraph(); 
       };
       td.appendChild(cb);
       tr.appendChild(td);
@@ -240,7 +237,6 @@ function renderHabits() {
     habitBody.appendChild(tr);
   });
   
-  // Call scroll handler after table is built
   scrollToToday();
 }
 
@@ -259,45 +255,35 @@ function updateProgress(tr, h) {
 }
 
 /* =========================================================
-   4. MOBILE SCROLL TO TODAY
+   4. SCROLL TO TODAY
 ========================================================= */
 
 function scrollToToday() {
-    if (!needsScrollToToday) return; // Only run on load or month change
+    if (!needsScrollToToday) return;
 
     const isMobile = window.innerWidth <= 768;
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
     
-    // Only scroll if: Mobile + Current Month + Not Edit Mode
     if (isMobile && isThisMonth && !isEditMode) {
         const today = NOW.getDate();
-        // If today is day 1 or 2, don't scroll, let them see the names
         if (today > 2) {
             const wrapper = document.querySelector(".table-wrapper");
             const todayHeader = document.getElementById(`header-day-${today}`);
-            const firstHeader = document.querySelector("th:first-child"); // Sticky names col
+            const firstHeader = document.querySelector("th:first-child");
             
             if (wrapper && todayHeader && firstHeader) {
-                // Calculate scroll position:
-                // Move scroll so that Today's column is just to the right of the sticky column
                 const stickyWidth = firstHeader.offsetWidth;
                 const targetPos = todayHeader.offsetLeft - stickyWidth;
-                
-                // Smooth scroll
-                wrapper.scrollTo({
-                    left: targetPos,
-                    behavior: "smooth"
-                });
+                wrapper.scrollTo({ left: targetPos, behavior: "smooth" });
             }
         }
     }
-    
-    needsScrollToToday = false; // Reset flag so clicking checkboxes doesn't re-scroll
+    needsScrollToToday = false; 
 }
 
 /* =========================================================
-   5. GRAPH RENDERING (WITH ANIMATION)
+   5. GRAPH RENDERING (ANIMATED)
 ========================================================= */
 
 function renderGraph() {
@@ -315,7 +301,6 @@ function renderGraph() {
   if (viewDate.getTime() < currentDate.getTime()) maxDotIndex = totalDaysInMonth - 1;
   else if (viewDate.getTime() === currentDate.getTime()) maxDotIndex = now.getDate() - 1;
 
-  // DATA
   let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0; let posCount = 0; let negCount = 0;
@@ -367,7 +352,6 @@ function renderGraph() {
 
   if (points.length < 2) return;
 
-  // --- CALC PATH STRING ---
   let dPath = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length; i++) {
     if (i < points.length - 1) {
@@ -379,24 +363,10 @@ function renderGraph() {
   }
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
-  // --- RENDER OR UPDATE ---
-  
-  // Check if SVG structure exists (has path)
   const existingPath = svg.querySelector('.graph-path');
-  
   if (!existingPath) {
-      // INITIAL BUILD (Only once or on resize)
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.style.width = "100%";
-      
-      let dotsHtml = "";
-      // Pre-create all possible dots, hide future ones via CSS or logic
-      // Actually simpler to re-render dots since count might change on month change
-      // But for smooth transition we need existing elements.
-      
-      // For simplicity in this logic: If month length changes, we rebuild. 
-      // If just data changes, we update.
-      
       svg.innerHTML = `
         <defs>
             <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -411,31 +381,18 @@ function renderGraph() {
         <circle id="activeDot" cx="0" cy="0" />
         <rect class="graph-overlay" width="${width}" height="${height}" />
       `;
-      
-      // Initialize Events (Only once)
       initGraphEvents(svg, tooltip);
   } else {
-      // UPDATE EXISTING (Animations trigger here)
       existingPath.setAttribute('d', dPath);
       svg.querySelector('.graph-area').setAttribute('d', dArea);
   }
 
-  // --- UPDATE DOTS SEPARATELY ---
   const dotsGroup = svg.getElementById('dotsGroup');
-  // Rebuild dots only if count mismatch (month change), otherwise update positions
-  // To allow smooth dot transition, we try to reuse elements.
-  
   const existingDots = dotsGroup.querySelectorAll('.graph-dot');
-  
-  // If month changed length, clear and rebuild
-  if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) {
-      dotsGroup.innerHTML = ''; 
-  }
+  if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) dotsGroup.innerHTML = ''; 
 
   points.forEach((p, i) => {
       let dot = dotsGroup.children[i];
-      
-      // Only show dot if valid date
       if (i <= maxDotIndex) {
           if (!dot) {
               dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -443,22 +400,18 @@ function renderGraph() {
               dot.setAttribute("r", "3");
               dotsGroup.appendChild(dot);
           }
-          // Update pos (CSS transition handles smoothing)
           dot.setAttribute("cx", p.x);
           dot.setAttribute("cy", p.y);
           dot.style.display = "block";
       } else {
-          // Hide future dots
           if (dot) dot.style.display = "none";
       }
   });
   
-  // Store points data on SVG for the event handler to read
   svg._dataPoints = points;
   svg._maxDotIndex = maxDotIndex;
 }
 
-// Separate Event Init to avoid duplicate listeners on re-render
 function initGraphEvents(svg, tooltip) {
     const overlay = svg.querySelector(".graph-overlay");
     const activeDot = svg.getElementById("activeDot");
@@ -467,7 +420,6 @@ function initGraphEvents(svg, tooltip) {
     let isPinned = false;
 
     const updateView = (relX, relY) => {
-        // Read fresh data
         const points = svg._dataPoints || [];
         const maxDotIndex = svg._maxDotIndex || -1;
         const width = svg.parentElement.offsetWidth;
@@ -480,11 +432,7 @@ function initGraphEvents(svg, tooltip) {
         }
 
         if (closest) {
-            // STRICT TOUCH: Must be below the graph line (plus small buffer)
-            if (relY < closest.y - 10) {
-                handleLeave();
-                return;
-            }
+            if (relY < closest.y - 10) { handleLeave(); return; }
 
             activeDot.setAttribute("cx", closest.x);
             activeDot.setAttribute("cy", closest.y);
@@ -558,7 +506,6 @@ function initGraphEvents(svg, tooltip) {
 ========================================================= */
 
 function updateStats() {
-    // ... [Same Logic as before, just collapsed for brevity] ... 
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : habits[0]?.days.length - 1 || 0;
@@ -616,7 +563,6 @@ function updateStats() {
     habits.forEach(h => { if(h.days[todayIdx]) todayNet += h.type==="positive"?1:-1; });
     if(scoreEl) scoreEl.innerText = `${todayNet>0?"+":""}${todayNet} Net Score`;
     
-    // ... [Heatmap & Footer Logic Same as Before] ...
     const heatGrid = document.getElementById("streakHeatmap");
     if(heatGrid) {
         heatGrid.innerHTML = "";
@@ -635,6 +581,7 @@ function updateStats() {
             heatGrid.appendChild(div);
         }
     }
+    
     const footerC = document.querySelector(".counter");
     if(footerC) {
         const slipT = negTotal > 0 ? `<span style="opacity:0.3; margin:0 6px">|</span> <span style="color:#ef4444">${todaySlips}/${negTotal}</span> slips` : ``;
@@ -691,7 +638,7 @@ function handleMobileLayout() {
 
 makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { 
     currentMonth = m; 
-    needsScrollToToday = true; // Flag to scroll when month changes back
+    needsScrollToToday = true; 
     loadHabits(); 
     update(); 
 }, null);
