@@ -28,6 +28,9 @@ let habits = [];
 let isEditMode = false;
 let needsScrollToToday = true;
 
+// Track ID for animations
+let lastAddedHabitIndex = -1;
+
 /* =========================================================
    2. DATA PERSISTENCE
 ========================================================= */
@@ -37,14 +40,11 @@ const loadHabits = () => {
   const stored = localStorage.getItem(key);
 
   if (stored) {
-    try {
-        habits = JSON.parse(stored);
-    } catch(e) { habits = []; }
+    try { habits = JSON.parse(stored); } catch(e) { habits = []; }
   } else {
-    // Attempt carry-over
+    // Attempt carry-over logic
     habits = [];
-    let checkY = y;
-    let checkM = currentMonth;
+    let checkY = y; let checkM = currentMonth;
     for (let i = 0; i < 12; i++) {
       checkM--;
       if (checkM < 0) { checkM = 11; checkY--; }
@@ -54,11 +54,7 @@ const loadHabits = () => {
         try {
             const parsedPrev = JSON.parse(prevData);
             habits = parsedPrev.map((h) => ({
-              name: h.name,
-              type: h.type || "positive",
-              weight: h.weight || 2,
-              goal: h.goal || 28,
-              days: [],
+              name: h.name, type: h.type || "positive", weight: h.weight || 2, goal: h.goal || 28, days: [],
             }));
             break;
         } catch(e) { continue; }
@@ -74,7 +70,7 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. DROPDOWN UTILS (With Animation)
+   3. DROPDOWN UTILS (With Fixes)
 ========================================================= */
 function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   el.innerHTML = ""; el.style.position = "relative";
@@ -101,15 +97,12 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   const toggleMenu = (e) => {
     e.stopPropagation();
     const isOpen = menu.classList.contains("open");
-    closeAllDropdowns(); // Close others first
+    closeAllDropdowns(); 
     
     if (!isOpen) {
       menu.classList.add("open");
-      
-      // Position logic
       let openUp = fixedSide === "up";
       if (!fixedSide && window.innerHeight - btn.getBoundingClientRect().bottom < 200) openUp = true;
-      
       if (openUp) { 
           menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)"; menu.style.transformOrigin = "bottom left"; 
       } else { 
@@ -151,7 +144,7 @@ function renderHeader() {
   settingsBtn.onclick = (e) => {
     e.stopPropagation();
     isEditMode = !isEditMode;
-    update(); // Full re-render for column structure changes
+    update(); 
   };
 
   const labelSpan = document.createElement("span");
@@ -165,7 +158,7 @@ function renderHeader() {
     ["Type", "Imp", "Goal"].forEach((t) => {
       const th = document.createElement("th");
       th.textContent = t;
-      th.classList.add("animate-enter"); // Add animation
+      th.classList.add("column-enter"); // SMOOTH REVEAL
       dayHeader.appendChild(th);
     });
   }
@@ -193,7 +186,6 @@ function renderHabits() {
   const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
   habits.forEach((h, i) => {
-    // Ensure days array matches month length
     if (!h.days || h.days.length !== days) {
       const newDays = Array(days).fill(false);
       if (h.days) h.days.forEach((val, idx) => { if (idx < days) newDays[idx] = val; });
@@ -202,7 +194,16 @@ function renderHabits() {
 
     const tr = document.createElement("tr");
     
-    // NAME (Fixed XSS Vulnerability using textContent)
+    // Check for ADD animation
+    if (i === lastAddedHabitIndex) {
+        tr.classList.add("row-enter-anim");
+        // Reset index after animation plays so it doesn't replay on scroll/update
+        setTimeout(() => { 
+            tr.classList.remove("row-enter-anim"); 
+            if(i === lastAddedHabitIndex) lastAddedHabitIndex = -1; 
+        }, 500);
+    }
+
     const nameTd = document.createElement("td");
     nameTd.contentEditable = isEditMode;
     nameTd.textContent = h.name; 
@@ -214,18 +215,16 @@ function renderHabits() {
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
-      // Type Dropdown
       const typeTd = document.createElement("td");
-      typeTd.classList.add("animate-enter");
+      typeTd.classList.add("column-enter"); // SMOOTH REVEAL
       const tDD = document.createElement("div"); tDD.className = "dropdown";
       makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir);
       const typeBtn = tDD.querySelector(".dropdown-button");
       if (h.type === "positive") typeBtn.classList.add("badge-pos"); else typeBtn.classList.add("badge-neg");
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-      // Importance Dropdown
       const impTd = document.createElement("td");
-      impTd.classList.add("animate-enter");
+      impTd.classList.add("column-enter"); // SMOOTH REVEAL
       const iDD = document.createElement("div"); iDD.className = "dropdown";
       makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir);
       const impBtn = iDD.querySelector(".dropdown-button");
@@ -235,16 +234,14 @@ function renderHabits() {
       if (w === 3) impBtn.classList.add("badge-imp-high");
       impTd.appendChild(iDD); tr.appendChild(impTd);
 
-      // Goal Input
       const goalTd = document.createElement("td");
-      goalTd.classList.add("animate-enter");
+      goalTd.classList.add("column-enter"); // SMOOTH REVEAL
       const gIn = document.createElement("input");
       gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
       gIn.oninput = (e) => { h.goal = +e.target.value; debouncedSave(); updateStats(); if (!isEditMode) updateProgress(tr, h); };
       goalTd.appendChild(gIn); tr.appendChild(goalTd);
     }
 
-    // Days Checkboxes
     for (let d = 0; d < days; d++) {
       const td = document.createElement("td");
       const isToday = isThisMonth && d + 1 === today;
@@ -262,13 +259,12 @@ function renderHabits() {
           save(); 
           updateStats(); 
           if (!isEditMode) updateProgress(tr, h); 
-          renderGraph(false); // Pass false to indicate update, not init
+          renderGraph(false); 
       };
       td.appendChild(cb);
       tr.appendChild(td);
     }
 
-    // End Actions / Progress
     const endTd = document.createElement("td");
     if (isEditMode) {
       const actionWrap = document.createElement("div");
@@ -280,8 +276,19 @@ function renderHabits() {
       const btnDown = document.createElement("button"); btnDown.className = "toggle-edit-btn"; btnDown.innerHTML = `<i data-lucide="arrow-down" style="width:14px;"></i>`; btnDown.disabled = i === habits.length - 1;
       btnDown.onclick = (e) => { e.stopPropagation(); [habits[i], habits[i + 1]] = [habits[i + 1], habits[i]]; save(); update(); };
       
+      // DELETE ANIMATION LOGIC
       const btnDel = document.createElement("button"); btnDel.className = "toggle-edit-btn"; btnDel.innerHTML = `<i data-lucide="trash-2" style="width:14px;"></i>`; btnDel.style.color = "#ef4444";
-      btnDel.onclick = () => { if (confirm("Delete?")) { habits.splice(i, 1); save(); update(); } };
+      btnDel.onclick = (e) => { 
+          if (confirm("Delete?")) { 
+              const row = btnDel.closest("tr");
+              row.classList.add("row-exit-anim"); // TRIGGER EXIT ANIMATION
+              setTimeout(() => {
+                  habits.splice(i, 1); 
+                  save(); 
+                  update(); 
+              }, 400); // Wait for animation
+          } 
+      };
 
       actionWrap.append(btnUp, btnDown, btnDel);
       endTd.appendChild(actionWrap);
@@ -315,18 +322,15 @@ function updateProgress(tr, h) {
 ========================================================= */
 function scrollToToday() {
     if (!needsScrollToToday) return;
-
     const isMobile = window.innerWidth <= 768;
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
-    
     if (isMobile && isThisMonth && !isEditMode) {
         const today = NOW.getDate();
         if (today > 2) {
             const wrapper = document.querySelector(".table-wrapper");
             const todayHeader = document.getElementById(`header-day-${today}`);
             const firstHeader = document.querySelector("th:first-child");
-            
             if (wrapper && todayHeader && firstHeader) {
                 const stickyWidth = firstHeader.offsetWidth;
                 const targetPos = todayHeader.offsetLeft - stickyWidth;
@@ -338,24 +342,20 @@ function scrollToToday() {
 }
 
 /* =========================================================
-   6. GRAPH RENDERING & ANIMATION (SYNC FIX)
+   6. GRAPH RENDERING & ANIMATION
 ========================================================= */
 function renderGraph(isFullRebuild = true) {
   const svg = document.getElementById("activityGraph");
   if (!svg) return;
-
   const y = parseInt(yearInput.value) || NOW.getFullYear();
   const totalDaysInMonth = getDays(y, currentMonth);
-
   const now = new Date();
   const viewDate = new Date(y, currentMonth, 1);
   const currentDate = new Date(now.getFullYear(), now.getMonth(), 1);
-
   let maxDotIndex = -1; 
   if (viewDate.getTime() < currentDate.getTime()) maxDotIndex = totalDaysInMonth - 1;
   else if (viewDate.getTime() === currentDate.getTime()) maxDotIndex = now.getDate() - 1;
 
-  // DATA CALCULATION
   let dataPoints = [];
   for (let d = 0; d < totalDaysInMonth; d++) {
     let dailyScore = 0; let posCount = 0; let negCount = 0;
@@ -379,29 +379,19 @@ function renderGraph(isFullRebuild = true) {
 
   const width = container.getBoundingClientRect().width || 600;
   const height = 150;
-
   let xPositions = [];
   const padding = 15;
   const drawWidth = width - (padding * 2);
-  for (let d = 0; d < totalDaysInMonth; d++) {
-    xPositions.push(padding + (d / (totalDaysInMonth - 1)) * drawWidth);
-  }
-
-  const topPad = 30; 
-  const bottomPad = 20;
+  for (let d = 0; d < totalDaysInMonth; d++) { xPositions.push(padding + (d / (totalDaysInMonth - 1)) * drawWidth); }
+  const topPad = 30; const bottomPad = 20;
   const graphHeight = height - bottomPad;
-  
   const maxVal = Math.max(...dataPoints.map(d => d.score), 5);
   const pxPerUnit = (graphHeight - topPad) / (maxVal || 1);
   const mapY = (val) => graphHeight - val * pxPerUnit;
 
-  const points = dataPoints.map((d, i) => ({
-    x: xPositions[i], y: mapY(d.score), val: d.score, pos: d.pos, neg: d.neg, day: i + 1, index: i
-  }));
-
+  const points = dataPoints.map((d, i) => ({ x: xPositions[i], y: mapY(d.score), val: d.score, pos: d.pos, neg: d.neg, day: i + 1, index: i }));
   if (points.length < 2) return;
 
-  // GENERATE PATH
   let dPath = `M ${points[0].x} ${points[0].y}`;
   for (let i = 0; i < points.length; i++) {
     if (i < points.length - 1) {
@@ -413,11 +403,8 @@ function renderGraph(isFullRebuild = true) {
   }
   const dArea = `${dPath} L ${points[points.length - 1].x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
-  // DRAW / UPDATE
   const existingPath = svg.querySelector('.graph-path');
-  
   if (!existingPath || isFullRebuild) {
-      // FIRST RENDER OR FULL REBUILD
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.style.width = "100%";
       svg.innerHTML = `
@@ -436,42 +423,32 @@ function renderGraph(isFullRebuild = true) {
       `;
       initGraphEvents(svg, tooltip);
   } else {
-      // SMART UPDATE - Smooth Transition
       existingPath.setAttribute('d', dPath);
       svg.querySelector('.graph-area').setAttribute('d', dArea);
       const overlay = svg.querySelector('.graph-overlay');
       if(overlay) overlay.setAttribute('width', width);
   }
 
-  // UPDATE DOTS EFFICIENTLY
   const dotsGroup = svg.getElementById('dotsGroup');
   const existingDots = dotsGroup.querySelectorAll('.graph-dot');
-  
-  // Only rebuild DOM if dot count mismatches (e.g. month change)
   if (existingDots.length !== totalDaysInMonth) {
       dotsGroup.innerHTML = ''; 
       points.forEach((p, i) => {
           const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
           dot.setAttribute("class", "graph-dot");
           dot.setAttribute("r", "3");
-          dot.setAttribute("cx", p.x);
-          dot.setAttribute("cy", p.y);
+          dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
           if (i > maxDotIndex) dot.style.display = "none";
           dotsGroup.appendChild(dot);
       });
   } else {
-      // Update existing dots (Triggers CSS Transition)
       points.forEach((p, i) => {
           const dot = existingDots[i];
-          dot.setAttribute("cx", p.x);
-          dot.setAttribute("cy", p.y);
-          if (i > maxDotIndex) dot.style.display = "none";
-          else dot.style.display = "block";
+          dot.setAttribute("cx", p.x); dot.setAttribute("cy", p.y);
+          if (i > maxDotIndex) dot.style.display = "none"; else dot.style.display = "block";
       });
   }
-  
-  svg._dataPoints = points;
-  svg._maxDotIndex = maxDotIndex;
+  svg._dataPoints = points; svg._maxDotIndex = maxDotIndex;
 }
 
 function initGraphEvents(svg, tooltip) {
@@ -484,27 +461,16 @@ function initGraphEvents(svg, tooltip) {
     const updateView = (relX, relY) => {
         const points = svg._dataPoints || [];
         const maxDotIndex = svg._maxDotIndex || -1;
-        
-        let closest = points[0];
-        let minDiff = Infinity;
-        for (let p of points) {
-            const diff = Math.abs(relX - p.x);
-            if (diff < minDiff) { minDiff = diff; closest = p; }
-        }
+        let closest = points[0]; let minDiff = Infinity;
+        for (let p of points) { const diff = Math.abs(relX - p.x); if (diff < minDiff) { minDiff = diff; closest = p; } }
 
         if (closest) {
-            // Un-hover if cursor is too far vertically
             if (Math.abs(relY - closest.y) > 50 && !isPinned) { handleLeave(); return; }
-
-            activeDot.setAttribute("cx", closest.x);
-            activeDot.setAttribute("cy", closest.y);
-            
-            if (closest.index <= maxDotIndex) activeDot.classList.add("is-active");
-            else activeDot.classList.remove("is-active");
+            activeDot.setAttribute("cx", closest.x); activeDot.setAttribute("cy", closest.y);
+            if (closest.index <= maxDotIndex) activeDot.classList.add("is-active"); else activeDot.classList.remove("is-active");
 
             const monthName = monthNames[currentMonth].substring(0, 3);
             dateEl.textContent = `${monthName} ${closest.day}`;
-            
             let html = ``;
             if (closest.pos > 0 || closest.neg === 0) html += `<span class="stat-item" style="color:var(--green)">${closest.pos} done</span>`;
             if (closest.neg > 0) html += `<span class="stat-item" style="color:#ef4444">${closest.neg} slip</span>`;
@@ -512,55 +478,24 @@ function initGraphEvents(svg, tooltip) {
             statsEl.innerHTML = html;
 
             tooltip.style.opacity = "1";
-            const tipWidth = tooltip.offsetWidth || 100;
-            const tipHeight = tooltip.offsetHeight || 60;
-            const width = svg.parentElement.offsetWidth; 
-            
-            let leftPos = closest.x - (tipWidth / 2);
-            if (leftPos < 10) leftPos = 10;
-            if (leftPos + tipWidth > width - 10) leftPos = width - tipWidth - 10;
-            
-            let topPos = closest.y - tipHeight - 15;
-            if (topPos < 0) topPos = closest.y + 20;
-
-            tooltip.style.left = `${leftPos}px`;
-            tooltip.style.top = `${topPos}px`;
+            const tipWidth = tooltip.offsetWidth || 100; const tipHeight = tooltip.offsetHeight || 60; const width = svg.parentElement.offsetWidth; 
+            let leftPos = closest.x - (tipWidth / 2); if (leftPos < 10) leftPos = 10; if (leftPos + tipWidth > width - 10) leftPos = width - tipWidth - 10;
+            let topPos = closest.y - tipHeight - 15; if (topPos < 0) topPos = closest.y + 20;
+            tooltip.style.left = `${leftPos}px`; tooltip.style.top = `${topPos}px`;
         }
     };
-
     const handleMove = (e) => {
         if (isPinned) return;
         const rect = svg.getBoundingClientRect();
-        let clientX = e.clientX;
-        let clientY = e.clientY;
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        }
+        let clientX = e.clientX; let clientY = e.clientY;
+        if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
         updateView(clientX - rect.left, clientY - rect.top);
     };
+    const handleClick = (e) => { e.preventDefault(); isPinned = !isPinned; if (!isPinned) handleLeave(); else { const rect = svg.getBoundingClientRect(); updateView(e.clientX - rect.left, e.clientY - rect.top); } };
+    const handleLeave = () => { if (!isPinned) { tooltip.style.opacity = "0"; activeDot.classList.remove("is-active"); } };
 
-    const handleClick = (e) => {
-        e.preventDefault();
-        isPinned = !isPinned; // Toggle pin
-        if (!isPinned) handleLeave();
-        else {
-             const rect = svg.getBoundingClientRect();
-             updateView(e.clientX - rect.left, e.clientY - rect.top);
-        }
-    };
-
-    const handleLeave = () => {
-        if (!isPinned) {
-            tooltip.style.opacity = "0";
-            activeDot.classList.remove("is-active");
-        }
-    };
-
-    overlay.addEventListener("mousemove", handleMove);
-    overlay.addEventListener("touchmove", handleMove, { passive: false });
-    overlay.addEventListener("click", handleClick);
-    overlay.addEventListener("mouseleave", handleLeave);
+    overlay.addEventListener("mousemove", handleMove); overlay.addEventListener("touchmove", handleMove, { passive: false });
+    overlay.addEventListener("click", handleClick); overlay.addEventListener("mouseleave", handleLeave);
 }
 
 /* =========================================================
@@ -577,84 +512,48 @@ function updateStats() {
     habits.forEach((h) => {
         const w = Number(h.weight) || 2;
         const daysPassed = todayIdx + 1;
-        
         const checks = h.days.slice(0, daysPassed).filter(Boolean).length;
-        if (h.type === "positive") {
-            earnedSoFar += (checks/daysPassed)*w;
-            totalHabitsDone += checks;
-        } else {
-            const slips = h.days.slice(0, daysPassed).filter(Boolean).length;
-            earnedSoFar += ((daysPassed-slips)/daysPassed)*w;
-        }
+        if (h.type === "positive") { earnedSoFar += (checks/daysPassed)*w; totalHabitsDone += checks; } 
+        else { const slips = h.days.slice(0, daysPassed).filter(Boolean).length; earnedSoFar += ((daysPassed-slips)/daysPassed)*w; }
         totalPossibleSoFar += w;
-        
-        if (h.type === "positive") { todayTotal++; if(h.days[todayIdx]) todayDone++; }
-        else { negTotal++; if(h.days[todayIdx]) todaySlips++; }
-        
+        if (h.type === "positive") { todayTotal++; if(h.days[todayIdx]) todayDone++; } else { negTotal++; if(h.days[todayIdx]) todaySlips++; }
         let recentScore = 0;
-        for(let i=0; i<3; i++) {
-            const idx = todayIdx - i;
-            if(idx >= 0) {
-                 const success = h.type==="positive" ? h.days[idx] : !h.days[idx];
-                 if(success) recentScore++;
-            }
-        }
+        for(let i=0; i<3; i++) { const idx = todayIdx - i; if(idx >= 0) { const success = h.type==="positive" ? h.days[idx] : !h.days[idx]; if(success) recentScore++; } }
         momentumSum += (recentScore/3);
     });
     
     const efficiencyPct = totalPossibleSoFar ? (earnedSoFar/totalPossibleSoFar)*100 : 0;
     const todayPerf = ((todayDone + (negTotal - todaySlips)) / (todayTotal + negTotal || 1)) * 100;
     const momPct = habits.length ? (momentumSum / habits.length) * 100 : 0;
-    
-    setRing("ring-efficiency", efficiencyPct);
-    setRing("ring-normalized", todayPerf);
-    setRing("ring-momentum", momPct);
+    setRing("ring-efficiency", efficiencyPct); setRing("ring-normalized", todayPerf); setRing("ring-momentum", momPct);
     
     const totalPotentialChecks = (todayIdx + 1) * habits.length;
     const monthlyProgress = totalPotentialChecks > 0 ? (totalHabitsDone / totalPotentialChecks) * 100 : 0;
-    
     const gradText = document.querySelector(".headline .gradient-text");
     if(gradText) gradText.innerText = Math.round(monthlyProgress) + "%";
 
     let streak = 0;
-    for (let d = todayIdx; d >= 0; d--) {
-        let score = 0;
-        habits.forEach(h => { if(h.days[d]) score += h.type==="positive"?1:-1; });
-        if(score > 0) streak++; else break;
-    }
-    const streakEl = document.getElementById("streakValue");
-    if(streakEl) streakEl.innerText = streak;
-    
+    for (let d = todayIdx; d >= 0; d--) { let score = 0; habits.forEach(h => { if(h.days[d]) score += h.type==="positive"?1:-1; }); if(score > 0) streak++; else break; }
+    const streakEl = document.getElementById("streakValue"); if(streakEl) streakEl.innerText = streak;
     const headerStreak = document.querySelector(".streak-info.mobile-view .streak-count");
-    if(headerStreak) {
-        headerStreak.innerHTML = `<i data-lucide="flame" class="streak-icon"></i> ${streak}`;
-        lucide.createIcons();
-    }
+    if(headerStreak) { headerStreak.innerHTML = `<i data-lucide="flame" class="streak-icon"></i> ${streak}`; lucide.createIcons(); }
 
     const scoreEl = document.getElementById("todaySummary");
-    let todayNet = 0;
-    habits.forEach(h => { if(h.days[todayIdx]) todayNet += h.type==="positive"?1:-1; });
+    let todayNet = 0; habits.forEach(h => { if(h.days[todayIdx]) todayNet += h.type==="positive"?1:-1; });
     if(scoreEl) scoreEl.innerText = `${todayNet>0?"+":""}${todayNet} Net Score`;
     
     const heatGrid = document.getElementById("streakHeatmap");
     if(heatGrid) {
         heatGrid.innerHTML = "";
         for(let i=0; i<14; i++) {
-            const dIdx = todayIdx - 13 + i;
-            const div = document.createElement("div"); div.className="heat-box";
+            const dIdx = todayIdx - 13 + i; const div = document.createElement("div"); div.className="heat-box";
             if(dIdx >= 0) {
                 let s=0; habits.forEach(h => { if(h.days[dIdx]) s+= h.type==="positive"?1:-1; });
-                if(s>0) {
-                    const inten = s/habits.length;
-                    if(inten<0.4) div.classList.add("active-low");
-                    else if(inten<0.8) div.classList.add("active-med");
-                    else div.classList.add("active-high");
-                }
+                if(s>0) { const inten = s/habits.length; if(inten<0.4) div.classList.add("active-low"); else if(inten<0.8) div.classList.add("active-med"); else div.classList.add("active-high"); }
             }
             heatGrid.appendChild(div);
         }
     }
-    
     const footerC = document.querySelector(".counter");
     if(footerC) {
         const slipT = negTotal > 0 ? `<span style="opacity:0.3; margin:0 6px">|</span> <span style="color:#ef4444">${todaySlips}/${negTotal}</span> slips` : ``;
@@ -666,104 +565,59 @@ function setRing(id, pct) {
   const path = document.getElementById(id.replace("ring-", "path-"));
   const text = document.getElementById(id.replace("ring-", "") + "Pct");
   if(!path) return;
-  const r = path.getAttribute("r");
-  const circ = 2 * Math.PI * r;
-  path.style.strokeDasharray = `${circ} ${circ}`;
-  path.style.strokeDashoffset = circ - (pct / 100) * circ;
+  const r = path.getAttribute("r"); const circ = 2 * Math.PI * r;
+  path.style.strokeDasharray = `${circ} ${circ}`; path.style.strokeDashoffset = circ - (pct / 100) * circ;
   text.textContent = Math.round(pct) + "%";
 }
 
-/* =========================================================
-   8. MOBILE LAYOUT MANAGER (IDEMPOTENT FIX)
-========================================================= */
 function handleMobileLayout() {
   const isMobile = window.innerWidth <= 768;
   const streakInfo = document.querySelector(".streak-info");
   const quote = document.getElementById("dailyQuote");
   const heatmap = document.getElementById("streakHeatmap");
-  
   const header = document.querySelector(".top");
   const graphSection = document.querySelector(".today-focus");
   const analyticsSection = document.querySelector(".analytics");
   const streakWidget = document.querySelector(".streak-widget");
-
   let ringsWrapper = document.getElementById("mobileRingsWrapper");
-  if (!ringsWrapper) {
-    ringsWrapper = document.createElement("div");
-    ringsWrapper.id = "mobileRingsWrapper";
-    ringsWrapper.className = "rings-container-mobile";
-  }
+  if (!ringsWrapper) { ringsWrapper = document.createElement("div"); ringsWrapper.id = "mobileRingsWrapper"; ringsWrapper.className = "rings-container-mobile"; }
 
-  // Idempotent Check: Only move if parent is wrong
   if (isMobile) {
-    if (streakInfo && streakInfo.parentElement !== header) { 
-        header.appendChild(streakInfo); 
-        streakInfo.classList.add("mobile-view"); 
-    }
-    if (quote && quote.previousElementSibling !== graphSection) { 
-        if(graphSection && graphSection.parentNode) {
-            graphSection.parentNode.insertBefore(quote, graphSection.nextSibling); 
-            quote.classList.add("mobile-view");
-        }
-    }
+    if (streakInfo && streakInfo.parentElement !== header) { header.appendChild(streakInfo); streakInfo.classList.add("mobile-view"); }
+    if (quote && quote.previousElementSibling !== graphSection) { if(graphSection && graphSection.parentNode) { graphSection.parentNode.insertBefore(quote, graphSection.nextSibling); quote.classList.add("mobile-view"); } }
     const rings = document.querySelectorAll(".ring-block");
     rings.forEach(ring => { if(ring.parentElement !== ringsWrapper) ringsWrapper.appendChild(ring); });
-    
-    if (ringsWrapper.parentElement !== analyticsSection) {
-        if(analyticsSection) analyticsSection.insertBefore(ringsWrapper, analyticsSection.firstChild);
-    }
-    
-    if (heatmap && heatmap.parentElement !== analyticsSection) { 
-        if(analyticsSection) analyticsSection.appendChild(heatmap); 
-        heatmap.classList.add("mobile-view"); 
-    }
+    if (ringsWrapper.parentElement !== analyticsSection) { if(analyticsSection) analyticsSection.insertBefore(ringsWrapper, analyticsSection.firstChild); }
+    if (heatmap && heatmap.parentElement !== analyticsSection) { if(analyticsSection) analyticsSection.appendChild(heatmap); heatmap.classList.add("mobile-view"); }
   } else {
-    // Desktop Revert
     if (streakWidget) {
-      if (streakInfo && streakInfo.parentElement !== streakWidget) { 
-          streakInfo.classList.remove("mobile-view"); 
-          streakWidget.insertBefore(streakInfo, streakWidget.firstChild); 
-      }
-      if (quote && quote.parentElement !== streakWidget) { 
-          quote.classList.remove("mobile-view"); 
-          streakWidget.insertBefore(quote, streakWidget.children[1]); 
-      }
-      if (heatmap && heatmap.parentElement !== streakWidget) { 
-          heatmap.classList.remove("mobile-view"); 
-          streakWidget.appendChild(heatmap); 
-      }
+      if (streakInfo && streakInfo.parentElement !== streakWidget) { streakInfo.classList.remove("mobile-view"); streakWidget.insertBefore(streakInfo, streakWidget.firstChild); }
+      if (quote && quote.parentElement !== streakWidget) { quote.classList.remove("mobile-view"); streakWidget.insertBefore(quote, streakWidget.children[1]); }
+      if (heatmap && heatmap.parentElement !== streakWidget) { heatmap.classList.remove("mobile-view"); streakWidget.appendChild(heatmap); }
       const rings = document.querySelectorAll(".ring-block");
-      rings.forEach(ring => {
-          if(ring.parentElement !== analyticsSection) analyticsSection.insertBefore(ring, streakWidget);
-      });
+      rings.forEach(ring => { if(ring.parentElement !== analyticsSection) analyticsSection.insertBefore(ring, streakWidget); });
       if (ringsWrapper.parentElement) ringsWrapper.remove();
     }
   }
 }
 
 // INIT
-makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { 
-    currentMonth = m; 
-    needsScrollToToday = true; 
-    loadHabits(); 
-    update(); 
-}, null);
+makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { currentMonth = m; needsScrollToToday = true; loadHabits(); update(); }, null);
 
 document.getElementById("addHabit").onclick = () => {
+  // Logic to trigger animation on next render
+  lastAddedHabitIndex = habits.length; 
   habits.push({ name: "New Habit", type: "positive", weight: 2, goal: 28, days: Array(getDays(yearInput.value, currentMonth)).fill(false) });
-  save(); update();
+  save(); 
+  update();
 };
 
 document.addEventListener("click", () => closeAllDropdowns());
 window.addEventListener("resize", debounce(() => { renderGraph(); handleMobileLayout(); }, 100));
 yearInput.addEventListener("input", () => { loadHabits(); update(); });
 
-function update() {
-  renderHeader(); renderHabits(); updateStats(); renderGraph(); handleMobileLayout(); lucide.createIcons();
-}
-
+function update() { renderHeader(); renderHabits(); updateStats(); renderGraph(); handleMobileLayout(); lucide.createIcons(); }
 loadHabits(); update();
 
 const quotes = ["Consistency is key.", "Focus on the process.", "Small wins matter.", "Day one or one day.", "Keep showing up.", "Progress, not perfection."];
-const qEl = document.getElementById("dailyQuote");
-if(qEl) qEl.innerText = quotes[Math.floor(Math.random()*quotes.length)];
+const qEl = document.getElementById("dailyQuote"); if(qEl) qEl.innerText = quotes[Math.floor(Math.random()*quotes.length)];
