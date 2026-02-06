@@ -1,7 +1,6 @@
 /* =========================================================
    1. UTILS & SETUP
 ========================================================= */
-
 const monthNames = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December"
@@ -32,36 +31,37 @@ let needsScrollToToday = true;
 /* =========================================================
    2. DATA PERSISTENCE
 ========================================================= */
-
 const loadHabits = () => {
   const y = parseInt(yearInput.value) || NOW.getFullYear();
   const key = storageKey(y, currentMonth);
   const stored = localStorage.getItem(key);
 
   if (stored) {
-    habits = JSON.parse(stored);
+    try {
+        habits = JSON.parse(stored);
+    } catch(e) { habits = []; }
   } else {
+    // Attempt carry-over
     habits = [];
     let checkY = y;
     let checkM = currentMonth;
     for (let i = 0; i < 12; i++) {
       checkM--;
-      if (checkM < 0) {
-        checkM = 11;
-        checkY--;
-      }
+      if (checkM < 0) { checkM = 11; checkY--; }
       const prevKey = storageKey(checkY, checkM);
       const prevData = localStorage.getItem(prevKey);
       if (prevData) {
-        const parsedPrev = JSON.parse(prevData);
-        habits = parsedPrev.map((h) => ({
-          name: h.name,
-          type: h.type || "positive",
-          weight: h.weight || 2,
-          goal: h.goal || 28,
-          days: [],
-        }));
-        break;
+        try {
+            const parsedPrev = JSON.parse(prevData);
+            habits = parsedPrev.map((h) => ({
+              name: h.name,
+              type: h.type || "positive",
+              weight: h.weight || 2,
+              goal: h.goal || 28,
+              days: [],
+            }));
+            break;
+        } catch(e) { continue; }
       }
     }
   }
@@ -74,44 +74,60 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. DROPDOWN UTILS (Defined before usage)
+   3. DROPDOWN UTILS (With Animation)
 ========================================================= */
-
 function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   el.innerHTML = ""; el.style.position = "relative";
   const btn = document.createElement("div");
   btn.className = "dropdown-button"; btn.tabIndex = 0;
   btn.innerHTML = options[selectedIndex]?.label || "Select";
+  
   const menu = document.createElement("div");
-  menu.className = "dropdown-menu"; menu.style.display = "none";
+  menu.className = "dropdown-menu"; 
 
   options.forEach((opt) => {
     const item = document.createElement("div");
-    item.className = "dropdown-item"; item.innerHTML = opt.label;
-    item.onclick = (e) => { e.stopPropagation(); btn.innerHTML = opt.label; menu.style.display = "none"; onChange(opt.value); };
+    item.className = "dropdown-item"; 
+    item.innerHTML = opt.label;
+    item.onclick = (e) => { 
+        e.stopPropagation(); 
+        btn.innerHTML = opt.label; 
+        closeAllDropdowns();
+        onChange(opt.value); 
+    };
     menu.appendChild(item);
   });
 
   const toggleMenu = (e) => {
     e.stopPropagation();
-    document.querySelectorAll(".dropdown-menu").forEach((m) => { if (m !== menu) m.style.display = "none"; });
-    const isClosed = menu.style.display === "none";
-    if (isClosed) {
-      menu.style.display = "block";
+    const isOpen = menu.classList.contains("open");
+    closeAllDropdowns(); // Close others first
+    
+    if (!isOpen) {
+      menu.classList.add("open");
+      
+      // Position logic
       let openUp = fixedSide === "up";
       if (!fixedSide && window.innerHeight - btn.getBoundingClientRect().bottom < 200) openUp = true;
-      if (openUp) { menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)"; menu.style.transformOrigin = "bottom left"; }
-      else { menu.style.top = "calc(100% + 8px)"; menu.style.bottom = "auto"; menu.style.transformOrigin = "top left"; }
-    } else { menu.style.display = "none"; }
+      
+      if (openUp) { 
+          menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)"; menu.style.transformOrigin = "bottom left"; 
+      } else { 
+          menu.style.top = "calc(100% + 8px)"; menu.style.bottom = "auto"; menu.style.transformOrigin = "top left"; 
+      }
+    }
   };
   btn.onclick = toggleMenu;
   el.appendChild(btn); el.appendChild(menu);
 }
 
+function closeAllDropdowns() {
+    document.querySelectorAll(".dropdown-menu").forEach((m) => m.classList.remove("open"));
+}
+
 /* =========================================================
    4. RENDER LOGIC
 ========================================================= */
-
 function renderHeader() {
   const dayHeader = document.getElementById("dayHeader");
   const y = parseInt(yearInput.value) || NOW.getFullYear();
@@ -135,7 +151,7 @@ function renderHeader() {
   settingsBtn.onclick = (e) => {
     e.stopPropagation();
     isEditMode = !isEditMode;
-    update();
+    update(); // Full re-render for column structure changes
   };
 
   const labelSpan = document.createElement("span");
@@ -149,6 +165,7 @@ function renderHeader() {
     ["Type", "Imp", "Goal"].forEach((t) => {
       const th = document.createElement("th");
       th.textContent = t;
+      th.classList.add("animate-enter"); // Add animation
       dayHeader.appendChild(th);
     });
   }
@@ -176,6 +193,7 @@ function renderHabits() {
   const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
   habits.forEach((h, i) => {
+    // Ensure days array matches month length
     if (!h.days || h.days.length !== days) {
       const newDays = Array(days).fill(false);
       if (h.days) h.days.forEach((val, idx) => { if (idx < days) newDays[idx] = val; });
@@ -183,9 +201,11 @@ function renderHabits() {
     }
 
     const tr = document.createElement("tr");
+    
+    // NAME (Fixed XSS Vulnerability using textContent)
     const nameTd = document.createElement("td");
     nameTd.contentEditable = isEditMode;
-    nameTd.textContent = h.name;
+    nameTd.textContent = h.name; 
     nameTd.style.cursor = isEditMode ? "text" : "default";
     nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
     tr.appendChild(nameTd);
@@ -194,37 +214,37 @@ function renderHabits() {
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
+      // Type Dropdown
       const typeTd = document.createElement("td");
-      const tDD = document.createElement("div");
-      tDD.className = "dropdown";
+      typeTd.classList.add("animate-enter");
+      const tDD = document.createElement("div"); tDD.className = "dropdown";
       makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir);
       const typeBtn = tDD.querySelector(".dropdown-button");
       if (h.type === "positive") typeBtn.classList.add("badge-pos"); else typeBtn.classList.add("badge-neg");
-      typeTd.appendChild(tDD);
-      tr.appendChild(typeTd);
+      typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
+      // Importance Dropdown
       const impTd = document.createElement("td");
-      const iDD = document.createElement("div");
-      iDD.className = "dropdown";
+      impTd.classList.add("animate-enter");
+      const iDD = document.createElement("div"); iDD.className = "dropdown";
       makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir);
       const impBtn = iDD.querySelector(".dropdown-button");
       const w = h.weight || 2;
       if (w === 1) impBtn.classList.add("badge-imp-low");
       if (w === 2) impBtn.classList.add("badge-imp-med");
       if (w === 3) impBtn.classList.add("badge-imp-high");
-      impTd.appendChild(iDD);
-      tr.appendChild(impTd);
+      impTd.appendChild(iDD); tr.appendChild(impTd);
 
+      // Goal Input
       const goalTd = document.createElement("td");
+      goalTd.classList.add("animate-enter");
       const gIn = document.createElement("input");
-      gIn.type = "number";
-      gIn.className = "goal-input";
-      gIn.value = h.goal || 28;
+      gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
       gIn.oninput = (e) => { h.goal = +e.target.value; debouncedSave(); updateStats(); if (!isEditMode) updateProgress(tr, h); };
-      goalTd.appendChild(gIn);
-      tr.appendChild(goalTd);
+      goalTd.appendChild(gIn); tr.appendChild(goalTd);
     }
 
+    // Days Checkboxes
     for (let d = 0; d < days; d++) {
       const td = document.createElement("td");
       const isToday = isThisMonth && d + 1 === today;
@@ -242,12 +262,13 @@ function renderHabits() {
           save(); 
           updateStats(); 
           if (!isEditMode) updateProgress(tr, h); 
-          renderGraph(); 
+          renderGraph(false); // Pass false to indicate update, not init
       };
       td.appendChild(cb);
       tr.appendChild(td);
     }
 
+    // End Actions / Progress
     const endTd = document.createElement("td");
     if (isEditMode) {
       const actionWrap = document.createElement("div");
@@ -292,7 +313,6 @@ function updateProgress(tr, h) {
 /* =========================================================
    5. AUTO-SCROLL TO TODAY
 ========================================================= */
-
 function scrollToToday() {
     if (!needsScrollToToday) return;
 
@@ -318,14 +338,9 @@ function scrollToToday() {
 }
 
 /* =========================================================
-   6. GRAPH RENDERING & ANIMATION
+   6. GRAPH RENDERING & ANIMATION (SYNC FIX)
 ========================================================= */
-
-/* =========================================================
-   GRAPH RENDERING & ANIMATION (SYNC FIX)
-========================================================= */
-
-function renderGraph() {
+function renderGraph(isFullRebuild = true) {
   const svg = document.getElementById("activityGraph");
   if (!svg) return;
 
@@ -362,7 +377,6 @@ function renderGraph() {
     container.appendChild(tooltip);
   }
 
-  // ZOOM FIX: Use getBoundingClientRect for precise decimal width
   const width = container.getBoundingClientRect().width || 600;
   const height = 150;
 
@@ -382,13 +396,7 @@ function renderGraph() {
   const mapY = (val) => graphHeight - val * pxPerUnit;
 
   const points = dataPoints.map((d, i) => ({
-    x: xPositions[i],
-    y: mapY(d.score),
-    val: d.score,
-    pos: d.pos,
-    neg: d.neg,
-    day: i + 1,
-    index: i
+    x: xPositions[i], y: mapY(d.score), val: d.score, pos: d.pos, neg: d.neg, day: i + 1, index: i
   }));
 
   if (points.length < 2) return;
@@ -408,8 +416,8 @@ function renderGraph() {
   // DRAW / UPDATE
   const existingPath = svg.querySelector('.graph-path');
   
-  if (!existingPath) {
-      // FIRST RENDER
+  if (!existingPath || isFullRebuild) {
+      // FIRST RENDER OR FULL REBUILD
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.style.width = "100%";
       svg.innerHTML = `
@@ -428,42 +436,39 @@ function renderGraph() {
       `;
       initGraphEvents(svg, tooltip);
   } else {
-      // UPDATE ANIMATION
-      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      // SMART UPDATE - Smooth Transition
       existingPath.setAttribute('d', dPath);
       svg.querySelector('.graph-area').setAttribute('d', dArea);
       const overlay = svg.querySelector('.graph-overlay');
       if(overlay) overlay.setAttribute('width', width);
   }
 
-  // UPDATE DOTS (Using cx/cy for perfect sync with d-path)
+  // UPDATE DOTS EFFICIENTLY
   const dotsGroup = svg.getElementById('dotsGroup');
   const existingDots = dotsGroup.querySelectorAll('.graph-dot');
   
-  // Rebuild if length changed (month switch)
-  if (existingDots.length !== 0 && existingDots.length !== totalDaysInMonth) {
+  // Only rebuild DOM if dot count mismatches (e.g. month change)
+  if (existingDots.length !== totalDaysInMonth) {
       dotsGroup.innerHTML = ''; 
-  }
-
-  points.forEach((p, i) => {
-      let dot = dotsGroup.children[i];
-      if (i <= maxDotIndex) {
-          if (!dot) {
-              dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-              dot.setAttribute("class", "graph-dot");
-              dot.setAttribute("r", "3");
-              dotsGroup.appendChild(dot);
-          }
-          // FIX: Set cx/cy attributes. CSS transition handles the smoothing.
+      points.forEach((p, i) => {
+          const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          dot.setAttribute("class", "graph-dot");
+          dot.setAttribute("r", "3");
           dot.setAttribute("cx", p.x);
           dot.setAttribute("cy", p.y);
-          dot.style.display = "block";
-          // Ensure no transform interference
-          dot.style.transform = "none";
-      } else {
-          if (dot) dot.style.display = "none";
-      }
-  });
+          if (i > maxDotIndex) dot.style.display = "none";
+          dotsGroup.appendChild(dot);
+      });
+  } else {
+      // Update existing dots (Triggers CSS Transition)
+      points.forEach((p, i) => {
+          const dot = existingDots[i];
+          dot.setAttribute("cx", p.x);
+          dot.setAttribute("cy", p.y);
+          if (i > maxDotIndex) dot.style.display = "none";
+          else dot.style.display = "block";
+      });
+  }
   
   svg._dataPoints = points;
   svg._maxDotIndex = maxDotIndex;
@@ -488,7 +493,8 @@ function initGraphEvents(svg, tooltip) {
         }
 
         if (closest) {
-            if (relY < closest.y - 10) { handleLeave(); return; }
+            // Un-hover if cursor is too far vertically
+            if (Math.abs(relY - closest.y) > 50 && !isPinned) { handleLeave(); return; }
 
             activeDot.setAttribute("cx", closest.x);
             activeDot.setAttribute("cy", closest.y);
@@ -508,7 +514,7 @@ function initGraphEvents(svg, tooltip) {
             tooltip.style.opacity = "1";
             const tipWidth = tooltip.offsetWidth || 100;
             const tipHeight = tooltip.offsetHeight || 60;
-            const width = svg.parentElement.offsetWidth; // Get real width for clamping
+            const width = svg.parentElement.offsetWidth; 
             
             let leftPos = closest.x - (tipWidth / 2);
             if (leftPos < 10) leftPos = 10;
@@ -523,7 +529,7 @@ function initGraphEvents(svg, tooltip) {
     };
 
     const handleMove = (e) => {
-        isPinned = false;
+        if (isPinned) return;
         const rect = svg.getBoundingClientRect();
         let clientX = e.clientX;
         let clientY = e.clientY;
@@ -536,12 +542,12 @@ function initGraphEvents(svg, tooltip) {
 
     const handleClick = (e) => {
         e.preventDefault();
-        const rect = svg.getBoundingClientRect();
-        let clientX = e.clientX;
-        let clientY = e.clientY;
-        if (e.type === 'touchend') { isPinned = true; return; }
-        updateView(clientX - rect.left, clientY - rect.top);
-        isPinned = true; 
+        isPinned = !isPinned; // Toggle pin
+        if (!isPinned) handleLeave();
+        else {
+             const rect = svg.getBoundingClientRect();
+             updateView(e.clientX - rect.left, e.clientY - rect.top);
+        }
     };
 
     const handleLeave = () => {
@@ -554,14 +560,12 @@ function initGraphEvents(svg, tooltip) {
     overlay.addEventListener("mousemove", handleMove);
     overlay.addEventListener("touchmove", handleMove, { passive: false });
     overlay.addEventListener("click", handleClick);
-    overlay.addEventListener("touchend", handleClick);
     overlay.addEventListener("mouseleave", handleLeave);
 }
 
 /* =========================================================
    7. UPDATES & INIT
 ========================================================= */
-
 function updateStats() {
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
@@ -574,7 +578,6 @@ function updateStats() {
         const w = Number(h.weight) || 2;
         const daysPassed = todayIdx + 1;
         
-        // Count total checks for monthly progress
         const checks = h.days.slice(0, daysPassed).filter(Boolean).length;
         if (h.type === "positive") {
             earnedSoFar += (checks/daysPassed)*w;
@@ -582,8 +585,6 @@ function updateStats() {
         } else {
             const slips = h.days.slice(0, daysPassed).filter(Boolean).length;
             earnedSoFar += ((daysPassed-slips)/daysPassed)*w;
-            // For negative habits, "done" implies avoiding them, but for strict check count:
-            // logic depends on user preference. Assuming checkboxes measure success.
         }
         totalPossibleSoFar += w;
         
@@ -609,11 +610,9 @@ function updateStats() {
     setRing("ring-normalized", todayPerf);
     setRing("ring-momentum", momPct);
     
-    // FIXED: Monthly Progress Text
     const totalPotentialChecks = (todayIdx + 1) * habits.length;
     const monthlyProgress = totalPotentialChecks > 0 ? (totalHabitsDone / totalPotentialChecks) * 100 : 0;
     
-    // Target the big gradient text
     const gradText = document.querySelector(".headline .gradient-text");
     if(gradText) gradText.innerText = Math.round(monthlyProgress) + "%";
 
@@ -674,11 +673,15 @@ function setRing(id, pct) {
   text.textContent = Math.round(pct) + "%";
 }
 
+/* =========================================================
+   8. MOBILE LAYOUT MANAGER (IDEMPOTENT FIX)
+========================================================= */
 function handleMobileLayout() {
   const isMobile = window.innerWidth <= 768;
   const streakInfo = document.querySelector(".streak-info");
   const quote = document.getElementById("dailyQuote");
   const heatmap = document.getElementById("streakHeatmap");
+  
   const header = document.querySelector(".top");
   const graphSection = document.querySelector(".today-focus");
   const analyticsSection = document.querySelector(".analytics");
@@ -691,20 +694,48 @@ function handleMobileLayout() {
     ringsWrapper.className = "rings-container-mobile";
   }
 
+  // Idempotent Check: Only move if parent is wrong
   if (isMobile) {
-    if (streakInfo && streakInfo.parentElement !== header) { header.appendChild(streakInfo); streakInfo.classList.add("mobile-view"); }
-    if (quote && quote.previousElementSibling !== graphSection) { graphSection.parentNode.insertBefore(quote, graphSection.nextSibling); quote.classList.add("mobile-view"); }
+    if (streakInfo && streakInfo.parentElement !== header) { 
+        header.appendChild(streakInfo); 
+        streakInfo.classList.add("mobile-view"); 
+    }
+    if (quote && quote.previousElementSibling !== graphSection) { 
+        if(graphSection && graphSection.parentNode) {
+            graphSection.parentNode.insertBefore(quote, graphSection.nextSibling); 
+            quote.classList.add("mobile-view");
+        }
+    }
     const rings = document.querySelectorAll(".ring-block");
-    rings.forEach(ring => ringsWrapper.appendChild(ring));
-    if (ringsWrapper.parentElement !== analyticsSection) analyticsSection.insertBefore(ringsWrapper, analyticsSection.firstChild);
-    if (heatmap && heatmap.parentElement !== analyticsSection) { analyticsSection.appendChild(heatmap); heatmap.classList.add("mobile-view"); }
+    rings.forEach(ring => { if(ring.parentElement !== ringsWrapper) ringsWrapper.appendChild(ring); });
+    
+    if (ringsWrapper.parentElement !== analyticsSection) {
+        if(analyticsSection) analyticsSection.insertBefore(ringsWrapper, analyticsSection.firstChild);
+    }
+    
+    if (heatmap && heatmap.parentElement !== analyticsSection) { 
+        if(analyticsSection) analyticsSection.appendChild(heatmap); 
+        heatmap.classList.add("mobile-view"); 
+    }
   } else {
+    // Desktop Revert
     if (streakWidget) {
-      if (streakInfo && streakInfo.parentElement !== streakWidget) { streakInfo.classList.remove("mobile-view"); streakWidget.insertBefore(streakInfo, streakWidget.firstChild); }
-      if (quote && quote.parentElement !== streakWidget) { quote.classList.remove("mobile-view"); streakWidget.insertBefore(quote, streakWidget.children[1]); }
-      if (heatmap && heatmap.parentElement !== streakWidget) { heatmap.classList.remove("mobile-view"); streakWidget.appendChild(heatmap); }
+      if (streakInfo && streakInfo.parentElement !== streakWidget) { 
+          streakInfo.classList.remove("mobile-view"); 
+          streakWidget.insertBefore(streakInfo, streakWidget.firstChild); 
+      }
+      if (quote && quote.parentElement !== streakWidget) { 
+          quote.classList.remove("mobile-view"); 
+          streakWidget.insertBefore(quote, streakWidget.children[1]); 
+      }
+      if (heatmap && heatmap.parentElement !== streakWidget) { 
+          heatmap.classList.remove("mobile-view"); 
+          streakWidget.appendChild(heatmap); 
+      }
       const rings = document.querySelectorAll(".ring-block");
-      rings.forEach(ring => analyticsSection.insertBefore(ring, streakWidget));
+      rings.forEach(ring => {
+          if(ring.parentElement !== analyticsSection) analyticsSection.insertBefore(ring, streakWidget);
+      });
       if (ringsWrapper.parentElement) ringsWrapper.remove();
     }
   }
@@ -723,7 +754,7 @@ document.getElementById("addHabit").onclick = () => {
   save(); update();
 };
 
-document.addEventListener("click", () => document.querySelectorAll(".dropdown-menu").forEach((m) => (m.style.display = "none")));
+document.addEventListener("click", () => closeAllDropdowns());
 window.addEventListener("resize", debounce(() => { renderGraph(); handleMobileLayout(); }, 100));
 yearInput.addEventListener("input", () => { loadHabits(); update(); });
 

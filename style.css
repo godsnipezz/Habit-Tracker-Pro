@@ -1,7 +1,6 @@
 /* =========================================================
    1. CORE THEME & LAYOUT
 ========================================================= */
-
 :root {
   --bg: #0b0b0b;
   --surface: rgba(255, 255, 255, 0.05);
@@ -15,23 +14,15 @@
   --radius: 24px;
 }
 
-html {
-  font-size: 13px;
-}
+html { font-size: 13px; }
 
 * {
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
 }
 
-*:focus {
-  outline: none !important;
-}
-
-*:focus-visible {
-  outline: 1px solid var(--muted);
-  outline-offset: 2px;
-}
+*:focus { outline: none !important; }
+*:focus-visible { outline: 1px solid var(--muted); outline-offset: 2px; }
 
 td[contenteditable]:focus {
   background: rgba(255, 255, 255, 0.1);
@@ -40,23 +31,10 @@ td[contenteditable]:focus {
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 
 body {
   margin: 0;
@@ -74,15 +52,25 @@ body {
   padding: 20px;
 }
 
+/* Animations Helper Classes */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-enter {
+  animation: fadeInScale 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 /* =========================================================
    2. HEADER & INPUTS
 ========================================================= */
-
 .top {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 24px;
+  transition: all 0.3s ease; /* Smooth height adjustments */
 }
 
 .date-picker {
@@ -104,7 +92,7 @@ body {
   font-weight: 600;
   outline: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
@@ -120,11 +108,7 @@ body {
   appearance: textfield;
   display: block;
 }
-
-.date-picker input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+.date-picker input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 .date-picker input[type="number"]:hover,
 .dropdown-button:hover {
@@ -164,11 +148,7 @@ body {
   margin-bottom: 2px;
 }
 
-.headline-icon {
-  width: 16px;
-  height: 16px;
-  stroke-width: 3px;
-}
+.headline-icon { width: 16px; height: 16px; stroke-width: 3px; }
 
 .gradient-text {
   font-size: 52px;
@@ -182,6 +162,7 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: #fff;
+  transition: opacity 0.3s ease;
 }
 
 .headline .sub {
@@ -192,9 +173,8 @@ body {
 }
 
 /* =========================================================
-   3. DROPDOWNS
+   3. DROPDOWNS (IMPROVED TRANSITIONS)
 ========================================================= */
-
 .dropdown {
   position: relative;
   display: inline-block;
@@ -211,6 +191,23 @@ body {
   min-width: 130px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  
+  /* FLUID TRANSITION FIX */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.98);
+  transition: 
+    opacity 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+    transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1),
+    visibility 0.2s;
+  pointer-events: none;
+}
+
+.dropdown-menu.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 .dropdown-item {
@@ -229,7 +226,6 @@ body {
 /* =========================================================
    4. ANALYTICS & WIDGETS
 ========================================================= */
-
 .analytics {
   display: flex;
   margin-bottom: 24px;
@@ -254,12 +250,7 @@ body {
   align-items: center;
   justify-content: center;
 }
-
-.ring svg {
-  transform: rotate(-90deg);
-  width: 100%;
-  height: 100%;
-}
+.ring svg { transform: rotate(-90deg); width: 100%; height: 100%; }
 
 .ring-bg {
   fill: none;
@@ -271,21 +262,12 @@ body {
   fill: none;
   stroke-width: 5;
   stroke-linecap: round;
-  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy effect */
   filter: drop-shadow(0 0 3px rgba(99, 230, 164, 0.4));
 }
 
-.ring span {
-  position: absolute;
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.ring-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-}
+.ring span { position: absolute; font-weight: 700; font-size: 13px; }
+.ring-label { font-size: 12px; font-weight: 600; color: #fff; }
 
 /* STREAK & HEATMAP WIDGET */
 .streak-widget {
@@ -310,18 +292,9 @@ body {
   flex: 1;
   animation: fadeIn 0.8s ease forwards;
 }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 0.8; transform: translateY(0); } }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 0.8; transform: translateY(0); }
-}
-
-.streak-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
+.streak-info { display: flex; flex-direction: column; justify-content: center; transition: opacity 0.3s ease; }
 .streak-count {
   display: flex;
   align-items: center;
@@ -333,27 +306,15 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-.streak-icon {
-  color: var(--orange);
-  fill: rgba(251, 146, 60, 0.2);
-  width: 20px;
-  height: 20px;
-}
-
-.streak-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-top: 4px;
-}
+.streak-icon { color: var(--orange); fill: rgba(251, 146, 60, 0.2); width: 20px; height: 20px; }
+.streak-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
 
 .heatmap-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   grid-template-rows: repeat(2, 1fr);
   gap: 6px;
+  transition: opacity 0.3s ease;
 }
 
 .heat-box {
@@ -361,17 +322,15 @@ body {
   height: 12px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.06);
-  transition: all 0.2s ease;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
 }
-
 .heat-box.active-low { background: rgba(99, 230, 164, 0.3); }
 .heat-box.active-med { background: rgba(99, 230, 164, 0.6); }
 .heat-box.active-high { background: var(--green); box-shadow: 0 0 4px rgba(99, 230, 164, 0.4); }
 
 /* =========================================================
-   5. GRAPH & INTERACTION
+   5. GRAPH & INTERACTION (FLUIDITY FIXES)
 ========================================================= */
-
 .today-focus {
   background: var(--surface);
   backdrop-filter: blur(20px);
@@ -396,12 +355,7 @@ body {
   z-index: 2;
 }
 
-.today-header-title {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
+.today-header-title { display: flex; gap: 10px; align-items: center; }
 .today-header-title h2 { margin: 0; font-size: 18px; }
 
 .graph-summary {
@@ -439,8 +393,6 @@ svg#activityGraph {
   stroke-linecap: round;
   stroke-linejoin: round;
   filter: drop-shadow(0 4px 6px rgba(99, 230, 164, 0.2));
-  
-  /* Animate the path shape */
   transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -448,46 +400,37 @@ svg#activityGraph {
   fill: url(#gradient-area);
   opacity: 0.2;
   stroke: none;
-  
-  /* Animate the area shape (Must match graph-path exactly) */
   transition: d 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 2. THE DOTS */
 .graph-dot {
   fill: #0b0b0b;
   stroke: var(--green);
   stroke-width: 2px;
   r: 3px;
-  
-  /* FIX: Animate cx and cy attributes directly. */
+  /* Sync with path animation */
   transition: cx 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
               cy 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
               r 0.2s ease, 
               fill 0.2s ease;
 }
+.graph-dot:hover { r: 5px; stroke-width: 3px; fill: var(--green); }
 
-.graph-dot:hover {
-  r: 5px;
-  stroke-width: 3px;
-  fill: var(--green);
-}
-
-/* 3. THE ACTIVE INDICATOR */
+/* FIXED: Spring Physics for Active Dot (No more robot motion) */
 #activeDot {
   fill: var(--green);
   stroke: #fff;
   stroke-width: 3px;
   filter: drop-shadow(0 0 5px var(--green));
   pointer-events: none;
-  
-  /* Snappy but smooth movement for the interaction cursor */
-  transition: cx 0.1s linear, cy 0.1s linear, r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: 
+    cx 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), /* Spring */
+    cy 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+    r 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity 0.1s;
+  opacity: 0; /* Hidden by default */
 }
-
-#activeDot.is-active {
-  r: 6px;
-}
+#activeDot.is-active { r: 6px; opacity: 1; }
 
 .graph-overlay {
   fill: transparent;
@@ -496,32 +439,25 @@ svg#activityGraph {
   z-index: 50; 
 }
 
-/* --- TOOLTIP STYLES --- */
-
+/* TOOLTIP STYLES - FADE IN/OUT */
 .graph-tooltip {
   position: absolute;
-  top: 0;
-  left: 0;
-  
+  top: 0; left: 0;
   background: rgba(10, 10, 10, 0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
   border-radius: 10px;
-  
   padding: 10px 14px;
   pointer-events: none;
-  
   opacity: 0;
-  transition: opacity 0.1s ease, top 0.1s, left 0.1s;
+  /* Smooth follow */
+  transition: opacity 0.2s ease, top 0.1s linear, left 0.1s linear; 
   z-index: 999;
-  
   text-align: center;
   white-space: nowrap;
 }
-
 .tooltip-date {
   font-size: 10px;
   color: var(--muted);
@@ -531,26 +467,12 @@ svg#activityGraph {
   display: block;
   margin-bottom: 4px;
 }
-
-.tooltip-stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.stat-item {
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
+.tooltip-stats { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.stat-item { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 3px; }
 
 /* =========================================================
    6. TABLE & LAYOUT
 ========================================================= */
-
 .habits {
   background: var(--surface);
   backdrop-filter: blur(20px);
@@ -559,14 +481,10 @@ svg#activityGraph {
   border-radius: var(--radius);
   padding: 24px 32px;
   margin-bottom: 20px;
+  transition: height 0.3s ease;
 }
 
-.section-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  margin-bottom: 16px;
-}
+.section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
 
 .table-wrapper {
   overflow-x: auto;
@@ -575,11 +493,7 @@ svg#activityGraph {
   margin-top: 10px;
 }
 
-table {
-  border-collapse: collapse;
-  width: 100%;
-  min-width: 800px;
-}
+table { border-collapse: collapse; width: 100%; min-width: 800px; }
 
 th, td {
   padding: 6px 4px;
@@ -589,9 +503,8 @@ th, td {
   vertical-align: middle;
 }
 
-/* SOLID STICKY COLUMNS */
-th:first-child,
-td:first-child {
+/* STICKY COLUMNS */
+th:first-child, td:first-child {
   position: sticky;
   left: 0;
   background-color: #0b0b0b !important;
@@ -606,28 +519,12 @@ td:first-child {
   text-overflow: ellipsis;
   padding-left: 12px;
 }
+tbody tr:hover td:first-child { background-color: #0b0b0b; }
 
-tbody tr:hover td:first-child {
-  background-color: #0b0b0b;
-}
+th { position: sticky; top: 0; background-color: #0b0b0b !important; z-index: 30; }
+thead th:first-child { z-index: 40; }
 
-th {
-  position: sticky;
-  top: 0;
-  background-color: #0b0b0b !important;
-  z-index: 30;
-}
-
-thead th:first-child {
-  z-index: 40;
-}
-
-.sticky-header-content {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 100%;
-}
+.sticky-header-content { display: flex; align-items: center; gap: 10px; height: 100%; }
 
 .today-col { background: rgba(99, 230, 164, 0.05) !important; }
 tbody tr:hover td { background-color: rgba(255, 255, 255, 0.03); }
@@ -653,20 +550,25 @@ button#addHabit {
   cursor: pointer;
   transition: transform 0.2s;
 }
-
 button#addHabit:hover { transform: translateY(-2px); filter: brightness(1.1); }
 
-.counter {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
+.counter { font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 #completed { color: var(--green); }
 #total { color: var(--text); }
 
-input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--green); cursor: pointer; }
+/* MOBILE HIT AREA FIX */
+td input[type="checkbox"] {
+  width: 16px; height: 16px; 
+  accent-color: var(--green); 
+  cursor: pointer;
+  position: relative;
+}
+td input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: -10px; bottom: -10px; left: -10px; right: -10px; /* Expand hit area */
+}
+
 input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 
 .progress-bar {
@@ -677,7 +579,6 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
   overflow: hidden;
   margin: 0 auto;
 }
-
 .progress-fill {
   height: 100%;
   background: linear-gradient(90deg, var(--green), var(--cyan));
@@ -698,7 +599,6 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
   width: 24px;
   height: 24px;
 }
-
 .toggle-edit-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
 .toggle-edit-btn:disabled { opacity: 0.2; cursor: default; background: transparent; }
 
@@ -719,7 +619,6 @@ td .dropdown-button {
   align-items: center;
   box-shadow: none;
 }
-
 td .dropdown-button::after { display: none; }
 td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
 
@@ -730,31 +629,18 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 .badge-imp-high { color: #f87171; background: rgba(248, 113, 113, 0.1) !important; }
 
 .goal-input {
-  height: 28px;
-  width: 60px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 0;
-  margin: 0;
-  background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  color: var(--muted) !important;
-  text-align: center;
-  transition: all 0.2s ease;
-  -moz-appearance: textfield;
-  appearance: textfield;
+  height: 28px; width: 60px; font-size: 12px; font-weight: 600; padding: 0; margin: 0;
+  background: transparent; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px;
+  color: var(--muted) !important; text-align: center; transition: all 0.2s ease;
+  -moz-appearance: textfield; appearance: textfield;
 }
-
 .goal-input:hover, .goal-input:focus { color: #fff !important; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.1); }
 .goal-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* =========================================================
-   7. MOBILE RESPONSIVENESS
+   7. MOBILE RESPONSIVENESS (FIXED)
 ========================================================= */
-
 @media (max-width: 768px) {
-  /* A. Header Adjustment for Streak */
   .top {
     flex-wrap: wrap;
     gap: 15px;
@@ -762,126 +648,55 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
     padding-top: 30px; 
   }
 
+  /* Smooth transition for mobile header items */
   .streak-info.mobile-view {
     position: absolute;
-    top: -5px;
-    left: 0;
-    width: 100%;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 8px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
+    top: -5px; left: 0; width: 100%;
+    flex-direction: row; justify-content: flex-start; align-items: center;
+    gap: 8px; padding-bottom: 10px; border-bottom: 1px solid var(--border);
+    animation: fadeIn 0.3s ease;
   }
-
   .streak-info.mobile-view .streak-count { font-size: 18px; color: var(--yellow); }
   .streak-info.mobile-view .streak-label { font-size: 12px; margin-top: 0; color: var(--muted); }
   .streak-info.mobile-view .streak-icon { width: 16px; height: 16px; }
 
-  /* B. Graph Interaction & Compact View */
-  .today-focus {
-    padding: 20px 15px;
-    height: auto;
-  }
-  
-  .graph-container {
-    width: 100%;
-    overflow: hidden;
-    padding-bottom: 0;
-    position: relative;
-  }
+  .today-focus { padding: 20px 15px; height: auto; }
+  .graph-container { width: 100%; overflow: hidden; padding-bottom: 0; position: relative; }
+  svg#activityGraph { display: block; width: 100% !important; min-width: 0 !important; max-width: 100%; overflow: visible; }
+  .graph-overlay { fill: transparent; cursor: default; touch-action: none; }
 
-  svg#activityGraph {
-    display: block;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100%;
-    overflow: visible;
-  }
-
-  .graph-overlay {
-    fill: transparent;
-    cursor: default;
-    touch-action: none; 
-  }
-
-  /* C. Quote Adjustment */
   #dailyQuote.mobile-view {
-    margin: 10px 0 20px 0;
-    text-align: center;
-    width: 100%;
-    font-style: italic;
-    color: var(--green);
-    opacity: 0.9;
-    padding: 10px;
-    background: rgba(255,255,255,0.03);
-    border-radius: 12px;
+    margin: 10px 0 20px 0; text-align: center; width: 100%;
+    font-style: italic; color: var(--green); opacity: 0.9; padding: 10px;
+    background: rgba(255,255,255,0.03); border-radius: 12px;
+    animation: fadeIn 0.3s ease;
   }
 
-  /* D. Heatmap & Rings (Mobile Fixes) */
-  .analytics {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow: visible !important;
-    padding: 10px;
-  }
-
+  .analytics { display: flex; flex-direction: column; gap: 20px; overflow: visible !important; padding: 10px; }
+  
   .rings-container-mobile {
-    display: flex;
-    justify-content: space-between; /* Fix: Spread evenly */
-    align-items: flex-start;
-    width: 100%;
-    padding: 0 10px; 
-    gap: 0;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    width: 100%; padding: 0 10px; gap: 0;
+    animation: fadeIn 0.3s ease;
   }
 
-  /* RING BLOCK FIX FOR MOBILE */
-  .ring-block {
-    flex-direction: column; /* Stack vertically */
-    gap: 8px; 
-    margin-right: 0; /* Remove right margin */
-    align-items: center;
-    flex: 1; /* Take equal width */
-  }
-  
-  .ring {
-    width: 64px; /* Slightly smaller for mobile fit */
-    height: 64px;
-  }
-  
-  .ring-label {
-    font-size: 11px;
-    text-align: center;
-  }
+  .ring-block { flex-direction: column; gap: 8px; margin-right: 0; align-items: center; flex: 1; }
+  .ring { width: 64px; height: 64px; }
+  .ring-label { font-size: 11px; text-align: center; }
 
   .heatmap-grid.mobile-view {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    background: var(--surface);
-    padding: 15px;
-    border-radius: 16px;
-    border: 1px solid var(--border);
-    margin-bottom: 10px;
+    display: flex; justify-content: center; gap: 6px;
+    background: var(--surface); padding: 15px; border-radius: 16px;
+    border: 1px solid var(--border); margin-bottom: 10px;
+    animation: fadeIn 0.3s ease;
   }
 
-  .streak-widget { display: none; }
+  .streak-widget { display: none; } /* Hide desktop widget, show mobile components */
   .heat-box { width: 16px; height: 16px; }
 
-  /* E. Cleaner Footer */
-  .footer {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-
+  .footer { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
   button#addHabit { width: auto; padding: 10px 20px; font-size: 13px; }
   .counter { font-size: 12px; text-align: right; }
   
-  th:first-child, td:first-child {
-    border-right: 1px solid var(--border); 
-  }
+  th:first-child, td:first-child { border-right: 1px solid var(--border); }
 }
