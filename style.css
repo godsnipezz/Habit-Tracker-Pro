@@ -271,7 +271,7 @@ body {
   stroke-width: 5;
   stroke-linecap: round;
   transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-  filter: drop-shadow(0 0 5px rgba(99, 230, 164, 0.6)); /* Enhanced glow */
+  filter: drop-shadow(0 0 5px rgba(99, 230, 164, 0.6));
 }
 
 .ring span {
@@ -475,11 +475,10 @@ svg#activityGraph {
   r: 6px;
 }
 
-/* Overlay needs to exist but not block other touches */
 .graph-overlay {
   fill: transparent;
   cursor: default;
-  touch-action: none; /* Prevents scroll on the graph area itself */
+  touch-action: none; 
 }
 
 /* --- TOOLTIP STYLES --- */
@@ -816,10 +815,30 @@ td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: tr
 
   .rings-container-mobile {
     display: flex;
-    justify-content: center; /* Center rings */
-    gap: 20px; 
+    justify-content: space-between; /* Fix: Spread evenly */
+    align-items: flex-start;
     width: 100%;
-    padding: 0 10px; /* Padding to prevent clipping */
+    padding: 0 10px; 
+    gap: 0;
+  }
+
+  /* RING BLOCK FIX FOR MOBILE */
+  .ring-block {
+    flex-direction: column; /* Stack vertically */
+    gap: 8px; 
+    margin-right: 0; /* Remove right margin */
+    align-items: center;
+    flex: 1; /* Take equal width */
+  }
+  
+  .ring {
+    width: 64px; /* Slightly smaller for mobile fit */
+    height: 64px;
+  }
+  
+  .ring-label {
+    font-size: 11px;
+    text-align: center;
   }
 
   .heatmap-grid.mobile-view {

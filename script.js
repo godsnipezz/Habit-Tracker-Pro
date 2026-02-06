@@ -157,7 +157,6 @@ function renderHabits() {
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
-      // Type Dropdown
       const typeTd = document.createElement("td");
       const tDD = document.createElement("div");
       tDD.className = "dropdown";
@@ -167,7 +166,6 @@ function renderHabits() {
       typeTd.appendChild(tDD);
       tr.appendChild(typeTd);
 
-      // Importance Dropdown
       const impTd = document.createElement("td");
       const iDD = document.createElement("div");
       iDD.className = "dropdown";
@@ -180,7 +178,6 @@ function renderHabits() {
       impTd.appendChild(iDD);
       tr.appendChild(impTd);
 
-      // Goal Input
       const goalTd = document.createElement("td");
       const gIn = document.createElement("input");
       gIn.type = "number";
@@ -494,10 +491,6 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
 }
 
 function updateStats() {
-    // Basic stats update logic matching your requirements
-    // (Collapsed for brevity, assuming standard logic from previous steps)
-    // Ensures rings update and "Net Score" badge updates.
-    
     const y = parseInt(yearInput.value) || NOW.getFullYear();
     const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
     const todayIdx = isThisMonth ? NOW.getDate() - 1 : habits[0]?.days.length - 1 || 0;
@@ -508,7 +501,6 @@ function updateStats() {
         const w = Number(h.weight) || 2;
         const daysPassed = todayIdx + 1;
         
-        // Efficiency
         if(h.type === "positive") {
             const checks = h.days.slice(0, daysPassed).filter(Boolean).length;
             earnedSoFar += (checks/daysPassed)*w;
@@ -518,11 +510,9 @@ function updateStats() {
         }
         totalPossibleSoFar += w;
         
-        // Today
         if (h.type === "positive") { todayTotal++; if(h.days[todayIdx]) todayDone++; }
         else { negTotal++; if(h.days[todayIdx]) todaySlips++; }
         
-        // Momentum (Simple Last 3 Days)
         let recentScore = 0;
         for(let i=0; i<3; i++) {
             const idx = todayIdx - i;
@@ -534,7 +524,6 @@ function updateStats() {
         momentumSum += (recentScore/3);
     });
     
-    // Rings
     const efficiencyPct = totalPossibleSoFar ? (earnedSoFar/totalPossibleSoFar)*100 : 0;
     const todayPerf = ((todayDone + (negTotal - todaySlips)) / (todayTotal + negTotal || 1)) * 100;
     const momPct = habits.length ? (momentumSum / habits.length) * 100 : 0;
@@ -543,7 +532,6 @@ function updateStats() {
     setRing("ring-normalized", todayPerf);
     setRing("ring-momentum", momPct);
     
-    // Streak
     let streak = 0;
     for (let d = todayIdx; d >= 0; d--) {
         let score = 0;
@@ -553,17 +541,14 @@ function updateStats() {
     const streakEl = document.getElementById("streakValue");
     if(streakEl) streakEl.innerText = streak;
     
-    // Header Streak (Mobile)
     const headerStreak = document.querySelector(".streak-info.mobile-view .streak-count");
     if(headerStreak) headerStreak.innerHTML = `<i data-lucide="flame" class="streak-icon"></i> ${streak}`;
 
-    // Net Score Badge
     const scoreEl = document.getElementById("todaySummary");
     let todayNet = 0;
     habits.forEach(h => { if(h.days[todayIdx]) todayNet += h.type==="positive"?1:-1; });
     if(scoreEl) scoreEl.innerText = `${todayNet>0?"+":""}${todayNet} Net Score`;
     
-    // Heatmap
     const heatGrid = document.getElementById("streakHeatmap");
     if(heatGrid) {
         heatGrid.innerHTML = "";
