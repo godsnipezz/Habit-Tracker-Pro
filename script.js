@@ -67,9 +67,9 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. DROPDOWN UTILS
+   3. DROPDOWN UTILS (Updated to optionally hide arrows)
 ========================================================= */
-function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
+function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null, showArrow = true) {
   el.innerHTML = ""; el.style.position = "relative";
   const btn = document.createElement("div");
   btn.className = "dropdown-button"; btn.tabIndex = 0;
@@ -78,10 +78,12 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null) {
   label.textContent = options[selectedIndex]?.label || "Select";
   btn.appendChild(label);
   
-  const arrow = document.createElement("span");
-  // Standard Chevron Arrow
-  arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="m6 9 6 6 6-6"/></svg>`;
-  btn.appendChild(arrow);
+  // FIX: Conditionally add arrow based on `showArrow` parameter
+  if (showArrow) {
+      const arrow = document.createElement("span");
+      arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="m6 9 6 6 6-6"/></svg>`;
+      btn.appendChild(arrow);
+  }
   
   const menu = document.createElement("div");
   menu.className = "dropdown-menu"; 
@@ -137,9 +139,8 @@ function renderHeader() {
   const nameTh = document.createElement("th");
   const wrapper = document.createElement("div");
   wrapper.className = "sticky-header-content";
-  // FIX: Force side-by-side alignment for Habit Label and Edit Button
+  // FIX: Force Habit Label and Settings Button side-by-side
   wrapper.style.display = "flex";
-  wrapper.style.flexDirection = "row";
   wrapper.style.alignItems = "center";
   wrapper.style.gap = "8px";
   wrapper.style.justifyContent = "flex-start";
@@ -219,14 +220,16 @@ function renderHabits() {
     nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
     tr.appendChild(nameTd);
 
-    const isBottomRow = i >= habits.length - 2;
+    // FIX: Update logic to flip the LAST 3 items, preventing cut-off
+    const isBottomRow = i >= habits.length - 3;
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
       const typeTd = document.createElement("td");
       typeTd.classList.add("column-enter"); 
       const tDD = document.createElement("div"); tDD.className = "dropdown";
-      makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir);
+      // FIX: Passing 'false' as last argument to disable arrows
+      makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir, false);
       const typeBtn = tDD.querySelector(".dropdown-button");
       if (h.type === "positive") typeBtn.classList.add("badge-pos"); else typeBtn.classList.add("badge-neg");
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
@@ -234,7 +237,8 @@ function renderHabits() {
       const impTd = document.createElement("td");
       impTd.classList.add("column-enter"); 
       const iDD = document.createElement("div"); iDD.className = "dropdown";
-      makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir);
+      // FIX: Passing 'false' as last argument to disable arrows
+      makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir, false);
       const impBtn = iDD.querySelector(".dropdown-button");
       const w = h.weight || 2;
       if (w === 1) impBtn.classList.add("badge-imp-low");
