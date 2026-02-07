@@ -96,9 +96,8 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     const btn = document.createElement("div");
     btn.className = "dropdown-button";
     
-    // Style the button based on value
+    // Style the button based on value (Only for table rows, blocked by CSS for header)
     const val = options[selectedIndex]?.value;
-    // Apply badges ONLY if it's not the month picker (CSS overrides month picker anyway, but good to have)
     if (val === "positive") btn.classList.add("badge-pos");
     else if (val === "negative") btn.classList.add("badge-neg");
     else if (val === 1) btn.classList.add("badge-imp-low");
@@ -119,15 +118,12 @@ function makeDropdown(el, options, selectedIndex, onChange) {
             return;
         }
 
-        // Close any other open menus
         closeAllDropdowns();
-        
-        // Mark this button as active
         btn.classList.add("active-dropdown-btn");
 
-        // 3. Create the Menu (Appended to BODY to escape table clipping)
+        // 3. Create the Menu
         const menu = document.createElement("div");
-        menu.className = "dropdown-menu"; // Hidden by default
+        menu.className = "dropdown-menu"; 
 
         // Populate items
         options.forEach((opt) => {
@@ -135,15 +131,17 @@ function makeDropdown(el, options, selectedIndex, onChange) {
             item.className = "dropdown-item";
             item.innerHTML = opt.label;
             
-            // --- COLOR CHANGES HERE ---
-            if(opt.label === "High") item.style.color = "#f87171"; // Red
-            else if(opt.label === "Medium") item.style.color = "#facc15"; // Yellow
-            else if(opt.label === "Low") item.style.color = "#4fd1ff"; // Cyan
-            else if(opt.label === "Positive") item.style.color = "#63e6a4"; // Green
-            else if(opt.label === "Negative") item.style.color = "#ef4444"; // Red
+            // Colors
+            if(opt.label === "High") item.style.color = "#f87171"; 
+            else if(opt.label === "Medium") item.style.color = "#facc15"; 
+            else if(opt.label === "Low") item.style.color = "#4fd1ff"; 
+            else if(opt.label === "Positive") item.style.color = "#63e6a4"; 
+            else if(opt.label === "Negative") item.style.color = "#ef4444"; 
 
             item.onclick = (evt) => {
                 evt.stopPropagation();
+                // --- FIX: Update the button text immediately ---
+                label.textContent = opt.label; 
                 onChange(opt.value);
                 closeAllDropdowns();
             };
@@ -155,7 +153,6 @@ function makeDropdown(el, options, selectedIndex, onChange) {
         // 4. Calculate Position (Fixed)
         const rect = btn.getBoundingClientRect();
         
-        // Temporarily show to measure
         menu.style.visibility = "hidden";
         menu.style.display = "block";
         const menuHeight = menu.scrollHeight;
@@ -166,19 +163,16 @@ function makeDropdown(el, options, selectedIndex, onChange) {
         let leftPos = rect.left;
         let transformOrigin = "top left";
 
-        // Flip UP if no space below
         if (spaceBelow < menuHeight && rect.top > menuHeight) {
             topPos = rect.top - menuHeight - 6;
             transformOrigin = "bottom left";
         }
 
-        // Clamp to Right Edge
         if (leftPos + menuWidth > window.innerWidth - 10) {
             leftPos = rect.right - menuWidth;
             transformOrigin = transformOrigin.replace("left", "right");
         }
 
-        // Apply Styles
         menu.style.position = "fixed";
         menu.style.top = `${topPos}px`;
         menu.style.left = `${leftPos}px`;
@@ -186,7 +180,6 @@ function makeDropdown(el, options, selectedIndex, onChange) {
         menu.style.transformOrigin = transformOrigin;
         menu.style.zIndex = "999999";
         
-        // Make visible and animate
         requestAnimationFrame(() => {
              menu.classList.add("open");
              menu.style.visibility = ""; 
@@ -267,7 +260,6 @@ function renderHabits() {
   const today = NOW.getDate();
   const isThisMonth = currentMonth === NOW.getMonth() && y === NOW.getFullYear();
 
-  // Clean up any stray menus
   closeAllDropdowns();
 
   habits.forEach((h, i) => {
