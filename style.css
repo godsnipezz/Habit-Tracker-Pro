@@ -36,6 +36,14 @@ html {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 ::-webkit-scrollbar-corner { background: transparent; }
 
+/* GLOBAL SPINNER REMOVAL (Fixes Arrows) */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; }
+
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
@@ -72,7 +80,7 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 0.8; transform: translateY(0); } }
 
 /* =========================================================
-   3. HEADER & DATE PICKER (Strict Uniformity)
+   3. HEADER & DATE PICKER
 ========================================================= */
 .top {
   display: flex;
@@ -93,24 +101,17 @@ body {
 /* UNIFY BOTH INPUTS */
 .date-picker input[type="number"],
 .date-picker .dropdown-button {
-  /* Force identical box model */
   appearance: none;
   -webkit-appearance: none;
   box-sizing: border-box !important;
-  
-  /* Identical Dimensions */
   height: 40px !important;
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  
-  /* Identical Styling (Overrides any accidental badge colors) */
   background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
   border-radius: 100px !important;
-  
-  /* Typography */
   font-family: "Inter", sans-serif;
   font-size: 13px !important;
   font-weight: 600 !important;
@@ -121,7 +122,6 @@ body {
   box-shadow: none !important; 
 }
 
-/* Specific widths */
 .date-picker input[type="number"] {
   width: 80px !important; 
   padding: 0 !important;
@@ -134,13 +134,11 @@ body {
   justify-content: space-between; 
 }
 
-/* Center text in month dropdown */
 .date-picker .dropdown-button span {
   width: 100%;
   text-align: center;
 }
 
-/* Hover States */
 .date-picker input[type="number"]:hover,
 .date-picker .dropdown-button:hover {
   background: rgba(255, 255, 255, 0.1) !important;
@@ -148,15 +146,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* Hide spinners */
-.date-picker input[type="number"]::-webkit-outer-spin-button,
-.date-picker input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.date-picker input[type="number"] { -moz-appearance: textfield; }
-
-/* HEADLINE */
 .headline {
   display: flex;
   flex-direction: column;
@@ -203,7 +192,7 @@ body {
 }
 
 /* =========================================================
-   4. DROPDOWNS (FIXED & FLOATING)
+   4. DROPDOWNS (FIXED)
 ========================================================= */
 .dropdown-menu {
   position: fixed; 
@@ -372,7 +361,6 @@ svg#activityGraph {
 table { border-collapse: collapse; width: 100%; min-width: 800px; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; position: relative; }
 
-/* Ensure rows don't trap the dropdowns */
 tbody tr { position: relative; }
 
 th:first-child, td:first-child {
@@ -408,11 +396,10 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 .toggle-edit-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
 .toggle-edit-btn:disabled { opacity: 0.2; cursor: default; background: transparent; }
 
-/* TABLE BUTTONS */
 td .dropdown-button { background: transparent; border: 1px solid transparent; padding: 0 8px; height: 28px; line-height: 26px; min-width: auto; width: auto; font-size: 12px; font-weight: 600; border-radius: 6px; justify-content: center; gap: 6px; display: inline-flex; align-items: center; box-shadow: none; }
 td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
 
-/* BADGES (Only for Table Rows) */
+/* BADGES */
 .badge-pos { color: #63e6a4; background: rgba(99, 230, 164, 0.1) !important; border: 1px solid rgba(99, 230, 164, 0.2) !important; }
 .badge-neg { color: #ef4444; background: rgba(239, 68, 68, 0.1) !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; }
 .badge-imp-low { color: #4fd1ff; background: rgba(79, 209, 255, 0.1) !important; }

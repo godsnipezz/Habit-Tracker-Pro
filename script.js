@@ -70,20 +70,16 @@ const debouncedSave = debounce(() => save(), 500);
    3. SMART DROPDOWNS (Fixed Positioning & Auto-Clamp)
 ========================================================= */
 
-// Global listener: Close all dropdowns if clicking outside
 document.addEventListener("click", (e) => {
     if (!e.target.closest(".dropdown-menu")) {
         closeAllDropdowns();
     }
 });
 
-// Close dropdowns on scroll to prevent them floating detached
 window.addEventListener('scroll', closeAllDropdowns, true);
 
 function closeAllDropdowns() {
-    // Physically remove menus from the DOM
     document.querySelectorAll(".dropdown-menu").forEach(el => el.remove());
-    // Reset button states
     document.querySelectorAll(".dropdown-button").forEach(btn => {
         btn.classList.remove("active-dropdown-btn");
     });
@@ -91,12 +87,9 @@ function closeAllDropdowns() {
 
 function makeDropdown(el, options, selectedIndex, onChange) {
     el.innerHTML = "";
-    
-    // 1. The Trigger Button
     const btn = document.createElement("div");
     btn.className = "dropdown-button";
     
-    // Style the button based on value (Only for table rows, blocked by CSS for header)
     const val = options[selectedIndex]?.value;
     if (val === "positive") btn.classList.add("badge-pos");
     else if (val === "negative") btn.classList.add("badge-neg");
@@ -108,11 +101,9 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     label.textContent = options[selectedIndex]?.label || "Select";
     btn.appendChild(label);
 
-    // 2. Click Handler
     btn.onclick = (e) => {
         e.stopPropagation();
 
-        // Toggle logic: if already active, just close
         if (btn.classList.contains("active-dropdown-btn")) {
             closeAllDropdowns();
             return;
@@ -121,17 +112,14 @@ function makeDropdown(el, options, selectedIndex, onChange) {
         closeAllDropdowns();
         btn.classList.add("active-dropdown-btn");
 
-        // 3. Create the Menu
         const menu = document.createElement("div");
         menu.className = "dropdown-menu"; 
 
-        // Populate items
         options.forEach((opt) => {
             const item = document.createElement("div");
             item.className = "dropdown-item";
             item.innerHTML = opt.label;
             
-            // Colors
             if(opt.label === "High") item.style.color = "#f87171"; 
             else if(opt.label === "Medium") item.style.color = "#facc15"; 
             else if(opt.label === "Low") item.style.color = "#4fd1ff"; 
@@ -140,7 +128,6 @@ function makeDropdown(el, options, selectedIndex, onChange) {
 
             item.onclick = (evt) => {
                 evt.stopPropagation();
-                // --- FIX: Update the button text immediately ---
                 label.textContent = opt.label; 
                 onChange(opt.value);
                 closeAllDropdowns();
@@ -150,7 +137,6 @@ function makeDropdown(el, options, selectedIndex, onChange) {
 
         document.body.appendChild(menu);
 
-        // 4. Calculate Position (Fixed)
         const rect = btn.getBoundingClientRect();
         
         menu.style.visibility = "hidden";
@@ -286,7 +272,6 @@ function renderHabits() {
     tr.appendChild(nameTd);
 
     if (isEditMode) {
-      // 1. Type Dropdown
       const typeTd = document.createElement("td");
       const tDD = document.createElement("div"); tDD.className = "dropdown";
       makeDropdown(tDD, 
@@ -296,7 +281,6 @@ function renderHabits() {
       );
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
-      // 2. Importance Dropdown
       const impTd = document.createElement("td");
       const iDD = document.createElement("div"); iDD.className = "dropdown";
       makeDropdown(iDD, 
@@ -306,7 +290,6 @@ function renderHabits() {
       );
       impTd.appendChild(iDD); tr.appendChild(impTd);
 
-      // 3. Goal Input
       const goalTd = document.createElement("td");
       const gIn = document.createElement("input");
       gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
@@ -685,5 +668,5 @@ yearInput.addEventListener("input", () => { loadHabits(); update(); });
 function update() { renderHeader(); renderHabits(); updateStats(); renderGraph(); handleMobileLayout(); lucide.createIcons(); }
 loadHabits(); update();
 
-const quotes = ["Consistency is key.", "Focus on the process.", "Small wins matter.", "Day one or one day.", "Keep showing up.", "Progress, not perfection."];
+const quotes = ["Consistency is key.", "Focus on the process.", "Small wins matter.", "Day one or one day.", "Keep showing up.", "Progress, not perfection.", "Show up daily.", "Little by little."];
 const qEl = document.getElementById("dailyQuote"); if(qEl) qEl.innerText = quotes[Math.floor(Math.random()*quotes.length)];
