@@ -134,10 +134,12 @@ function makeDropdown(el, options, selectedIndex, onChange) {
             item.className = "dropdown-item";
             item.innerHTML = opt.label;
             
-            // Item colors
-            if(opt.label === "High") item.style.color = "#f87171";
-            if(opt.label === "Positive") item.style.color = "#63e6a4";
-            if(opt.label === "Negative") item.style.color = "#ef4444";
+            // --- COLOR CHANGES HERE ---
+            if(opt.label === "High") item.style.color = "#f87171"; // Red
+            else if(opt.label === "Medium") item.style.color = "#facc15"; // Yellow
+            else if(opt.label === "Low") item.style.color = "#4fd1ff"; // Cyan
+            else if(opt.label === "Positive") item.style.color = "#63e6a4"; // Green
+            else if(opt.label === "Negative") item.style.color = "#ef4444"; // Red
 
             item.onclick = (evt) => {
                 evt.stopPropagation();
@@ -151,8 +153,8 @@ function makeDropdown(el, options, selectedIndex, onChange) {
 
         // 4. Calculate Position (Fixed)
         const rect = btn.getBoundingClientRect();
-        // Estimate height since it's currently hidden/scale(0.95)
-        // or temporarily show it to measure (safest)
+        
+        // Temporarily show to measure
         menu.style.visibility = "hidden";
         menu.style.display = "block";
         const menuHeight = menu.scrollHeight;
@@ -186,7 +188,7 @@ function makeDropdown(el, options, selectedIndex, onChange) {
         // Make visible and animate
         requestAnimationFrame(() => {
              menu.classList.add("open");
-             menu.style.visibility = ""; // Let class handle it
+             menu.style.visibility = ""; 
         });
     };
 

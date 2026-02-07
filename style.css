@@ -109,12 +109,12 @@ body {
 }
 
 .date-picker input[type="number"],
-.dropdown-button {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.date-picker .dropdown-button {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
   height: 40px;
-  padding: 0 20px;
+  padding: 0 16px;
   border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
@@ -124,26 +124,30 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-width: 130px;
+  box-sizing: border-box;
 }
 
 .date-picker input[type="number"] {
-  width: 90px;
+  width: 100px;
   text-align: center;
-  display: block;
-  line-height: normal; 
+  -moz-appearance: textfield;
+  appearance: textfield;
+  line-height: normal;
 }
 
 .dropdown-button svg {
     display: block;
     margin-left: 8px; 
 }
+.date-picker .dropdown-button {
+  width: 140px;
+  justify-content: space-between;
+}
 
 .date-picker input[type="number"]:hover,
-.dropdown-button:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.3);
+.date-picker .dropdown-button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
   transform: translateY(-1px);
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
