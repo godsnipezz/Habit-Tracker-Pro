@@ -67,121 +67,111 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. ROBUST DROPDOWNS (FIXED & CLIP-PROOF)
+   3. SMART DROPDOWNS (Fixed Positioning & Auto-Clamp)
 ========================================================= */
-
-// Global listener: Close all dropdowns if clicking outside
-document.addEventListener("click", (e) => {
-    if (!e.target.closest(".dropdown-menu")) {
-        closeAllDropdowns();
-    }
-});
-
-// Helper to physically remove menus from DOM
-function closeAllDropdowns() {
-    document.querySelectorAll(".dropdown-menu").forEach(el => el.remove());
-    document.querySelectorAll(".dropdown-button").forEach(btn => {
-        btn.classList.remove("active-dropdown-btn");
-    });
-}
-
+/* =========================================================
+   3. SMART DROPDOWNS (Fixed Positioning & Auto-Clamp)
+========================================================= */
 function makeDropdown(el, options, selectedIndex, onChange) {
-    el.innerHTML = "";
+  el.innerHTML = "";
+  
+  // 1. The Button (Stays in the table)
+  const btn = document.createElement("div");
+  btn.className = "dropdown-button";
+  btn.tabIndex = 0;
+
+  const label = document.createElement("span");
+  label.textContent = options[selectedIndex]?.label || "Select";
+  btn.appendChild(label);
+
+  // 2. The Menu (Will be positioned Fixed)
+  const menu = document.createElement("div");
+  menu.className = "dropdown-menu";
+
+  // Populate items
+  options.forEach((opt) => {
+    const item = document.createElement("div");
+    item.className = "dropdown-item";
+    item.innerHTML = opt.label; // Use innerHTML to allow icons if needed
     
-    // Create the Trigger Button
-    const btn = document.createElement("div");
-    btn.className = "dropdown-button";
-    
-    // Current Value styling
-    const currentLabel = options[selectedIndex]?.label || "Select";
-    const val = options[selectedIndex]?.value;
+    // Add color dots for priority/type visual cues
+    if(opt.label === "High") item.style.color = "#f87171";
+    if(opt.label === "Positive") item.style.color = "#63e6a4";
+    if(opt.label === "Negative") item.style.color = "#ef4444";
 
-    // Apply badge colors directly to the button
-    if (val === "positive") btn.classList.add("badge-pos");
-    else if (val === "negative") btn.classList.add("badge-neg");
-    else if (val === 1) btn.classList.add("badge-imp-low");
-    else if (val === 2) btn.classList.add("badge-imp-med");
-    else if (val === 3) btn.classList.add("badge-imp-high");
-
-    // Add label (no arrow, keeps it clean as requested)
-    btn.innerHTML = `<span>${currentLabel}</span>`;
-    
-    // CLICK HANDLER: Create menu freshly on click
-    btn.onclick = (e) => {
-        e.stopPropagation();
-        
-        // Toggle behavior
-        if (btn.classList.contains("active-dropdown-btn")) {
-            closeAllDropdowns();
-            return;
-        }
-
-        // 1. Clean up others
-        closeAllDropdowns();
-
-        // 2. Mark active
-        btn.classList.add("active-dropdown-btn");
-
-        // 3. Create the Menu (Appended to BODY to escape table clipping)
-        const menu = document.createElement("div");
-        menu.className = "dropdown-menu open"; // Add 'open' class for visibility
-
-        // 4. Populate Items
-        options.forEach((opt) => {
-            const item = document.createElement("div");
-            item.className = "dropdown-item";
-            item.textContent = opt.label;
-            
-            // Item styling
-            if(opt.label === "High") item.style.color = "#f87171";
-            if(opt.label === "Positive") item.style.color = "#63e6a4";
-            if(opt.label === "Negative") item.style.color = "#ef4444";
-
-            item.onclick = (evt) => {
-                evt.stopPropagation();
-                onChange(opt.value);
-                closeAllDropdowns(); // Destroy after selection
-            };
-            menu.appendChild(item);
-        });
-
-        // 5. Append to BODY
-        document.body.appendChild(menu);
-
-        // 6. CALCULATE POSITION (The "Pro" Math)
-        const rect = btn.getBoundingClientRect();
-        const menuHeight = menu.offsetHeight;
-        const menuWidth = menu.offsetWidth;
-        const windowHeight = window.innerHeight;
-        const windowWidth = window.innerWidth;
-
-        // Vertical Logic: Prefer Down, flip Up if no space
-        const spaceBelow = windowHeight - rect.bottom;
-        let topPos = rect.bottom + 6; // Default: 6px below button
-        
-        // If strict collision with bottom edge, flip up
-        if (spaceBelow < menuHeight && rect.top > menuHeight) {
-            topPos = rect.top - menuHeight - 6; // Flip to 6px above button
-        }
-
-        // Horizontal Logic: Align Left, flip Right if overflow
-        let leftPos = rect.left;
-        
-        // If menu goes off right edge of screen
-        if (leftPos + menuWidth > windowWidth - 10) {
-            leftPos = rect.right - menuWidth; // Align to right edge of button
-        }
-
-        // Apply Coordinates
-        menu.style.position = "fixed";
-        menu.style.top = `${topPos}px`;
-        menu.style.left = `${leftPos}px`;
-        menu.style.minWidth = `${rect.width}px`; // Match button width
-        menu.style.zIndex = "999999";
+    item.onclick = (e) => {
+      e.stopPropagation();
+      label.textContent = opt.label;
+      closeAllDropdowns();
+      onChange(opt.value);
     };
+    menu.appendChild(item);
+  });
 
-    el.appendChild(btn);
+  // Append menu to BODY, not the element. 
+  // This prevents it from being clipped by the table scroll.
+  document.body.appendChild(menu);
+
+  // 3. Toggle Logic
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    const wasOpen = menu.classList.contains("open");
+    closeAllDropdowns(); // Close others first
+
+    if (!wasOpen) {
+      // --- SMART POSITIONING LOGIC ---
+      const rect = btn.getBoundingClientRect();
+      const menuHeight = (options.length * 36) + 10; // Approx height
+      const spaceBelow = window.innerHeight - rect.bottom;
+      
+      // Default: Open Down
+      let topPos = rect.bottom + 6;
+      let leftPos = rect.left;
+      let transformOrigin = "top left";
+
+      // If not enough space below, flip UP
+      if (spaceBelow < menuHeight && rect.top > menuHeight) {
+        topPos = rect.top - menu.offsetHeight - 6;
+        // If menu hasn't rendered size yet, estimate it
+        if(menu.offsetHeight === 0) topPos = rect.top - menuHeight - 6;
+        transformOrigin = "bottom left";
+      }
+
+      // Check Right Edge Clamping
+      if (leftPos + 140 > window.innerWidth) {
+        leftPos = rect.right - 140; // Align to right edge of button
+        transformOrigin = transformOrigin.replace("left", "right");
+      }
+
+      // Apply coordinates
+      menu.style.top = `${topPos}px`;
+      menu.style.left = `${leftPos}px`;
+      menu.style.minWidth = `${Math.max(rect.width, 120)}px`; // Match button width min
+      menu.style.transformOrigin = transformOrigin;
+
+      // Activate
+      menu.classList.add("open");
+      
+      // Link this menu to this button for cleanup
+      menu._triggerBtn = btn;
+      btn.classList.add("active-dropdown-btn");
+    }
+  };
+
+  el.appendChild(btn);
 }
+
+function closeAllDropdowns() {
+  document.querySelectorAll(".dropdown-menu").forEach((m) => {
+    m.classList.remove("open");
+  });
+  document.querySelectorAll(".dropdown-button").forEach((b) => {
+    b.classList.remove("active-dropdown-btn");
+  });
+}
+
+// Add a scroll listener to close dropdowns on scroll (optional but recommended for Fixed UI)
+window.addEventListener('scroll', closeAllDropdowns, true);
 
 /* =========================================================
    4. RENDER LOGIC
@@ -197,6 +187,7 @@ function renderHeader() {
   const nameTh = document.createElement("th");
   const wrapper = document.createElement("div");
   wrapper.className = "sticky-header-content";
+  // FIX: Force Habit Label and Settings Button side-by-side
   wrapper.style.display = "flex";
   wrapper.style.alignItems = "center";
   wrapper.style.gap = "8px";
@@ -213,8 +204,6 @@ function renderHeader() {
   settingsBtn.onclick = (e) => {
     e.stopPropagation();
     isEditMode = !isEditMode;
-    // Close any lingering dropdowns when switching modes
-    closeAllDropdowns();
     update(); 
   };
 
@@ -229,6 +218,7 @@ function renderHeader() {
     ["Type", "Imp", "Goal"].forEach((t) => {
       const th = document.createElement("th");
       th.textContent = t;
+      // th.classList.add("column-enter"); // REMOVED ANIMATION CLASS TO FIX STACKING CONTEXT
       dayHeader.appendChild(th);
     });
   }
@@ -278,32 +268,28 @@ function renderHabits() {
     nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
     tr.appendChild(nameTd);
 
+    // FIX: Update logic to flip the LAST 3 items
+    const isBottomRow = i >= habits.length - 3;
+    const dropDir = isBottomRow ? "up" : "down";
+
     if (isEditMode) {
       const typeTd = document.createElement("td");
+      // REMOVED "column-enter" animation class to prevent z-index trapping
       const tDD = document.createElement("div"); tDD.className = "dropdown";
-      
-      // FIXED: Removed extra 'dropDir' and 'false' args
-      makeDropdown(tDD, 
-        [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], 
-        h.type === "negative" ? 1 : 0, 
-        (v) => { h.type = v; save(); update(); }
-      );
-      
+      makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); });      if (h.type === "positive") typeBtn.classList.add("badge-pos"); else typeBtn.classList.add("badge-neg");
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
       const impTd = document.createElement("td");
+      // REMOVED "column-enter" animation class
       const iDD = document.createElement("div"); iDD.className = "dropdown";
-      
-      // FIXED: Removed extra 'dropDir' and 'false' args
-      makeDropdown(iDD, 
-        [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], 
-        (h.weight || 2) - 1, 
-        (v) => { h.weight = v; save(); update(); }
-      );
-      
+      makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); });      const w = h.weight || 2;
+      if (w === 1) impBtn.classList.add("badge-imp-low");
+      if (w === 2) impBtn.classList.add("badge-imp-med");
+      if (w === 3) impBtn.classList.add("badge-imp-high");
       impTd.appendChild(iDD); tr.appendChild(impTd);
 
       const goalTd = document.createElement("td");
+      // REMOVED "column-enter" animation class
       const gIn = document.createElement("input");
       gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
       gIn.oninput = (e) => { h.goal = +e.target.value; debouncedSave(); updateStats(); if (!isEditMode) updateProgress(tr, h); };
@@ -666,7 +652,7 @@ function handleMobileLayout() {
 }
 
 // INIT
-makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { currentMonth = m; needsScrollToToday = true; loadHabits(); update(); });
+makeDropdown(document.getElementById("monthDropdown"), monthNames.map((m, i) => ({ label: m, value: i })), currentMonth, (m) => { currentMonth = m; needsScrollToToday = true; loadHabits(); update(); }, null);
 
 document.getElementById("addHabit").onclick = () => {
   lastAddedHabitIndex = habits.length; 
@@ -675,6 +661,7 @@ document.getElementById("addHabit").onclick = () => {
   update();
 };
 
+document.addEventListener("click", () => closeAllDropdowns());
 window.addEventListener("resize", debounce(() => { renderGraph(); handleMobileLayout(); }, 100));
 yearInput.addEventListener("input", () => { loadHabits(); update(); });
 
@@ -682,4 +669,4 @@ function update() { renderHeader(); renderHabits(); updateStats(); renderGraph()
 loadHabits(); update();
 
 const quotes = ["Consistency is key.", "Focus on the process.", "Small wins matter.", "Day one or one day.", "Keep showing up.", "Progress, not perfection."];
-const qEl = document.getElementById("dailyQuote"); if(qEl) qEl.innerText = quotes[Math.floor(Math.random()*quotes.length)]; 
+const qEl = document.getElementById("dailyQuote"); if(qEl) qEl.innerText = quotes[Math.floor(Math.random()*quotes.length)];
