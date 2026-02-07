@@ -67,76 +67,108 @@ const save = () => {
 const debouncedSave = debounce(() => save(), 500);
 
 /* =========================================================
-   3. DROPDOWN UTILS (Updated to optionally hide arrows)
+   3. SMART DROPDOWNS (Fixed Positioning & Auto-Clamp)
 ========================================================= */
-function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null, showArrow = true) {
-  el.innerHTML = ""; el.style.position = "relative";
-  const btn = document.createElement("div");
-  btn.className = "dropdown-button"; btn.tabIndex = 0;
+function makeDropdown(el, options, selectedIndex, onChange) {
+  el.innerHTML = "";
   
+  // 1. The Button (Stays in the table)
+  const btn = document.createElement("div");
+  btn.className = "dropdown-button";
+  btn.tabIndex = 0;
+
   const label = document.createElement("span");
   label.textContent = options[selectedIndex]?.label || "Select";
   btn.appendChild(label);
-  
-  // FIX: Conditionally add arrow based on `showArrow` parameter
-  if (showArrow) {
-      const arrow = document.createElement("span");
-      arrow.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.5"><path d="m6 9 6 6 6-6"/></svg>`;
-      btn.appendChild(arrow);
-  }
-  
-  const menu = document.createElement("div");
-  menu.className = "dropdown-menu"; 
 
+  // 2. The Menu (Will be positioned Fixed)
+  const menu = document.createElement("div");
+  menu.className = "dropdown-menu";
+
+  // Populate items
   options.forEach((opt) => {
     const item = document.createElement("div");
-    item.className = "dropdown-item"; 
-    item.innerHTML = opt.label;
-    item.onclick = (e) => { 
-        e.stopPropagation(); 
-        label.textContent = opt.label; 
-        closeAllDropdowns();
-        onChange(opt.value); 
+    item.className = "dropdown-item";
+    item.innerHTML = opt.label; // Use innerHTML to allow icons if needed
+    
+    // Add color dots for priority/type visual cues
+    if(opt.label === "High") item.style.color = "#f87171";
+    if(opt.label === "Positive") item.style.color = "#63e6a4";
+    if(opt.label === "Negative") item.style.color = "#ef4444";
+
+    item.onclick = (e) => {
+      e.stopPropagation();
+      label.textContent = opt.label;
+      closeAllDropdowns();
+      onChange(opt.value);
     };
     menu.appendChild(item);
   });
 
-  const toggleMenu = (e) => {
+  // Append menu to BODY, not the element. 
+  // This prevents it from being clipped by the table scroll.
+  document.body.appendChild(menu);
+
+  // 3. Toggle Logic
+  btn.onclick = (e) => {
     e.stopPropagation();
-    const isOpen = menu.classList.contains("open");
-    closeAllDropdowns(); 
-    
-    if (!isOpen) {
-      menu.classList.add("open");
+    const wasOpen = menu.classList.contains("open");
+    closeAllDropdowns(); // Close others first
+
+    if (!wasOpen) {
+      // --- SMART POSITIONING LOGIC ---
+      const rect = btn.getBoundingClientRect();
+      const menuHeight = (options.length * 36) + 10; // Approx height
+      const spaceBelow = window.innerHeight - rect.bottom;
       
-      // FIX: Force Z-Index on the Row to prevent "transparency" illusion
-      const row = el.closest('tr');
-      if (row) {
-          row.style.zIndex = '1000';
-          row.style.position = 'relative'; // Ensure z-index applies
+      // Default: Open Down
+      let topPos = rect.bottom + 6;
+      let leftPos = rect.left;
+      let transformOrigin = "top left";
+
+      // If not enough space below, flip UP
+      if (spaceBelow < menuHeight && rect.top > menuHeight) {
+        topPos = rect.top - menu.offsetHeight - 6;
+        // If menu hasn't rendered size yet, estimate it
+        if(menu.offsetHeight === 0) topPos = rect.top - menuHeight - 6;
+        transformOrigin = "bottom left";
       }
 
-      let openUp = fixedSide === "up";
-      if (!fixedSide && window.innerHeight - btn.getBoundingClientRect().bottom < 200) openUp = true;
-      if (openUp) { 
-          menu.style.top = "auto"; menu.style.bottom = "calc(100% + 8px)"; menu.style.transformOrigin = "bottom left"; 
-      } else { 
-          menu.style.top = "calc(100% + 8px)"; menu.style.bottom = "auto"; menu.style.transformOrigin = "top left"; 
+      // Check Right Edge Clamping
+      if (leftPos + 140 > window.innerWidth) {
+        leftPos = rect.right - 140; // Align to right edge of button
+        transformOrigin = transformOrigin.replace("left", "right");
       }
+
+      // Apply coordinates
+      menu.style.top = `${topPos}px`;
+      menu.style.left = `${leftPos}px`;
+      menu.style.minWidth = `${Math.max(rect.width, 120)}px`; // Match button width min
+      menu.style.transformOrigin = transformOrigin;
+
+      // Activate
+      menu.classList.add("open");
+      
+      // Link this menu to this button for cleanup
+      menu._triggerBtn = btn;
+      btn.classList.add("active-dropdown-btn");
     }
   };
-  btn.onclick = toggleMenu;
-  el.appendChild(btn); el.appendChild(menu);
+
+  el.appendChild(btn);
 }
 
 function closeAllDropdowns() {
-    // Reset Z-Index on all rows when closing
-    document.querySelectorAll("tbody tr").forEach(tr => {
-        tr.style.zIndex = '';
-        tr.style.position = '';
-    });
-    document.querySelectorAll(".dropdown-menu").forEach((m) => m.classList.remove("open"));
+  document.querySelectorAll(".dropdown-menu").forEach((m) => {
+    m.classList.remove("open");
+  });
+  document.querySelectorAll(".dropdown-button").forEach((b) => {
+    b.classList.remove("active-dropdown-btn");
+  });
 }
+
+// Add a scroll listener to close dropdowns on scroll (optional but recommended for Fixed UI)
+window.addEventListener('scroll', closeAllDropdowns, true);
 
 /* =========================================================
    4. RENDER LOGIC
@@ -241,16 +273,14 @@ function renderHabits() {
       const typeTd = document.createElement("td");
       // REMOVED "column-enter" animation class to prevent z-index trapping
       const tDD = document.createElement("div"); tDD.className = "dropdown";
-      makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir, false);
-      const typeBtn = tDD.querySelector(".dropdown-button");
+      makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); });      const typeBtn = tDD.querySelector(".dropdown-button");
       if (h.type === "positive") typeBtn.classList.add("badge-pos"); else typeBtn.classList.add("badge-neg");
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
       const impTd = document.createElement("td");
       // REMOVED "column-enter" animation class
       const iDD = document.createElement("div"); iDD.className = "dropdown";
-      makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir, false);
-      const impBtn = iDD.querySelector(".dropdown-button");
+      makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); });      const impBtn = iDD.querySelector(".dropdown-button");
       const w = h.weight || 2;
       if (w === 1) impBtn.classList.add("badge-imp-low");
       if (w === 2) impBtn.classList.add("badge-imp-med");
