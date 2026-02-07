@@ -8,9 +8,15 @@
 
   <rect x="0" y="0" width="512" height="512" rx="128" fill="url(#proGradient)"/>
 
-  <path d="M300 16 L 160 288 L 256 288 L 212 496 L 352 224 L 256 224 L 300 16 Z" 
-        fill="#0b0b0b" 
-        stroke="#0b0b0b" 
-        stroke-width="20" 
+  <path d="M320 100 
+           L 190 290 
+           L 270 290 
+           L 230 420 
+           L 360 230 
+           L 280 230 
+           L 320 100 Z" 
+        fill="#0b0b0b"
+        stroke="#0b0b0b"
+        stroke-width="24"
         stroke-linejoin="round"/>
 </svg>
