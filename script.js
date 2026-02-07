@@ -98,6 +98,7 @@ function makeDropdown(el, options, selectedIndex, onChange) {
     
     // Style the button based on value
     const val = options[selectedIndex]?.value;
+    // Apply badges ONLY if it's not the month picker (CSS overrides month picker anyway, but good to have)
     if (val === "positive") btn.classList.add("badge-pos");
     else if (val === "negative") btn.classList.add("badge-neg");
     else if (val === 1) btn.classList.add("badge-imp-low");

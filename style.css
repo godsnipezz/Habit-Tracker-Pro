@@ -36,21 +36,9 @@ html {
 ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
 ::-webkit-scrollbar-corner { background: transparent; }
 
-/* REMOVE SPINNERS */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-input[type="number"] {
-  -moz-appearance: textfield; 
-  appearance: textfield; 
-}
-
 body {
   margin: 0;
   font-family: "Inter", sans-serif;
-  /* FIX: Solid background with fixed attachment to prevent split-color issue */
   background: radial-gradient(circle at 50% 0%, #1a1a1a 0%, var(--bg) 80%) no-repeat fixed;
   background-color: var(--bg);
   color: var(--text);
@@ -68,12 +56,6 @@ body {
 /* =========================================================
    2. ANIMATIONS
 ========================================================= */
-@keyframes slideReveal {
-  from { opacity: 0; transform: translateX(-10px) scale(0.95); }
-  to { opacity: 1; transform: translateX(0) scale(1); }
-}
-.column-enter { animation: slideReveal 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-
 @keyframes rowEnter {
   from { opacity: 0; transform: translateY(-20px); background: rgba(99, 230, 164, 0.2); }
   to { opacity: 1; transform: translateY(0); background: transparent; }
@@ -90,15 +72,15 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 0.8; transform: translateY(0); } }
 
 /* =========================================================
-   3. HEADER (STRICT SINGLE LINE)
+   3. HEADER & DATE PICKER (Strict Uniformity)
 ========================================================= */
 .top {
   display: flex;
   justify-content: space-between;
-  align-items: center; 
+  align-items: center;
   margin-bottom: 24px;
-  height: 80px; 
-  flex-wrap: nowrap; /* Forces same line on mobile */
+  height: 80px;
+  flex-wrap: nowrap;
 }
 
 .date-picker {
@@ -108,50 +90,73 @@ body {
   flex-shrink: 0;
 }
 
+/* UNIFY BOTH INPUTS */
 .date-picker input[type="number"],
 .date-picker .dropdown-button {
-  background: rgba(255, 255, 255, 0.03) !important;
+  /* Force identical box model */
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box !important;
+  
+  /* Identical Dimensions */
+  height: 40px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  
+  /* Identical Styling (Overrides any accidental badge colors) */
+  background: rgba(255, 255, 255, 0.05) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #ffffff !important;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: 100px !important;
+  
+  /* Typography */
+  font-family: "Inter", sans-serif;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: normal;
   outline: none;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  box-sizing: border-box;
+  transition: all 0.2s ease;
+  box-shadow: none !important; 
 }
 
+/* Specific widths */
 .date-picker input[type="number"] {
-  width: 100px;
+  width: 80px !important; 
+  padding: 0 !important;
   text-align: center;
-  -moz-appearance: textfield;
-  appearance: textfield;
-  line-height: normal;
 }
 
-.dropdown-button svg {
-    display: block;
-    margin-left: 8px; 
-}
 .date-picker .dropdown-button {
-  width: 140px;
-  justify-content: space-between;
+  width: 120px !important; 
+  padding: 0 16px !important;
+  justify-content: space-between; 
 }
 
+/* Center text in month dropdown */
+.date-picker .dropdown-button span {
+  width: 100%;
+  text-align: center;
+}
+
+/* Hover States */
 .date-picker input[type="number"]:hover,
 .date-picker .dropdown-button:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   border-color: rgba(255, 255, 255, 0.3) !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
 
+/* Hide spinners */
+.date-picker input[type="number"]::-webkit-outer-spin-button,
+.date-picker input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.date-picker input[type="number"] { -moz-appearance: textfield; }
+
+/* HEADLINE */
 .headline {
   display: flex;
   flex-direction: column;
@@ -198,26 +203,21 @@ body {
 }
 
 /* =========================================================
-   4. DROPDOWNS (FIXED: 100% SOLID)
+   4. DROPDOWNS (FIXED & FLOATING)
 ========================================================= */
-.dropdown { position: relative; display: inline-block; }
-
 .dropdown-menu {
-  /* Default state (hidden) */
-  position: fixed; /* CHANGED from absolute to fixed */
+  position: fixed; 
   background: #1a1a1a !important;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  z-index: 99999 !important; /* Always on top */
+  z-index: 99999 !important; 
   min-width: 140px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.05);
   overflow: hidden;
-  
-  /* Animation Setup */
   opacity: 0;
   visibility: hidden;
   transform: scale(0.95);
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  transition: opacity 0.1s ease, transform 0.1s ease, visibility 0.1s;
   pointer-events: none;
 }
 
@@ -227,6 +227,7 @@ body {
   transform: scale(1);
   pointer-events: auto;
 }
+
 .dropdown-item {
   padding: 10px 14px;
   cursor: pointer;
@@ -238,10 +239,12 @@ body {
   align-items: center;
   gap: 8px;
 }
+
 .dropdown-item:hover {
   background: #2a2a2a !important;
   color: white;
 }
+
 /* =========================================================
    5. GRAPH & WIDGETS
 ========================================================= */
@@ -369,7 +372,7 @@ svg#activityGraph {
 table { border-collapse: collapse; width: 100%; min-width: 800px; }
 th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; position: relative; }
 
-/* FIX: Ensure rows don't trap the dropdowns */
+/* Ensure rows don't trap the dropdowns */
 tbody tr { position: relative; }
 
 th:first-child, td:first-child {
@@ -405,11 +408,11 @@ input[type="checkbox"].neg-habit { accent-color: #ef4444; }
 .toggle-edit-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
 .toggle-edit-btn:disabled { opacity: 0.2; cursor: default; background: transparent; }
 
+/* TABLE BUTTONS */
 td .dropdown-button { background: transparent; border: 1px solid transparent; padding: 0 8px; height: 28px; line-height: 26px; min-width: auto; width: auto; font-size: 12px; font-weight: 600; border-radius: 6px; justify-content: center; gap: 6px; display: inline-flex; align-items: center; box-shadow: none; }
-/* FIX: Hide SVG Arrow ONLY in Table Cell Dropdowns */
-td .dropdown-button svg { display: none !important; }
 td .dropdown-button:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
 
+/* BADGES (Only for Table Rows) */
 .badge-pos { color: #63e6a4; background: rgba(99, 230, 164, 0.1) !important; border: 1px solid rgba(99, 230, 164, 0.2) !important; }
 .badge-neg { color: #ef4444; background: rgba(239, 68, 68, 0.1) !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; }
 .badge-imp-low { color: #4fd1ff; background: rgba(79, 209, 255, 0.1) !important; }
