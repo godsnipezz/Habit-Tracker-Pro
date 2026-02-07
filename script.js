@@ -108,6 +108,14 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null, sh
     
     if (!isOpen) {
       menu.classList.add("open");
+      
+      // FIX: Force Z-Index on the Row to prevent "transparency" illusion
+      const row = el.closest('tr');
+      if (row) {
+          row.style.zIndex = '1000';
+          row.style.position = 'relative'; // Ensure z-index applies
+      }
+
       let openUp = fixedSide === "up";
       if (!fixedSide && window.innerHeight - btn.getBoundingClientRect().bottom < 200) openUp = true;
       if (openUp) { 
@@ -122,6 +130,11 @@ function makeDropdown(el, options, selectedIndex, onChange, fixedSide = null, sh
 }
 
 function closeAllDropdowns() {
+    // Reset Z-Index on all rows when closing
+    document.querySelectorAll("tbody tr").forEach(tr => {
+        tr.style.zIndex = '';
+        tr.style.position = '';
+    });
     document.querySelectorAll(".dropdown-menu").forEach((m) => m.classList.remove("open"));
 }
 
@@ -170,7 +183,7 @@ function renderHeader() {
     ["Type", "Imp", "Goal"].forEach((t) => {
       const th = document.createElement("th");
       th.textContent = t;
-      th.classList.add("column-enter"); 
+      // th.classList.add("column-enter"); // REMOVED ANIMATION CLASS TO FIX STACKING CONTEXT
       dayHeader.appendChild(th);
     });
   }
@@ -220,24 +233,22 @@ function renderHabits() {
     nameTd.oninput = () => { h.name = nameTd.textContent; debouncedSave(); };
     tr.appendChild(nameTd);
 
-    // FIX: Update logic to flip the LAST 3 items, preventing cut-off
+    // FIX: Update logic to flip the LAST 3 items
     const isBottomRow = i >= habits.length - 3;
     const dropDir = isBottomRow ? "up" : "down";
 
     if (isEditMode) {
       const typeTd = document.createElement("td");
-      typeTd.classList.add("column-enter"); 
+      // REMOVED "column-enter" animation class to prevent z-index trapping
       const tDD = document.createElement("div"); tDD.className = "dropdown";
-      // FIX: Passing 'false' as last argument to disable arrows
       makeDropdown(tDD, [{ label: "Positive", value: "positive" }, { label: "Negative", value: "negative" }], h.type === "negative" ? 1 : 0, (v) => { h.type = v; save(); update(); }, dropDir, false);
       const typeBtn = tDD.querySelector(".dropdown-button");
       if (h.type === "positive") typeBtn.classList.add("badge-pos"); else typeBtn.classList.add("badge-neg");
       typeTd.appendChild(tDD); tr.appendChild(typeTd);
 
       const impTd = document.createElement("td");
-      impTd.classList.add("column-enter"); 
+      // REMOVED "column-enter" animation class
       const iDD = document.createElement("div"); iDD.className = "dropdown";
-      // FIX: Passing 'false' as last argument to disable arrows
       makeDropdown(iDD, [{ label: "Low", value: 1 }, { label: "Medium", value: 2 }, { label: "High", value: 3 }], (h.weight || 2) - 1, (v) => { h.weight = v; save(); update(); }, dropDir, false);
       const impBtn = iDD.querySelector(".dropdown-button");
       const w = h.weight || 2;
@@ -247,7 +258,7 @@ function renderHabits() {
       impTd.appendChild(iDD); tr.appendChild(impTd);
 
       const goalTd = document.createElement("td");
-      goalTd.classList.add("column-enter"); 
+      // REMOVED "column-enter" animation class
       const gIn = document.createElement("input");
       gIn.type = "number"; gIn.className = "goal-input"; gIn.value = h.goal || 28;
       gIn.oninput = (e) => { h.goal = +e.target.value; debouncedSave(); updateStats(); if (!isEditMode) updateProgress(tr, h); };

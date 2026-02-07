@@ -90,7 +90,7 @@ body {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 0.8; transform: translateY(0); } }
 
 /* =========================================================
-   3. HEADER
+   3. HEADER (STRICT SINGLE LINE)
 ========================================================= */
 .top {
   display: flex;
@@ -124,7 +124,7 @@ body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Ensures label left, arrow right */
+  justify-content: space-between;
   min-width: 130px;
 }
 
@@ -135,7 +135,6 @@ body {
   line-height: normal; 
 }
 
-/* FIX: Centering the Month Dropdown Arrow */
 .dropdown-button svg {
     display: block;
     margin-left: 8px; 
@@ -195,7 +194,7 @@ body {
 }
 
 /* =========================================================
-   4. DROPDOWNS (FIXED: 100% OPAQUE, SOLID)
+   4. DROPDOWNS (FIXED: 100% SOLID)
 ========================================================= */
 .dropdown { position: relative; display: inline-block; }
 
@@ -203,8 +202,9 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  /* FIX: Solid Dark Background - Completely Opaque */
-  background-color: #1a1a1a !important; 
+  /* FIX: 100% Solid Color */
+  background: #1a1a1a !important; 
+  background-color: #1a1a1a !important;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 14px;
   z-index: 99999; 
@@ -220,7 +220,7 @@ body {
 
 .dropdown-item {
   padding: 12px 16px; cursor: pointer; font-size: 13px; color: #e5e5e5; transition: 0.2s;
-  background-color: #1a1a1a !important; /* Force solid background */
+  background: #1a1a1a !important; /* Force solid background */
 }
 .dropdown-item:hover { background: #333 !important; color: white; }
 
@@ -349,7 +349,10 @@ svg#activityGraph {
 .section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
 .table-wrapper { overflow-x: auto; border-radius: 16px; position: relative; margin-top: 10px; }
 table { border-collapse: collapse; width: 100%; min-width: 800px; }
-th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; }
+th, td { padding: 6px 4px; text-align: center; font-size: 13px; height: 44px; vertical-align: middle; position: relative; }
+
+/* FIX: Ensure rows don't trap the dropdowns */
+tbody tr { position: relative; }
 
 th:first-child, td:first-child {
   position: sticky; left: 0; background-color: #0b0b0b !important; z-index: 20; 
